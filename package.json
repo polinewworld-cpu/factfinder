@@ -1,0 +1,31 @@
+{
+  "name": "factfinder-poc",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -p 3411",
+    "build": "prisma generate && prisma db push --accept-data-loss --skip-generate && node prisma/seed-launch.mjs && next build",
+    "start": "next start",
+    "postinstall": "prisma generate"
+  },
+  "dependencies": {
+    "@netlify/blobs": "^8.1.0",
+    "@next-auth/prisma-adapter": "^1.0.7",
+    "@prisma/client": "5.18.0",
+    "jszip": "^3.10.1",
+    "next": "14.2.35",
+    "next-auth": "^4.24.7",
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/typography": "^0.5.15",
+    "@types/node": "20.14.15",
+    "@types/react": "18.3.3",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.47",
+    "prisma": "5.18.0",
+    "tailwindcss": "^3.4.13",
+    "typescript": "5.5.4"
+  }
+}

@@ -1,0 +1,209 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+// 실서버(테스트 서버) — Neon PostgreSQL 사용
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  READER
+  DONOR_READER
+  REPORTER
+  COLUMNIST
+  CHIEF_EDITOR
+}
+
+enum Gender {
+  MALE
+  FEMALE
+}
+
+enum ArticleStatus {
+  AUTOSAVE
+  DRAFT
+  PUBLISHED
+}
+
+enum DonationStatus {
+  ACTIVE
+  CANCELLED
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  emailVerified DateTime? // NextAuth 요구 필드
+  name          String
+  image         String?
+  role          UserRole  @default(READER)
+  gender        Gender?
+  nickname      String?
+  isDonor       Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+
+  articles  Article[]
+  comments  Comment[]
+  accounts  Account[]
+  sessions  Session[]
+  donations Donation[]
+  pollVotes PollVote[]
+}
+
+// 아래 3개는 NextAuth(구글 로그인) 표준 스키마 — Prisma 어댑터가 요구하는 형태 그대로
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Category {
+  id       String     @id @default(cuid())
+  name     String
+  slug     String     @unique
+  parentId String?
+  parent   Category?  @relation("CategoryToSub", fields: [parentId], references: [id])
+  children Category[] @relation("CategoryToSub")
+  order    Int        @default(0)
+
+  articles Article[]
+}
+
+model Article {
+  id              String        @id @default(cuid())
+  title           String
+  content         String        @db.Text
+  excerpt         String?
+  coverImageUrl   String?
+  status          ArticleStatus @default(PUBLISHED)
+  viewCount       Int           @default(0)
+  isFrontpageTop  Boolean       @default(false) // 1면톱 - 사이트 전체 1건만 true
+
+  authorId   String
+  author     User     @relation(fields: [authorId], references: [id])
+
+  categoryId String?
+  category   Category? @relation(fields: [categoryId], references: [id])
+
+  images   ArticleImage[]
+  comments Comment[]
+  keywords Keyword[] // 관리자가 미리 만든 키워드 중 선택 (다대다)
+  poll     Poll?
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  publishedAt DateTime?
+}
+
+// 기사 첨부 설문(투표) — 기사 1건당 최대 1개, 옵션 2개 이상
+model Poll {
+  id        String       @id @default(cuid())
+  articleId String       @unique
+  article   Article      @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  question  String
+  options   PollOption[]
+  votes     PollVote[]
+  createdAt DateTime     @default(now())
+}
+
+model PollOption {
+  id      String     @id @default(cuid())
+  pollId  String
+  poll    Poll       @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  text    String
+  order   Int        @default(0)
+  votes   PollVote[]
+}
+
+model PollVote {
+  id       String     @id @default(cuid())
+  pollId   String
+  poll     Poll       @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  optionId String
+  option   PollOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
+  userId   String
+  user     User       @relation(fields: [userId], references: [id])
+  createdAt DateTime  @default(now())
+
+  @@unique([pollId, userId]) // 사용자당 설문 1표
+}
+
+// 관리자가 미리 만들어두는 키워드 목록 (카테고리와 별도 체계) — 여론/단독 등은 이제 카테고리가 아니라 키워드
+model Keyword {
+  id        String    @id @default(cuid())
+  name      String    @unique
+  createdAt DateTime  @default(now())
+
+  articles  Article[]
+}
+
+// 에디터 특수문자 세트 — 관리자가 개별 추가/수정/삭제
+model SpecialCharacter {
+  id        String  @id @default(cuid())
+  char      String  // 실제 문자 (▶, ■, ※ 등)
+  label     String? // 관리용 설명
+  order     Int     @default(0)
+}
+
+model ArticleImage {
+  id        String  @id @default(cuid())
+  articleId String
+  article   Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  url       String
+  caption   String?
+  order     Int     @default(0)
+}
+
+// 정기후원 — 세제혜택(기부금영수증) 없는 단순 결제구독, 금액 자유입력.
+// PG(결제대행)사 계약정보가 아직 없어 실제 카드결제 연동은 보류 상태 — 지금은 구독 상태/왕관뱃지 로직만 구현.
+model Donation {
+  id          String         @id @default(cuid())
+  userId      String
+  user        User           @relation(fields: [userId], references: [id])
+  amount      Int // 월 후원금액(원), 자유입력
+  status      DonationStatus @default(ACTIVE)
+  startedAt   DateTime       @default(now())
+  cancelledAt DateTime?
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  articleId String
+  article   Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  content   String
+  createdAt DateTime @default(now())
+}

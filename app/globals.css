@@ -1,0 +1,35 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  background: #ffffff;
+  color: #16161a;
+}
+
+.embed-youtube {
+  position: relative;
+  margin: 1.25rem 0;
+  border-radius: 12px;
+  overflow: hidden;
+}
+.embed-youtube iframe {
+  display: block;
+}
+
+.hl-mark {
+  background: rgba(250, 204, 21, 0.45);
+  padding: 0 1px;
+  border-radius: 2px;
+}
+
+.keyword-badge {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 700;
+  color: #ec1561;
+  background: rgba(236, 21, 97, 0.12);
+  border-radius: 4px;
+  padding: 2px 8px;
+  margin-right: 6px;
+}
