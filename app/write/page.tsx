@@ -119,28 +119,38 @@ export default function WritePage() {
     if (s.categoryId) payload.categoryId = s.categoryId;
 
     try {
+      let res: Response;
       if (!articleIdRef.current) {
-        const res = await fetch('/api/articles', {
+        res = await fetch('/api/articles', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
         });
-        if (res.ok) {
-          const created = await res.json();
-          articleIdRef.current = created.id;
-          setArticleId(created.id);
-        }
       } else {
-        await fetch(`/api/articles/${articleIdRef.current}`, {
+        res = await fetch(`/api/articles/${articleIdRef.current}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
         });
       }
+
+      if (!res.ok) {
+        // 실패 시 저장된 것처럼 표시하지 않고, dirty 상태를 유지해 다음 주기에 재시도
+        const data = await res.json().catch(() => null);
+        setErrorMsg(data?.error ?? '자동저장에 실패했습니다. 다음 저장 때 다시 시도합니다.');
+        return;
+      }
+
+      if (!articleIdRef.current) {
+        const created = await res.json();
+        articleIdRef.current = created.id;
+        setArticleId(created.id);
+      }
       dirtyRef.current = false;
       setLastSavedAt(new Date());
+      setErrorMsg('');
     } catch (e) {
-      // 자동저장 실패는 조용히 무시 — 다음 주기에 재시도
+      setErrorMsg('자동저장 중 오류가 발생했습니다. 다음 저장 때 다시 시도합니다.');
     } finally {
       setSaving(false);
     }
@@ -445,54 +455,6 @@ export default function WritePage() {
         )}
       </div>
 
-      <div className="mb-6 border border-gray-200 rounded-lg p-4">
-        <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 cursor-pointer">
-          <input type="checkbox" checked={pollEnabled} onChange={(e) => togglePoll(e.target.checked)} />
-          설문(투표) 추가
-        </label>
-        {pollEnabled && (
-          <div className="mt-3 space-y-2">
-            <input
-              value={pollQuestion}
-              onChange={(e) => {
-                setPollQuestion(e.target.value);
-                markDirty();
-              }}
-              placeholder="질문을 입력하세요 (예: 이번 정책에 찬성하시나요?)"
-              className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-brand"
-            />
-            {pollOptions.map((opt, i) => (
-              <div key={i} className="flex items-center gap-2">
-                <input
-                  value={opt}
-                  onChange={(e) => updatePollOption(i, e.target.value)}
-                  placeholder={`항목 ${i + 1}`}
-                  className="flex-1 text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-brand"
-                />
-                {pollOptions.length > 2 && (
-                  <button
-                    type="button"
-                    onClick={() => removePollOption(i)}
-                    className="w-7 h-7 shrink-0 rounded-full text-gray-400 hover:text-red-500 hover:bg-red-50"
-                  >
-                    ✕
-                  </button>
-                )}
-              </div>
-            ))}
-            {pollOptions.length < 6 && (
-              <button
-                type="button"
-                onClick={addPollOption}
-                className="text-xs font-semibold text-brand border border-brand/30 rounded-full px-3 py-1 hover:bg-brand/5"
-              >
-                + 항목 추가
-              </button>
-            )}
-          </div>
-        )}
-      </div>
-
       {/* 에디터 툴바 */}
       <div
         className="flex flex-wrap items-center gap-1 border border-gray-200 border-b-0 rounded-t-lg bg-gray-50 px-2 py-1.5"
@@ -545,6 +507,57 @@ export default function WritePage() {
         className="min-h-[300px] border border-gray-200 rounded-b-lg p-4 leading-relaxed outline-none focus:border-brand text-gray-900"
         data-placeholder="본문을 입력하세요"
       />
+
+      {/* 설문(투표) — 기사 본문 작성을 마친 뒤 별도로 추가하는 선택 항목 */}
+      <div className="mt-8 pt-6 border-t border-gray-200">
+        <div className="border border-gray-200 rounded-lg p-4">
+          <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 cursor-pointer">
+            <input type="checkbox" checked={pollEnabled} onChange={(e) => togglePoll(e.target.checked)} />
+            설문(투표) 추가
+          </label>
+          {pollEnabled && (
+            <div className="mt-3 space-y-2">
+              <input
+                value={pollQuestion}
+                onChange={(e) => {
+                  setPollQuestion(e.target.value);
+                  markDirty();
+                }}
+                placeholder="질문을 입력하세요 (예: 이번 정책에 찬성하시나요?)"
+                className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-brand"
+              />
+              {pollOptions.map((opt, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <input
+                    value={opt}
+                    onChange={(e) => updatePollOption(i, e.target.value)}
+                    placeholder={`항목 ${i + 1}`}
+                    className="flex-1 text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-brand"
+                  />
+                  {pollOptions.length > 2 && (
+                    <button
+                      type="button"
+                      onClick={() => removePollOption(i)}
+                      className="w-7 h-7 shrink-0 rounded-full text-gray-400 hover:text-red-500 hover:bg-red-50"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+              ))}
+              {pollOptions.length < 6 && (
+                <button
+                  type="button"
+                  onClick={addPollOption}
+                  className="text-xs font-semibold text-brand border border-brand/30 rounded-full px-3 py-1 hover:bg-brand/5"
+                >
+                  + 항목 추가
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
 
       <div className="flex justify-end gap-3 mt-6">
         <button
