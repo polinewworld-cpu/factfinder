@@ -1,11 +1,12 @@
 import { prisma } from '@/lib/prisma';
 import ArticleCard from '@/components/ArticleCard';
+import type { ArticleStatus } from '@prisma/client';
 
 export default async function Home({ searchParams }: { searchParams: { category?: string } }) {
   const category = searchParams.category;
 
   const where = {
-    status: 'PUBLISHED',
+    status: 'PUBLISHED' as ArticleStatus,
     ...(category ? { category: { name: category } } : {}),
   };
 
