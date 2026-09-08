@@ -101,7 +101,7 @@ for (const a of articlesData) {
     authorId: a.author.id,
     categoryId: catId(a.category),
     publishedAt: a.status === 'PUBLISHED' ? daysAgo(a.days) : null,
-    keywords: a.keyword ? { set: [{ id: a.keyword.id }] } : undefined,
+    keywords: a.keyword ? { connect: [{ id: a.keyword.id }] } : undefined,
   };
 
   let article = await prisma.article.findFirst({ where: { title: a.title } });
