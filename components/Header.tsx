@@ -1,4 +1,5 @@
 import { getCurrentUser } from '@/lib/session';
+import { ROLES, WRITER_ROLES } from '@/lib/roles';
 
 const CATEGORIES = ['전체', '정치', '국제', '사회', '문화'];
 
@@ -25,6 +26,16 @@ export default async function Header() {
           </a>
           {user ? (
             <>
+              {WRITER_ROLES.includes(user.role as any) && (
+                <a href="/write" className="hidden sm:inline hover:text-brand">
+                  글쓰기
+                </a>
+              )}
+              {user.role === ROLES.CHIEF_EDITOR && (
+                <a href="/admin" className="hidden sm:inline hover:text-brand">
+                  관리자
+                </a>
+              )}
               <a href="/profile" className="hidden sm:inline hover:text-brand">
                 {user.name ?? '내 정보'}
               </a>
