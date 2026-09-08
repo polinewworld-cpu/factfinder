@@ -3,6 +3,9 @@ import { prisma } from '@/lib/prisma';
 import { ROLES } from '@/lib/roles';
 import { getCurrentUser } from '@/lib/session';
 
+// 빌드 시 미리 실행(정적 생성)되지 않도록 — DB 접속은 실제 요청이 올 때만
+export const dynamic = 'force-dynamic';
+
 // 관리자가 미리 만들어두는 키워드 목록 (여론, 단독 등)
 export async function GET() {
   const keywords = await prisma.keyword.findMany({ orderBy: { name: 'asc' } });

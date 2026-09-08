@@ -3,6 +3,9 @@ import { prisma } from '@/lib/prisma';
 import { ROLES } from '@/lib/roles';
 import { getCurrentUser } from '@/lib/session';
 
+// 빌드 시 미리 실행(정적 생성)되지 않도록 — DB 접속은 실제 요청이 올 때만
+export const dynamic = 'force-dynamic';
+
 // 에디터 특수문자 세트 — 관리자가 하나씩 추가/수정/삭제
 export async function GET() {
   const chars = await prisma.specialCharacter.findMany({ orderBy: { order: 'asc' } });
