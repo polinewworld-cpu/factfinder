@@ -2,10 +2,13 @@ generator client {
   provider = "prisma-client-js"
 }
 
-// 실서버(테스트 서버) — Neon PostgreSQL 사용
+// 실서버(테스트 서버) — Supabase PostgreSQL 사용
+// DATABASE_URL: 커넥션 풀링(pgbouncer) 주소 — 앱 실행 시 사용
+// DIRECT_URL: 직접 연결 주소 — 빌드 시 prisma db push(스키마 반영)에 사용
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 enum UserRole {
