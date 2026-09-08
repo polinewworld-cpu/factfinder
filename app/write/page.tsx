@@ -274,7 +274,7 @@ export default function WritePage() {
     };
 
     try {
-      let res;
+      let res: Response;
       if (!articleIdRef.current) {
         res = await fetch('/api/articles', {
           method: 'POST',
@@ -288,9 +288,13 @@ export default function WritePage() {
           body: JSON.stringify(payload),
         });
       }
-      const data = await res.json();
+      const data = await res.json().catch(() => null);
       if (!res.ok) {
-        setErrorMsg(data.error ?? '제출 실패');
+        setErrorMsg(data?.error ?? `제출 실패 (오류 코드 ${res.status})`);
+        return;
+      }
+      if (!data) {
+        setErrorMsg('서버 응답을 처리하지 못했습니다. 잠시 후 다시 시도해주세요.');
         return;
       }
       submittedRef.current = true;
@@ -299,6 +303,8 @@ export default function WritePage() {
       } else {
         setResultMsg({ text: '편집장 승인 대기 중입니다. 승인되면 발행됩니다.' });
       }
+    } catch (e) {
+      setErrorMsg('제출 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
     } finally {
       setSubmitting(false);
     }
