@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev -p 3411",
-    "build": "prisma generate && prisma db push --accept-data-loss --skip-generate && node prisma/seed-launch.mjs && next build",
+    "build": "prisma generate && prisma db push --accept-data-loss --skip-generate && node prisma/seed-launch.mjs && node prisma/seed-dummy.mjs && next build",
     "start": "next start",
     "postinstall": "prisma generate"
   },
