@@ -10,17 +10,19 @@ export default async function Home({ searchParams }: { searchParams: { category?
     ...(category ? { category: { name: category } } : {}),
   };
 
-  const top = await prisma.article.findFirst({
-    where: { ...where, isFrontpageTop: true },
-    include: { author: true, keywords: true, category: true },
-  });
-
-  const rest = await prisma.article.findMany({
-    where: { ...where, NOT: top ? { id: top.id } : undefined },
-    include: { author: true, keywords: true, category: true },
-    orderBy: { publishedAt: 'desc' },
-    take: 40,
-  });
+const [top, restRaw] = await Promise.all([
+    prisma.article.findFirst({
+      where: { ...where, isFrontpageTop: true },
+      include: { author: true, keywords: true, category: true },
+    }),
+    prisma.article.findMany({
+      where,
+      include: { author: true, keywords: true, category: true },
+      orderBy: { publishedAt: 'desc' },
+      take: 41,
+    }),
+  ]);
+  const rest = restRaw.filter((a) => a.id !== top?.id).slice(0, 40);
 
   return (
     <main className="max-w-6xl mx-auto px-4 py-6">
