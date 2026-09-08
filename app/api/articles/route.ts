@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { ROLES, initialStatusForRole } from '@/lib/roles';
 import { getCurrentUser } from '@/lib/session';
+import type { ArticleStatus } from '@prisma/client';
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -13,7 +14,7 @@ export async function GET(req: NextRequest) {
   const page = Number(searchParams.get('page') ?? '1');
   const pageSize = Number(searchParams.get('pageSize') ?? '20');
 
-  let status = 'PUBLISHED';
+  let status: ArticleStatus = 'PUBLISHED';
   if (statusParam === 'draft') {
     const user = await getCurrentUser();
     if (!user || user.role !== ROLES.CHIEF_EDITOR) {
