@@ -1,6 +1,10 @@
+import { getCurrentUser } from '@/lib/session';
+
 const CATEGORIES = ['전체', '정치', '국제', '사회', '문화'];
 
-export default function Header() {
+export default async function Header() {
+  const user = await getCurrentUser();
+
   return (
     <header className="sticky top-0 z-10 bg-bg/95 backdrop-blur border-b border-white/10">
       <div className="max-w-6xl mx-auto px-4 py-3 flex items-center gap-6">
@@ -19,6 +23,20 @@ export default function Header() {
           <a href="/donate" className="text-brand font-bold bg-brand/10 rounded-full px-4 py-1.5">
             후원하기
           </a>
+          {user ? (
+            <>
+              <a href="/profile" className="hidden sm:inline hover:text-brand">
+                {user.name ?? '내 정보'}
+              </a>
+              <a href="/api/auth/signout" className="hover:text-brand">
+                로그아웃
+              </a>
+            </>
+          ) : (
+            <a href="/api/auth/signin" className="hover:text-brand">
+              로그인
+            </a>
+          )}
         </div>
       </div>
       <nav className="max-w-6xl mx-auto px-4 flex gap-5 pb-3 text-sm font-semibold overflow-x-auto">
