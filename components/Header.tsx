@@ -1,5 +1,6 @@
 import { getCurrentUser } from '@/lib/session';
 import { ROLES, WRITER_ROLES } from '@/lib/roles';
+import { BellIcon, LogoMark, SearchIcon } from './icons';
 
 const CATEGORIES = ['전체', '정치', '국제', '사회', '문화'];
 
@@ -7,60 +8,71 @@ export default async function Header() {
   const user = await getCurrentUser();
 
   return (
-    <header className="sticky top-0 z-10 bg-bg/95 backdrop-blur border-b border-white/10">
-      <div className="max-w-6xl mx-auto px-4 py-3 flex items-center gap-6">
-        <a href="/" className="text-brand font-extrabold text-xl tracking-tight shrink-0">
-          팩트파인더
+    <>
+      <header className="site-header">
+        <a className="brand" href="/" aria-label="팩트파인더 홈">
+          <LogoMark />
+          <span className="brand-name">팩트파인더</span>
         </a>
-        <form action="/search" className="flex-1 max-w-md">
-          <input
-            name="q"
-            placeholder="기사, 인물, 이슈 검색"
-            className="w-full bg-white/5 border border-white/10 rounded-full px-4 py-1.5 text-sm placeholder:text-white/40 outline-none focus:border-brand"
-          />
+
+        <form className="search" action="/search" role="search">
+          <SearchIcon />
+          <input name="q" placeholder="기사, 인물, 이슈 검색" aria-label="기사 검색" />
         </form>
-        <div className="ml-auto flex items-center gap-4 text-sm text-white/70 shrink-0">
-          <a href="/" className="hidden sm:inline">전체기사</a>
-          <a href="/donate" className="text-brand font-bold bg-brand/10 rounded-full px-4 py-1.5">
+
+        <nav className="header-actions" aria-label="주요 메뉴">
+          <a className="text-link" href="/">
+            전체기사
+          </a>
+          <button className="icon-button" type="button" aria-label="알림">
+            <BellIcon />
+          </button>
+          <a className="cta" href="/donate">
             후원하기
           </a>
           {user ? (
             <>
               {WRITER_ROLES.includes(user.role as any) && (
-                <a href="/write" className="hidden sm:inline hover:text-brand">
+                <a className="text-link" href="/write">
                   글쓰기
                 </a>
               )}
               {user.role === ROLES.CHIEF_EDITOR && (
-                <a href="/admin" className="hidden sm:inline hover:text-brand">
+                <a className="text-link" href="/admin">
                   관리자
                 </a>
               )}
-              <a href="/profile" className="hidden sm:inline hover:text-brand">
+              <a className="text-link" href="/profile">
                 {user.name ?? '내 정보'}
               </a>
-              <a href="/api/auth/signout" className="hover:text-brand">
-                로그아웃
+              <a className="icon-button" href="/api/auth/signout" aria-label="로그아웃" title="로그아웃">
+                <span aria-hidden="true" style={{ fontSize: 13, fontWeight: 700 }}>
+                  ⏻
+                </span>
               </a>
             </>
           ) : (
-            <a href="/api/auth/signin" className="hover:text-brand">
+            <a className="cta" href="/api/auth/signin">
               로그인
             </a>
           )}
+        </nav>
+      </header>
+
+      <div className="content" style={{ paddingBottom: 0 }}>
+        <div className="chips" role="tablist" aria-label="기사 분류">
+          {CATEGORIES.map((c) => (
+            <a
+              key={c}
+              role="tab"
+              className="chip"
+              href={c === '전체' ? '/' : `/?category=${encodeURIComponent(c)}`}
+            >
+              {c}
+            </a>
+          ))}
         </div>
       </div>
-      <nav className="max-w-6xl mx-auto px-4 flex gap-5 pb-3 text-sm font-semibold overflow-x-auto">
-        {CATEGORIES.map((c) => (
-          <a
-            key={c}
-            href={c === '전체' ? '/' : `/?category=${encodeURIComponent(c)}`}
-            className="text-white/80 hover:text-brand whitespace-nowrap"
-          >
-            {c}
-          </a>
-        ))}
-      </nav>
-    </header>
+    </>
   );
 }

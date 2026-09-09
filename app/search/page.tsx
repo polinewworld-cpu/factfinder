@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import ArticleCard from '@/components/ArticleCard';
+import Masonry from '@/components/Masonry';
 
 export default async function SearchPage({ searchParams }: { searchParams: { q?: string } }) {
   const q = (searchParams.q ?? '').trim();
@@ -16,29 +16,31 @@ export default async function SearchPage({ searchParams }: { searchParams: { q?:
         },
         include: { author: true, category: true, keywords: true },
         orderBy: { publishedAt: 'desc' },
-        take: 40,
+        take: 60,
       })
     : [];
 
   return (
-    <main className="max-w-6xl mx-auto px-4 py-6">
-      <h1 className="text-lg font-bold mb-4 text-gray-900">
-        {q ? (
-          <>
-            &quot;<span className="text-brand">{q}</span>&quot; 검색결과 ({articles.length})
-          </>
-        ) : (
-          '검색어를 입력해주세요'
-        )}
-      </h1>
-      <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-4">
-        {articles.map((a) => (
-          <ArticleCard key={a.id} article={a as any} />
-        ))}
+    <>
+      <div className="content" style={{ paddingBottom: 0 }}>
+        <h1 style={{ fontFamily: 'var(--title)', fontSize: 20, fontWeight: 700, margin: '4px 0 20px' }}>
+          {q ? (
+            <>
+              &quot;<span style={{ color: 'var(--accent)' }}>{q}</span>&quot; 검색결과 ({articles.length})
+            </>
+          ) : (
+            '검색어를 입력해주세요'
+          )}
+        </h1>
       </div>
+      <Masonry top={null} articles={articles as any} />
       {q && articles.length === 0 && (
-        <p className="text-gray-400 text-sm py-20 text-center">검색 결과가 없습니다.</p>
+        <div className="content">
+          <div className="empty-state">
+            <p>검색 결과가 없습니다.</p>
+          </div>
+        </div>
       )}
-    </main>
+    </>
   );
 }

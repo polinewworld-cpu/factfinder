@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import ArticleCard from '@/components/ArticleCard';
+import Masonry from '@/components/Masonry';
 
 export default async function KeywordPage({ params }: { params: { name: string } }) {
   const name = decodeURIComponent(params.name);
@@ -10,17 +10,23 @@ export default async function KeywordPage({ params }: { params: { name: string }
   });
 
   return (
-    <main className="max-w-6xl mx-auto px-4 py-6">
-      <h1 className="text-xl font-bold mb-4 text-gray-900">
-        <span className="keyword-badge text-sm align-middle mr-2">{name}</span>
-        키워드 기사 모음 ({articles.length})
-      </h1>
-      <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-4">
-        {articles.map((a) => (
-          <ArticleCard key={a.id} article={a as any} />
-        ))}
+    <>
+      <div className="content" style={{ paddingBottom: 0 }}>
+        <h1 style={{ fontFamily: 'var(--title)', fontSize: 22, fontWeight: 700, margin: '4px 0 20px' }}>
+          <span className="keyword-badge" style={{ fontSize: 14, verticalAlign: 'middle', marginRight: 8 }}>
+            {name}
+          </span>
+          키워드 기사 모음 ({articles.length})
+        </h1>
       </div>
-      {articles.length === 0 && <p className="text-gray-400 text-sm py-20 text-center">해당 키워드의 기사가 없습니다.</p>}
-    </main>
+      <Masonry top={null} articles={articles as any} />
+      {articles.length === 0 && (
+        <div className="content">
+          <div className="empty-state">
+            <p>해당 키워드의 기사가 없습니다.</p>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

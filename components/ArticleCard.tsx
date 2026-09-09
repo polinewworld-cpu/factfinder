@@ -1,6 +1,9 @@
-import { timeAgo } from '@/lib/time';
+'use client';
 
-type CardArticle = {
+import { timeAgo } from '@/lib/time';
+import { ShareIcon } from './icons';
+
+export type CardArticle = {
   id: string;
   title: string;
   excerpt?: string | null;
@@ -8,43 +11,94 @@ type CardArticle = {
   publishedAt?: string | Date | null;
   author: { name: string };
   keywords: { name: string }[];
+  category?: { name: string } | null;
   isFrontpageTop?: boolean;
 };
 
-export default function ArticleCard({ article, big = false }: { article: CardArticle; big?: boolean }) {
+const RATIOS = [0.72, 0.88, 1.04, 1.22, 1.38, 0.64, 0.96, 1.16];
+
+function hashString(value: string) {
+  let hash = 0;
+  for (let i = 0; i < value.length; i += 1) {
+    hash = (hash * 31 + value.charCodeAt(i)) >>> 0;
+  }
+  return hash;
+}
+
+export default function ArticleCard({
+  article,
+  featured = false,
+  wide = false,
+}: {
+  article: CardArticle;
+  featured?: boolean;
+  wide?: boolean;
+}) {
+  const ratio = RATIOS[hashString(article.id) % RATIOS.length];
+  const imageRatio = featured ? 1.12 : wide ? 0.46 : ratio;
+  const pinClass = featured ? 'pin is-featured' : wide ? 'pin is-wide' : 'pin';
+  const badges = article.keywords.map((k) => k.name).slice(0, 2);
+  const href = `/article/${article.id}`;
+  const categoryLabel = article.category?.name ?? '정치';
+
+  async function shareArticle(event: React.MouseEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+    const url = `${window.location.origin}${href}`;
+    const payload = { title: article.title, url };
+    if (navigator.share) {
+      try {
+        await navigator.share(payload);
+      } catch {
+        /* user cancelled */
+      }
+      return;
+    }
+    await navigator.clipboard.writeText(url);
+  }
+
   return (
-    <a
-      href={`/article/${article.id}`}
-      className={`block break-inside-avoid mb-4 bg-white rounded-xl overflow-hidden border border-gray-200 shadow-sm hover:border-brand/50 hover:shadow-md transition ${
-        big ? 'row-span-2' : ''
-      }`}
-    >
-      <div
-        className={`w-full bg-gray-100 ${big ? 'aspect-[4/3]' : 'aspect-[16/10]'} flex items-center justify-center text-gray-400 text-xs`}
-        style={
-          article.coverImageUrl
-            ? { backgroundImage: `url(${article.coverImageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' }
-            : undefined
-        }
-      >
-        {!article.coverImageUrl && '이미지 없음'}
-      </div>
-      <div className="p-4">
-        {article.keywords.length > 0 && (
-          <div className="mb-1">
-            {article.keywords.map((k) => (
-              <span key={k.name} className="keyword-badge">
-                {k.name}
+    <article className={pinClass}>
+      <a className="pin-media" href={href}>
+        {article.coverImageUrl ? (
+          <img src={article.coverImageUrl} alt="" style={{ aspectRatio: `1 / ${imageRatio}` }} />
+        ) : (
+          <div className="pin-fallback" style={{ aspectRatio: `1 / ${imageRatio}` }}>
+            <p>{(article.excerpt || article.title || '').slice(0, 90)}</p>
+          </div>
+        )}
+
+        <div className="pin-overlay">
+          <span className="read-pill">읽기</span>
+          <span className="overlay-actions">
+            <span className="ghost-chip">{badges[0] || categoryLabel}</span>
+            <button type="button" className="share-button" onClick={shareArticle} aria-label="공유">
+              <ShareIcon />
+            </button>
+          </span>
+        </div>
+      </a>
+
+      <div className="pin-copy">
+        {badges.length > 0 && (
+          <div className="badge-row">
+            {badges.map((badge) => (
+              <span key={badge} className="badge">
+                {badge}
               </span>
             ))}
           </div>
         )}
-        <h3 className={`font-bold leading-snug text-gray-900 ${big ? 'text-xl' : 'text-base'}`}>{article.title}</h3>
-        {big && article.excerpt && <p className="text-gray-500 text-sm mt-2 line-clamp-2">{article.excerpt}</p>}
-        <div className="text-xs text-gray-400 mt-2">
-          {article.author.name} · {article.publishedAt ? timeAgo(article.publishedAt) : ''}
+        <h2>
+          <a href={href}>{article.title}</a>
+        </h2>
+        {(featured || wide) && article.excerpt && <p className="pin-excerpt">{article.excerpt}</p>}
+        <div className="pin-meta">
+          <span>{article.author.name}</span>
+          <span className="dot" />
+          <time>{article.publishedAt ? timeAgo(article.publishedAt) : ''}</time>
         </div>
       </div>
-    </a>
+    </article>
   );
 }

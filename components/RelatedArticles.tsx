@@ -3,12 +3,44 @@
 import { useEffect, useState } from 'react';
 import { timeAgo } from '@/lib/time';
 
-type Item = { id: string; title: string; author: { name: string }; publishedAt: string };
+type Item = {
+  id: string;
+  title: string;
+  author: { name: string };
+  publishedAt: string;
+  coverImageUrl?: string | null;
+};
+
+function RailCard({ article }: { article: Item }) {
+  const href = `/article/${article.id}`;
+  return (
+    <article className="pin rail-pin">
+      <a className="pin-media" href={href}>
+        {article.coverImageUrl ? (
+          <img src={article.coverImageUrl} alt="" style={{ aspectRatio: '1 / 0.72' }} />
+        ) : (
+          <div className="pin-fallback" style={{ aspectRatio: '1 / 0.72' }}>
+            <p>{article.title}</p>
+          </div>
+        )}
+      </a>
+      <div className="pin-copy">
+        <h2>
+          <a href={href}>{article.title}</a>
+        </h2>
+        <div className="pin-meta">
+          <span>{article.author.name}</span>
+          <span className="dot" />
+          <time>{timeAgo(article.publishedAt)}</time>
+        </div>
+      </div>
+    </article>
+  );
+}
 
 export default function RelatedArticles({ articleId, keywordNames }: { articleId: string; keywordNames: string[] }) {
   const [mode, setMode] = useState<'related' | 'latest' | 'popular'>('latest');
   const [items, setItems] = useState<Item[]>([]);
-  const [hasRelated, setHasRelated] = useState(false);
   const [loaded, setLoaded] = useState(false);
 
   // 초기 진입 시: 같은 키워드 기사가 있으면 "관련기사"로, 없으면 "최신기사"로 시작
@@ -19,7 +51,6 @@ export default function RelatedArticles({ articleId, keywordNames }: { articleId
         const data = await res.json();
         if (data.length > 0) {
           setItems(data);
-          setHasRelated(true);
           setMode('related');
           setLoaded(true);
           return;
@@ -38,40 +69,32 @@ export default function RelatedArticles({ articleId, keywordNames }: { articleId
   }
 
   return (
-    <aside className="lg:w-80 shrink-0">
-      <div className="bg-gray-50 rounded-xl border border-gray-200 p-4">
-        {mode === 'related' ? (
-          <h4 className="font-bold text-sm mb-3 text-gray-900">관련기사</h4>
-        ) : (
-          <div className="flex gap-3 text-sm font-bold mb-3">
-            <button
-              onClick={() => switchMode('latest')}
-              className={mode === 'latest' ? 'text-brand' : 'text-gray-400'}
-            >
-              최신기사
-            </button>
-            <button
-              onClick={() => switchMode('popular')}
-              className={mode === 'popular' ? 'text-brand' : 'text-gray-400'}
-            >
-              많이 본 기사
-            </button>
-          </div>
-        )}
-        {!loaded && <p className="text-gray-400 text-xs">불러오는 중…</p>}
-        <ul className="space-y-3">
-          {items.map((a) => (
-            <li key={a.id}>
-              <a href={`/article/${a.id}`} className="block text-gray-900 hover:text-brand">
-                <p className="text-sm font-semibold leading-snug line-clamp-2">{a.title}</p>
-                <p className="text-xs text-gray-400 mt-1">
-                  {a.author.name} · {timeAgo(a.publishedAt)}
-                </p>
-              </a>
-            </li>
-          ))}
-          {loaded && items.length === 0 && <p className="text-gray-400 text-xs">표시할 기사가 없습니다.</p>}
-        </ul>
+    <aside className="article-rail" aria-label="다른 기사">
+      {mode !== 'related' && (
+        <div style={{ display: 'flex', gap: 12, fontSize: 13, fontWeight: 700, marginBottom: 16 }}>
+          <button
+            onClick={() => switchMode('latest')}
+            style={{ color: mode === 'latest' ? 'var(--accent)' : 'var(--ash)' }}
+          >
+            최신기사
+          </button>
+          <button
+            onClick={() => switchMode('popular')}
+            style={{ color: mode === 'popular' ? 'var(--accent)' : 'var(--ash)' }}
+          >
+            많이 본 기사
+          </button>
+        </div>
+      )}
+      {mode === 'related' && (
+        <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--mute)', margin: '0 0 16px' }}>관련기사</p>
+      )}
+      {!loaded && <p style={{ fontSize: 12, color: 'var(--ash)' }}>불러오는 중…</p>}
+      <div className="rail-list">
+        {items.map((a) => (
+          <RailCard key={a.id} article={a} />
+        ))}
+        {loaded && items.length === 0 && <p style={{ fontSize: 12, color: 'var(--ash)' }}>표시할 기사가 없습니다.</p>}
       </div>
     </aside>
   );

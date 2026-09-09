@@ -21,42 +21,47 @@ export default async function ArticlePage({ params }: { params: { id: string } }
   // 조회수 증가 (데모 단순화를 위해 상세 페이지 렌더링 시 직접 처리)
   await prisma.article.update({ where: { id: article.id }, data: { viewCount: { increment: 1 } } });
 
+  const kicker = article.keywords.length > 0
+    ? article.keywords.map((k) => k.name).join(' · ')
+    : article.category?.name ?? '팩트파인더';
+
   return (
-    <main className="max-w-6xl mx-auto px-4 py-8 flex flex-col lg:flex-row gap-8">
-      <article className="flex-1 min-w-0">
-        <p className="text-brand text-sm font-bold mb-2">{article.category?.name ?? '미지정'}</p>
-        {article.keywords.length > 0 && (
-          <div className="mb-3">
-            {article.keywords.map((k) => (
-              <a key={k.name} href={`/keyword/${encodeURIComponent(k.name)}`} className="keyword-badge">
-                {k.name}
-              </a>
-            ))}
-          </div>
-        )}
-        <h1 className="text-2xl sm:text-3xl font-extrabold leading-tight mb-3">{article.title}</h1>
-        <div className="flex items-center justify-between mb-6">
-          <div className="text-sm text-gray-400">
-            {article.author.name} · {article.publishedAt ? timeAgo(article.publishedAt) : ''} · 조회 {article.viewCount + 1}
-          </div>
-          <div className="flex items-center gap-2">
-            <ReadAloudButton text={`${article.title}. ${stripHtml(article.content)}`} gender={article.author.gender} />
-            <ShareButtons title={article.title} coverImageUrl={article.coverImageUrl} />
-          </div>
-        </div>
+    <div className="article-layout">
+      <article className="article-main">
         {article.coverImageUrl && (
-          <img src={article.coverImageUrl} alt="" className="w-full rounded-xl mb-6" />
+          <img className="article-hero" src={article.coverImageUrl} alt="" />
         )}
-        <div
-          className="prose max-w-none leading-relaxed text-gray-900"
-          dangerouslySetInnerHTML={{ __html: article.content }}
-        />
-        <CardNewsCarousel articleId={article.id} images={article.images} />
-        {article.poll && <PollCard pollId={article.poll.id} />}
-        <EmbedScripts />
-        <CommentSection articleId={article.id} />
+        <div className="article-body">
+          <p className="article-kicker">
+            {kicker} · {article.publishedAt ? timeAgo(article.publishedAt) : ''}
+          </p>
+          {article.keywords.length > 0 && (
+            <div style={{ marginBottom: 12 }}>
+              {article.keywords.map((k) => (
+                <a key={k.name} href={`/keyword/${encodeURIComponent(k.name)}`} className="keyword-badge">
+                  {k.name}
+                </a>
+              ))}
+            </div>
+          )}
+          <h1>{article.title}</h1>
+          <div className="article-byline">
+            <span>
+              {article.author.name} 기자 · 조회 {article.viewCount + 1}
+            </span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <ReadAloudButton text={`${article.title}. ${stripHtml(article.content)}`} gender={article.author.gender} />
+              <ShareButtons title={article.title} coverImageUrl={article.coverImageUrl} />
+            </span>
+          </div>
+          <div className="article-content" dangerouslySetInnerHTML={{ __html: article.content }} />
+          <CardNewsCarousel articleId={article.id} images={article.images} />
+          {article.poll && <PollCard pollId={article.poll.id} />}
+          <EmbedScripts />
+          <CommentSection articleId={article.id} />
+        </div>
       </article>
       <RelatedArticles articleId={article.id} keywordNames={article.keywords.map((k) => k.name)} />
-    </main>
+    </div>
   );
 }
