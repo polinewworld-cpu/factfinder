@@ -1,13 +1,17 @@
 import './globals.css';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import SavedArticlesProvider from '@/components/SavedArticlesProvider';
+import { getCurrentUser } from '@/lib/session';
+import { ROLES } from '@/lib/roles';
 
 export const metadata = {
   title: '팩트파인더',
   description: '팩트파인더는 진영주의를 벗어나 중도주의 관점으로 정치와 사회를 봅니다.',
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const user = await getCurrentUser();
   return (
     <html lang="ko">
       <head>
@@ -25,7 +29,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-screen">
         <div className="page">
           <Header />
-          {children}
+          <SavedArticlesProvider loggedIn={!!user} isChiefEditor={user?.role === ROLES.CHIEF_EDITOR}>
+            {children}
+          </SavedArticlesProvider>
           <Footer />
         </div>
       </body>

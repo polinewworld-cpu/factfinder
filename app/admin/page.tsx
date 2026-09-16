@@ -5,12 +5,18 @@ import { useEffect, useState } from 'react';
 type Stats = {
   publishedToday: number;
   totalMembers: number;
+  newMembersToday: number;
   pendingCount: number;
   totalArticles: number;
   activeDonors: number;
   newDonorsToday: number;
+  pendingReporterCount: number;
+  currentReporterCount: number;
+  donationAmountToday: number;
+  donationAmountMonth: number;
 };
 
+// 관리자 대시보드 — 전면 재설계: 빨간 면 박스 + 흰 글씨, 숫자를 누르면 해당 상세 탭으로 이동 (2026-09-11 개편)
 export default function AdminHome() {
   const [me, setMe] = useState<any>('loading');
   const [stats, setStats] = useState<Stats | null>(null);
@@ -36,51 +42,62 @@ export default function AdminHome() {
     );
   }
 
-  const cards = [
-    { label: '오늘 발행 기사', value: stats?.publishedToday ?? '—' },
-    { label: '전체 발행 기사', value: stats?.totalArticles ?? '—' },
-    { label: '승인 대기 중', value: stats?.pendingCount ?? '—', href: '/admin/pending' },
-    { label: '전체 회원', value: stats?.totalMembers ?? '—', href: '/admin/members' },
-    { label: '전체 후원자', value: stats?.activeDonors ?? '—' },
-    { label: '오늘 신규 후원', value: stats?.newDonorsToday ?? '—' },
-    { label: '신고 댓글 대기', value: '준비 중' },
-  ];
-
-  const links = [
-    { href: '/admin/pending', label: '승인 대기함' },
-    { href: '/admin/keywords', label: '키워드 관리' },
-    { href: '/admin/special-characters', label: '특수문자 관리' },
-    { href: '/admin/members', label: '회원 관리' },
-  ];
-
   return (
-    <main className="max-w-5xl mx-auto px-4 py-8">
+    <main className="px-4 py-8">
       <h1 className="text-xl font-bold text-gray-900 mb-6">관리자 대시보드</h1>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-8">
-        {cards.map((c) => (
-          <a
-            key={c.label}
-            href={c.href ?? '#'}
-            className={`rounded-xl border border-gray-200 p-4 ${c.href ? 'hover:border-brand' : ''}`}
-          >
-            <p className="text-xs text-gray-400 mb-1">{c.label}</p>
-            <p className="text-2xl font-bold text-gray-900">{c.value}</p>
-          </a>
-        ))}
-      </div>
+      {!stats ? (
+        <p className="text-sm text-gray-400">불러오는 중…</p>
+      ) : (
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+          {/* 발행기사 — 오늘/전체. 전체 숫자를 누르면 전체기사 탭으로 */}
+          <div className="rounded-xl bg-brand text-white p-4">
+            <p className="text-xs text-white/70 mb-1">발행기사</p>
+            <p className="text-2xl font-bold">
+              {stats.publishedToday}/
+              <a href="/admin/articles" className="hover:underline">
+                {stats.totalArticles}
+              </a>
+            </p>
+          </div>
 
-      <div className="flex flex-wrap gap-3">
-        {links.map((l) => (
-          <a
-            key={l.href}
-            href={l.href}
-            className="text-sm font-semibold text-gray-700 border border-gray-200 rounded-full px-4 py-2 hover:border-brand hover:text-brand"
-          >
-            {l.label}
+          {/* 승인대기 — 단일 지표, 누르면 승인대기함으로 */}
+          <a href="/admin/pending" className="rounded-xl bg-brand text-white p-4 block hover:opacity-90">
+            <p className="text-xs text-white/70 mb-1">승인대기</p>
+            <p className="text-2xl font-bold">{stats.pendingCount}</p>
           </a>
-        ))}
-      </div>
+
+          {/* 회원 — 뭘 눌러도 회원 관리탭으로 */}
+          <a href="/admin/members" className="rounded-xl bg-brand text-white p-4 block hover:opacity-90">
+            <p className="text-xs text-white/70 mb-1">회원</p>
+            <p className="text-2xl font-bold">
+              {stats.newMembersToday}/{stats.totalMembers}
+            </p>
+          </a>
+
+          {/* 기자 — 대기중 숫자는 기자신청 대기함으로, 현재 숫자는 기자관리 메뉴로 */}
+          <div className="rounded-xl bg-brand text-white p-4">
+            <p className="text-xs text-white/70 mb-1">기자</p>
+            <p className="text-2xl font-bold">
+              <a href="/admin/reporter-applications" className="hover:underline">
+                {stats.pendingReporterCount}
+              </a>
+              /
+              <a href="/admin/members?role=REPORTER" className="hover:underline">
+                {stats.currentReporterCount}
+              </a>
+            </p>
+          </div>
+
+          {/* 후원 — 오늘 금액/이번달 금액, 누르면 전체 후원리스트로 */}
+          <a href="/admin/donations" className="rounded-xl bg-brand text-white p-4 block hover:opacity-90">
+            <p className="text-xs text-white/70 mb-1">후원</p>
+            <p className="text-2xl font-bold">
+              {stats.donationAmountToday.toLocaleString()}/{stats.donationAmountMonth.toLocaleString()}
+            </p>
+          </a>
+        </div>
+      )}
     </main>
   );
 }

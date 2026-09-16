@@ -35,6 +35,21 @@ enum DonationStatus {
   CANCELLED
 }
 
+// 기자 신청 상태 — null(신청 이력 없음/이미 처리됨) | PENDING(승인대기) | REJECTED(반려)
+// 승인되면 role이 REPORTER로 바뀌면서 이 값은 다시 null로 초기화됨 (기능정의서 3.2.1)
+enum ReporterApplicationStatus {
+  PENDING
+  REJECTED
+}
+
+// 메인화면 3/5/7번째 카드 슬롯 + 기사 본문 삽입 광고 (기능정의서 5)
+enum BannerPlacement {
+  HOMEPAGE_3
+  HOMEPAGE_5
+  HOMEPAGE_7
+  ARTICLE_BODY
+}
+
 model User {
   id            String    @id @default(cuid())
   email         String    @unique
@@ -43,16 +58,33 @@ model User {
   image         String?
   role          UserRole  @default(READER)
   gender        Gender?
-  nickname      String?
+  nickname      String?   @unique // 필수+중복불허 (기능정의서 2번) — 앱 레벨에서 필수 검증, DB는 유니크만 강제
+  bio           String?   @db.Text // 자기소개 — 기사 하단 기자 프로필에 노출 (기능정의서 3.2 신규)
+  reporterApplicationStatus ReporterApplicationStatus? // 기자 신청 상태 (기능정의서 3.2.1)
+  newsletterOptIn Boolean @default(false) // 뉴스레터 구독 여부 — 후원 여부와 무관한 별도 옵트인 (기능정의서 6)
   isDonor       Boolean   @default(false)
   createdAt     DateTime  @default(now())
 
-  articles  Article[]
-  comments  Comment[]
-  accounts  Account[]
-  sessions  Session[]
-  donations Donation[]
-  pollVotes PollVote[]
+  articles      Article[]
+  comments      Comment[]
+  accounts      Account[]
+  sessions      Session[]
+  donations     Donation[]
+  pollVotes     PollVote[]
+  snsLinks      SnsLink[]
+  savedArticles SavedArticle[]
+  photos        Photo[]
+  reporterDonations Donation[] @relation("DonationReporter") // 이 기자를 지정해서 들어온 후원 (기능정의서 7)
+}
+
+// 기자 프로필에 노출되는 SNS 링크 — "+" 버튼으로 여러 개 추가 가능 (기능정의서 3.2.1)
+model SnsLink {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  url       String
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
 }
 
 // 아래 3개는 NextAuth(구글 로그인) 표준 스키마 — Prisma 어댑터가 요구하는 형태 그대로
@@ -107,8 +139,16 @@ model Category {
 model Article {
   id              String        @id @default(cuid())
   title           String
+  subtitle1       String? // 부제목 3줄 (기능정의서 8.2) — 전부 선택 입력
+  subtitle2       String?
+  subtitle3       String?
   content         String        @db.Text
   excerpt         String?
+  hoverText       String? // 카드 이미지 마우스 오버 시 이미지가 dimmed되며 표시되는 흰색 문구 (2026-09-11 신설)
+  themeTags       String? // "테마" — 콤마로 구분된 문자열. 아직 기능은 없고 값만 입력받아 저장(추후 사용 예정, 2026-09-11 신설)
+  showOnMain      Boolean   @default(true) // 메인(인덱스) 피드 노출 여부 — 편집장이 카드 호버 (-) 버튼으로 끌 수 있음. 꺼도 키워드/검색 등 다른 화면엔 계속 노출됨 (2026-09-12 신설)
+  recommendCount  Int       @default(0) // "추천" 버튼 클릭 수 — 로그인 불필요, 브라우저당 1회로 클라이언트에서만 제한 (2026-09-12 신설)
+  audioUrl        String? // "읽어주기" — Google Cloud TTS로 생성해둔 오디오 파일 캐시. 본문 수정 시 PUT에서 null로 초기화되어 재생성됨 (2026-09-12 신설)
   coverImageUrl   String?
   status          ArticleStatus @default(PUBLISHED)
   viewCount       Int           @default(0)
@@ -124,10 +164,27 @@ model Article {
   comments Comment[]
   keywords Keyword[] // 관리자가 미리 만든 키워드 중 선택 (다대다)
   poll     Poll?
+  savedBy  SavedArticle[]
+
+  // 관련기사 — 작성자가 발행된 기사 중에서 직접 선택 (기능정의서 8.2). 방향성 있는 자기참조 다대다.
+  relatedArticles Article[] @relation("RelatedArticles")
+  relatedFrom     Article[] @relation("RelatedArticles")
 
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   publishedAt DateTime?
+}
+
+// 독자의 "기사 저장"(북마크) 기능 (기능정의서 3.1)
+model SavedArticle {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  articleId String
+  article   Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, articleId])
 }
 
 // 기사 첨부 설문(투표) — 기사 1건당 최대 1개, 옵션 2개 이상
@@ -172,12 +229,13 @@ model Keyword {
   articles  Article[]
 }
 
-// 에디터 특수문자 세트 — 관리자가 개별 추가/수정/삭제
+// 에디터 특수문자 세트 — 편집장이 에디터 안의 레이어(모달)에서 카테고리별로 추가/삭제 (2026-09-11: 관리자 메뉴 → 에디터 내장으로 이동)
 model SpecialCharacter {
-  id        String  @id @default(cuid())
-  char      String  // 실제 문자 (▶, ■, ※ 등)
-  label     String? // 관리용 설명
-  order     Int     @default(0)
+  id       String @id @default(cuid())
+  char     String // 실제 문자 (▶, ■, ※ 등)
+  label    String? // 관리용 설명
+  category String  @default("자주쓰는") // 모달 상단 탭 — 자주쓰는/화살표/단위 등, 편집장이 새 이름을 입력하면 새 탭이 생김
+  order    Int     @default(0)
 }
 
 model ArticleImage {
@@ -196,9 +254,90 @@ model Donation {
   userId      String
   user        User           @relation(fields: [userId], references: [id])
   amount      Int // 월 후원금액(원), 자유입력
+  phone       String? // 후원 신청 시 입력한 연락처 — 관리자 후원리스트에서 닉네임/프로필사진/이메일과 함께 노출 (2026-09-12 신설)
   status      DonationStatus @default(ACTIVE)
+  // 특정 기자를 지정한 후원인 경우 (기능정의서 7 "기자별 정산") — null이면 사이트 전체 후원(정산 시 미지정으로 집계)
+  reporterId  String?
+  reporter    User?          @relation("DonationReporter", fields: [reporterId], references: [id])
+  settled     Boolean        @default(false) // 정산 완료 처리된 건 — 재선택 불가 (기능정의서 7.1)
+  settledAt   DateTime?
   startedAt   DateTime       @default(now())
   cancelledAt DateTime?
+}
+
+// 줄광고 — 기사 본문 맨 마지막에 핫핑크 화살표 + 기사제목 같은 굵은 글씨 한 줄로 노출되는 텍스트형 광고.
+// 배너(이미지)와 달리 문안(text)+링크만 가짐. 최대 10개까지 화면에 노출(order 순), 그 이상은 비활성 처리해서 대기시켜둠 (2026-09-12 신설)
+model LineAd {
+  id        String   @id @default(cuid())
+  text      String
+  linkUrl   String
+  order     Int      @default(0)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// 배너 광고 — 홈화면은 슬롯(3/5/7번째 카드 자리)당 활성 배너 1개, 기사본문은 여러 개를 order 순으로 노출 (기능정의서 5)
+model Banner {
+  id        String          @id @default(cuid())
+  placement BannerPlacement
+  imageUrl  String
+  linkUrl   String
+  order     Int             @default(0)
+  active    Boolean         @default(true)
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+}
+
+// 사이트 전역 설정값 — 지금은 기사 본문 삽입 광고 개수만 (싱글턴 row, id 고정)
+model SiteConfig {
+  id                 String @id @default("singleton")
+  articleBannerCount Int    @default(0)
+}
+
+// 범용 사진 라이브러리 — 기사에 종속되지 않는 재사용 가능한 사진 모음 (기능정의서 8.1)
+model Photo {
+  id         String     @id @default(cuid())
+  url        String
+  filename   String?
+  title      String? // 사진 제목 — 갤러리 모달 업로드 시 입력 (2026-09-11 신설)
+  uploaderId String
+  uploader   User       @relation(fields: [uploaderId], references: [id])
+  tags       PhotoTag[]
+  createdAt  DateTime   @default(now())
+}
+
+model PhotoTag {
+  id     String  @id @default(cuid())
+  name   String  @unique
+  photos Photo[]
+}
+
+// 정치신세계 자동 영상 카드 — 유튜브 채널에서 가져온 쇼츠/영상/라이브. Article과 별도 모델 (기능정의서 4.2.1)
+enum VideoKind {
+  SHORT
+  VIDEO
+  LIVE
+}
+
+model VideoCard {
+  id           String    @id @default(cuid())
+  youtubeId    String    @unique
+  title        String
+  thumbnailUrl String
+  kind         VideoKind
+  publishedAt  DateTime
+  createdAt    DateTime  @default(now())
+  showOnMain   Boolean   @default(true) // 전체(인덱스) 피드 노출 여부 — 편집장이 관리화면에서 개별로 끌 수 있음 (2026-09-11 신설)
+}
+
+// 뉴스레터 발송 이력 — 중복발송 방지 확인용 로그 (기능정의서 6)
+model NewsletterSend {
+  id             String   @id @default(cuid())
+  weekStart      DateTime
+  weekEnd        DateTime
+  recipientCount Int
+  sentAt         DateTime @default(now())
 }
 
 model Comment {

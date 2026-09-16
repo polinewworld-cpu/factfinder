@@ -2,6 +2,38 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import ArticleCard, { CardArticle } from './ArticleCard';
+import BannerSlotCard from './BannerSlotCard';
+import VideoMasonryCard, { MasonryVideo } from './VideoMasonryCard';
+
+export type HomepageBanner = { slot: 3 | 5 | 7; imageUrl: string; linkUrl: string };
+type BannerGridItem = { id: string; isBanner: true; imageUrl: string; linkUrl: string };
+// 정치신세계 영상을 "기사 생성"처럼 취급해 전체(인덱스) 피드에 섞어 보여주기 위한 항목 타입 (2026-09-11 신설)
+export type VideoGridItem = MasonryVideo & { isVideo: true };
+type GridItem = CardArticle | BannerGridItem | VideoGridItem;
+
+function isBannerItem(item: GridItem): item is BannerGridItem {
+  return (item as BannerGridItem).isBanner === true;
+}
+
+function isVideoItem(item: GridItem): item is VideoGridItem {
+  return (item as VideoGridItem).isVideo === true;
+}
+
+// 메인화면 그리드의 3/5/7번째 카드 자리를 광고 슬롯으로 고정 (기능정의서 5) — 해당 순번의 기사 카드를 배너로 교체
+function withBanners(items: CardArticle[], banners: HomepageBanner[] = []): GridItem[] {
+  if (banners.length === 0) return items;
+  const bySlot = new Map(banners.map((b) => [b.slot, b]));
+  return items.map((item, index): GridItem => {
+    const banner = bySlot.get((index + 1) as 3 | 5 | 7);
+    if (!banner) return item;
+    return {
+      id: `banner-slot-${banner.slot}`,
+      isBanner: true as const,
+      imageUrl: banner.imageUrl,
+      linkUrl: banner.linkUrl,
+    };
+  });
+}
 
 function columnsForWidth(width: number) {
   if (width < 520) return 2;
@@ -35,12 +67,12 @@ function useColumnCount() {
 }
 
 function packColumns(
-  items: CardArticle[],
+  items: GridItem[],
   columnCount: number,
   hasFeatured: boolean,
   hasSecond: boolean
 ) {
-  const columns: CardArticle[][] = Array.from({ length: columnCount }, () => []);
+  const columns: GridItem[][] = Array.from({ length: columnCount }, () => []);
   const heights = Array(columnCount).fill(0);
 
   if (hasFeatured && columnCount >= 2) {
@@ -58,7 +90,8 @@ function packColumns(
   items.forEach((item) => {
     const shortest = heights.indexOf(Math.min(...heights));
     columns[shortest].push(item);
-    const imageWeight = item.coverImageUrl ? 0.9 : 0.55;
+    const hasImage = isBannerItem(item) || isVideoItem(item) || !!(item as CardArticle).coverImageUrl;
+    const imageWeight = hasImage ? 0.9 : 0.55;
     heights[shortest] += imageWeight + 0.42;
   });
 
@@ -89,16 +122,26 @@ function useInfiniteReveal(total: number, onLoadMore: () => void, enabled: boole
   return sentinelRef;
 }
 
-export default function Masonry({ articles, top }: { articles: CardArticle[]; top?: CardArticle | null }) {
+export default function Masonry({
+  articles,
+  top,
+  banners = [],
+}: {
+  articles: (CardArticle | VideoGridItem)[];
+  top?: CardArticle | null;
+  banners?: HomepageBanner[];
+}) {
   const { containerRef, columnCount, width } = useColumnCount();
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
+  // 상단 2번째(second) 슬롯은 ArticleCard 전용이라, 맨 앞 항목이 영상이면 그 슬롯은 건너뛰고 일반 그리드로 흘려보냄
   const showFeatured = !!top && columnCount >= 2;
-  const showSecond = showFeatured && articles.length > 0 && columnCount >= 4;
-  const second = showSecond ? articles[0] : null;
+  const showSecond =
+    showFeatured && articles.length > 0 && columnCount >= 4 && !isVideoItem(articles[0]);
+  const second = showSecond ? (articles[0] as CardArticle) : null;
   const rest = showSecond ? articles.slice(1) : articles;
 
-  const visible = useMemo(() => rest.slice(0, visibleCount), [rest, visibleCount]);
+  const visible = useMemo(() => withBanners(rest.slice(0, visibleCount), banners), [rest, visibleCount, banners]);
   const columns = useMemo(
     () => packColumns(visible, columnCount, showFeatured, !!second),
     [visible, columnCount, showFeatured, second]
@@ -197,9 +240,15 @@ export default function Masonry({ articles, top }: { articles: CardArticle[]; to
                 aria-hidden="true"
               />
             )}
-            {column.map((article) => (
-              <ArticleCard key={article.id} article={article} />
-            ))}
+            {column.map((item) =>
+              isBannerItem(item) ? (
+                <BannerSlotCard key={item.id} imageUrl={item.imageUrl} linkUrl={item.linkUrl} />
+              ) : isVideoItem(item) ? (
+                <VideoMasonryCard key={item.id} video={item} />
+              ) : (
+                <ArticleCard key={item.id} article={item} />
+              )
+            )}
           </div>
         ))}
       </div>

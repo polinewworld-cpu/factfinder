@@ -38,13 +38,22 @@ function RailCard({ article }: { article: Item }) {
   );
 }
 
-export default function RelatedArticles({ articleId, keywordNames }: { articleId: string; keywordNames: string[] }) {
-  const [mode, setMode] = useState<'related' | 'latest' | 'popular'>('latest');
-  const [items, setItems] = useState<Item[]>([]);
-  const [loaded, setLoaded] = useState(false);
+export default function RelatedArticles({
+  articleId,
+  keywordNames,
+  manualRelated = [],
+}: {
+  articleId: string;
+  keywordNames: string[];
+  manualRelated?: Item[];
+}) {
+  const [mode, setMode] = useState<'related' | 'latest' | 'popular'>(manualRelated.length > 0 ? 'related' : 'latest');
+  const [items, setItems] = useState<Item[]>(manualRelated);
+  const [loaded, setLoaded] = useState(manualRelated.length > 0);
 
-  // 초기 진입 시: 같은 키워드 기사가 있으면 "관련기사"로, 없으면 "최신기사"로 시작
+  // 작성자가 직접 고른 관련기사가 있으면 그걸 우선 노출 (기능정의서 8.2) — 없을 때만 기존 키워드/최신 로직 사용
   useEffect(() => {
+    if (manualRelated.length > 0) return;
     (async () => {
       if (keywordNames.length > 0) {
         const res = await fetch(`/api/articles?keyword=${encodeURIComponent(keywordNames[0])}&exclude=${articleId}&pageSize=5`);

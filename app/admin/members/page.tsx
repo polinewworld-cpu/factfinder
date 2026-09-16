@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 
 const ROLE_LABELS: Record<string, string> = {
   READER: '독자',
@@ -11,6 +12,9 @@ const ROLE_LABELS: Record<string, string> = {
 };
 
 export default function MembersAdminPage() {
+  const searchParams = useSearchParams();
+  // 관리자 대시보드 "기자관리"에서 ?role=REPORTER 로 진입 — 회원 관리 화면을 재사용해 필터만 적용 (2026-09-11 신설)
+  const roleFilter = searchParams.get('role');
   const [me, setMe] = useState<any>('loading');
   const [users, setUsers] = useState<any[]>([]);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -49,9 +53,13 @@ export default function MembersAdminPage() {
     );
   }
 
+  const shownUsers = roleFilter ? users.filter((u) => u.role === roleFilter) : users;
+
   return (
     <main className="max-w-3xl mx-auto px-4 py-8">
-      <h1 className="text-xl font-bold text-gray-900 mb-6">회원 관리 ({users.length})</h1>
+      <h1 className="text-xl font-bold text-gray-900 mb-6">
+        {roleFilter ? `기자관리 (${shownUsers.length})` : `회원 관리 (${users.length})`}
+      </h1>
       <div className="overflow-x-auto">
         <table className="w-full text-sm border-collapse">
           <thead>
@@ -63,11 +71,19 @@ export default function MembersAdminPage() {
             </tr>
           </thead>
           <tbody>
-            {users.map((u) => (
+            {shownUsers.map((u) => (
               <tr key={u.id} className="border-b border-gray-100">
                 <td className="py-2 pr-4 text-gray-900 font-medium">{u.name}</td>
                 <td className="py-2 pr-4 text-gray-500">{u.email}</td>
-                <td className="py-2 pr-4 text-gray-700">{ROLE_LABELS[u.role] ?? u.role}</td>
+                <td className="py-2 pr-4 text-gray-700">
+                  {ROLE_LABELS[u.role] ?? u.role}
+                  {u.reporterApplicationStatus === 'PENDING' && (
+                    <span className="ml-1.5 text-xs font-semibold text-brand">(기자신청중)</span>
+                  )}
+                  {u.reporterApplicationStatus === 'REJECTED' && (
+                    <span className="ml-1.5 text-xs text-gray-400">(신청반려)</span>
+                  )}
+                </td>
                 <td className="py-2">
                   <select
                     value={u.role}

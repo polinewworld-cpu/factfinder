@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { timeAgo } from '@/lib/time';
+import { CloseIcon } from './icons';
 
 type CommentItem = {
   id: string;
@@ -15,6 +16,8 @@ export default function CommentSection({ articleId }: { articleId: string }) {
   const [comments, setComments] = useState<CommentItem[]>([]);
   const [text, setText] = useState('');
   const [posting, setPosting] = useState(false);
+  // 비로그인 상태에서 "등록"을 누르면 입력창을 숨기는 대신 로그인 유도 레이어를 띄움 (2026-09-12 개편)
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
 
   async function load() {
     const res = await fetch(`/api/articles/${articleId}/comments`);
@@ -31,6 +34,10 @@ export default function CommentSection({ articleId }: { articleId: string }) {
 
   async function submit() {
     if (!text.trim()) return;
+    if (!me) {
+      setShowLoginPrompt(true);
+      return;
+    }
     setPosting(true);
     const res = await fetch(`/api/articles/${articleId}/comments`, {
       method: 'POST',
@@ -50,37 +57,51 @@ export default function CommentSection({ articleId }: { articleId: string }) {
   }
 
   return (
-    <section className="mt-10 pt-8 border-t border-gray-200">
+    <section id="comments" className="mt-10 pt-8 border-t border-gray-200">
       <h3 className="font-bold text-gray-900 mb-4">댓글 {comments.length}</h3>
 
-      {me ? (
-        <div className="mb-6">
-          <textarea
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            placeholder="댓글을 입력하세요"
-            rows={3}
-            className="w-full border border-gray-200 rounded-lg p-3 text-sm outline-none focus:border-brand"
-          />
-          <div className="flex justify-end mt-2">
+      {/* 비로그인 상태에서도 입력창은 그대로 보이고, "등록"을 누르는 순간에만 로그인 유도 레이어가 뜸 (2026-09-12 개편) */}
+      <div className="mb-6">
+        <textarea
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          placeholder="댓글을 입력하세요"
+          rows={3}
+          className="w-full border border-gray-200 rounded-lg p-3 text-sm outline-none focus:border-brand"
+        />
+        <div className="flex justify-end mt-2">
+          <button
+            disabled={posting}
+            onClick={submit}
+            className="text-sm font-bold text-white bg-brand rounded-full px-5 py-1.5 disabled:opacity-50"
+          >
+            등록
+          </button>
+        </div>
+      </div>
+
+      {showLoginPrompt && (
+        <div className="share-modal-overlay" onClick={() => setShowLoginPrompt(false)}>
+          <div className="share-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="share-modal-header">
+              <h3 className="share-modal-title">로그인이 필요합니다</h3>
+              <button
+                type="button"
+                onClick={() => setShowLoginPrompt(false)}
+                aria-label="닫기"
+                className="share-modal-close"
+              >
+                <CloseIcon />
+              </button>
+            </div>
+            <p className="text-sm text-gray-600 mt-3 mb-5">댓글을 작성하려면 구글 로그인이 필요합니다.</p>
             <button
-              disabled={posting}
-              onClick={submit}
-              className="text-sm font-bold text-white bg-brand rounded-full px-5 py-1.5 disabled:opacity-50"
+              onClick={() => (window.location.href = '/api/auth/signin/google')}
+              className="w-full text-sm font-bold text-white bg-brand rounded-full py-3"
             >
-              등록
+              구글로 로그인
             </button>
           </div>
-        </div>
-      ) : (
-        <div className="mb-6 flex items-center justify-between bg-gray-50 border border-gray-200 rounded-lg p-4">
-          <p className="text-sm text-gray-500">댓글을 작성하려면 로그인해주세요.</p>
-          <button
-            onClick={() => (window.location.href = '/api/auth/signin/google')}
-            className="text-sm font-bold text-white bg-gray-900 rounded-full px-4 py-1.5"
-          >
-            구글로 로그인
-          </button>
         </div>
       )}
 

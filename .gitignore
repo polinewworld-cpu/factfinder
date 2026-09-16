@@ -2,6 +2,13 @@ node_modules
 .next
 .env
 .env.local
+.env.dev
 *.db
 *.db-journal
 .netlify
+.local-uploads
+.env.production
+Claude outputs/
+factfinder-인수인계서.md
+인수인계서.md
+add-youtube-key.bat

@@ -93,9 +93,11 @@ img {
 }
 
 .logo-mark {
-  width: 32px;
-  height: 32px;
-  color: var(--accent);
+  /* 새 로고(가로형 워드마크, 843.54 x 281.08)가 자체적으로 "팩트파인더" 텍스트를 포함하고 있어서
+     별도의 .brand-name 텍스트 없이 이 하나만으로 브랜드를 표시함 (2026-09-12 로고 교체) */
+  height: 34px;
+  width: auto;
+  display: block;
 }
 
 .brand-name {
@@ -108,11 +110,11 @@ img {
   display: flex;
   align-items: center;
   gap: 10px;
-  height: 48px;
-  max-width: 820px;
+  height: 44px;
+  max-width: 420px;
   margin: 0 auto;
   width: 100%;
-  padding: 0 18px;
+  padding: 0 16px;
   border-radius: 999px;
   background: var(--chip);
   color: var(--mute);
@@ -194,7 +196,9 @@ img {
 .avatar {
   width: 36px;
   height: 36px;
+  padding: 0;
   border-radius: 999px;
+  overflow: hidden;
   display: grid;
   place-items: center;
   background: #2a241c;
@@ -202,6 +206,104 @@ img {
   font-size: 13px;
   font-weight: 700;
   text-decoration: none;
+  border: 0;
+}
+
+/* 계정 메뉴 아바타에 구글 프로필 사진이 있으면 이니셜 대신 사진을 채워 보여줌 (2026-09-12) */
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* ---------- 실시간 코스피·환율 위젯 (전체기사/알림/후원하기 자리를 대신함) ---------- */
+
+.market-ticker {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 0 6px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.market-item {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+}
+
+.market-label {
+  color: var(--mute);
+  font-weight: 600;
+}
+
+.market-value {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.market-change {
+  font-weight: 600;
+}
+
+.market-up {
+  color: #e0293e;
+}
+
+.market-down {
+  color: #2b6cd4;
+}
+
+.market-flat {
+  color: var(--mute);
+}
+
+/* ---------- Account dropdown (글쓰기/사진관리/관리자/프로필/로그아웃을 아바타 하나로 묶음) ---------- */
+
+.account-menu {
+  position: relative;
+}
+
+.account-dropdown {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  z-index: 30;
+  min-width: 180px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.account-dropdown-name {
+  margin: 4px 8px 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--hairline);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.account-dropdown-item {
+  padding: 10px 8px;
+  border-radius: 10px;
+  color: var(--body);
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.account-dropdown-item:hover {
+  background: var(--chip);
+}
+
+.account-dropdown-item--danger {
+  color: var(--accent);
 }
 
 /* ---------- Layout shell ---------- */
@@ -335,23 +437,35 @@ img {
   background: #ddd8cf;
 }
 
+/* 카드 마우스 오버 시 메인 이미지를 흑백으로 전환 (2026-09-12 신설) */
+.pin-media img {
+  transition: filter 200ms ease;
+}
+
+.pin-media:hover img,
+.pin-media:focus-visible img {
+  filter: grayscale(100%);
+}
+
+/* 사진이 없는 기사 카드 — 어두운 랜덤 컬러 배경(기사별로 고정, ArticleCard의 --pin-fallback-bg)에
+   핫핑크 타이포로 본문 첫 문장을 노출 (2026-09-12 개편 — 기존엔 제목을 크림색으로 노출) */
 .pin-fallback {
   display: grid;
   place-items: end start;
   padding: 22px;
-  color: #f7f3ec;
+  color: #ff2d8a;
   background:
-    linear-gradient(180deg, rgba(23, 21, 18, 0.08), rgba(23, 21, 18, 0.78)),
-    #3d342b;
+    linear-gradient(180deg, rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.5)),
+    var(--pin-fallback-bg, #241b2d);
   text-align: left;
 }
 
 .pin-fallback p {
   margin: 0;
   font-family: var(--title);
-  font-size: 18px;
-  font-weight: 700;
-  line-height: 1.4;
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.42;
   letter-spacing: -0.02em;
 }
 
@@ -361,7 +475,7 @@ img {
   z-index: 2;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: flex-end;
   padding: 14px;
   background: var(--overlay);
   opacity: 0;
@@ -374,47 +488,179 @@ img {
   opacity: 1;
 }
 
-.read-pill {
-  align-self: flex-end;
-  height: 40px;
-  padding: 0 16px;
-  border-radius: 999px;
-  background: var(--accent);
-  color: #fff;
-  display: inline-flex;
+/* 카드 마우스 오버 시 이미지가 dimmed된 위에 흰색으로 뜨는 문구 (기사 작성 시 "마우스 오버 문안" 필드, 2026-09-11) */
+.pin-hover-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
   align-items: center;
-  font-size: 14px;
+  justify-content: center;
+  text-align: center;
+  margin: 0;
+  padding: 28px;
+  color: #fff;
+  font-family: var(--title);
+  font-size: 15px;
   font-weight: 700;
+  line-height: 1.5;
+  pointer-events: none;
 }
 
 .overlay-actions {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
+  gap: 6px;
   pointer-events: auto;
 }
 
-.ghost-chip,
+/* 카드 마우스 오버 시 상단에 뜨는 핫핑크 키워드 뱃지 — 클릭 시 해당 키워드 기사 목록으로 이동 (2026-09-11) */
+.pin-keyword-badge {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  z-index: 3;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #ff2d8a;
+  font-family: var(--title);
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.pin-keyword-badge:hover {
+  text-decoration: underline;
+}
+
+/* 카드 마우스 오버 시 상단 중앙에 뜨는 핫핑크 바탕 "테마" 배지 (2026-09-11 필드 신설, 2026-09-12 실제 노출 기능 구현) */
+.pin-theme-badge {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 3;
+  margin: 0;
+  padding: 6px 16px;
+  border-radius: 999px;
+  background: #ff2d8a;
+  color: #fff;
+  font-family: var(--title);
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  pointer-events: none;
+}
+
+/* 카드 마우스 오버 시 좌하단에 뜨는 "메인에서 제외" 버튼 — 편집장 전용, 메인(인덱스) 피드에서만 사후적으로 제외 (2026-09-12 신설) */
+.pin-remove-main-btn {
+  position: absolute;
+  bottom: 14px;
+  left: 14px;
+  z-index: 3;
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  pointer-events: auto;
+  transition: background 120ms ease;
+}
+
+.pin-remove-main-btn:hover {
+  background: rgba(255, 45, 138, 0.85);
+  border-color: rgba(255, 45, 138, 0.85);
+}
+
+.save-button,
 .share-button {
   height: 36px;
+  width: 36px;
+  padding: 0;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.92);
   color: var(--ink);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0 12px;
   font-size: 12px;
   font-weight: 700;
   border: 0;
 }
 
-.share-button {
-  width: 36px;
-  padding: 0;
+.save-button.is-saved {
+  color: var(--accent);
 }
 
+.save-button svg,
 .share-button svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* SNS 아이콘 통일 스타일 — 검정 외곽선 원 + 검정 아이콘, 마우스 오버 시 채워짐 (2026-09-12 신설). 기자 프로필 SNS 링크 / 기사 공유버튼에서 사용 */
+.icon-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  border: 1.5px solid #1a1a1a;
+  background: #fff;
+  color: #1a1a1a;
+  transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
+}
+
+.icon-badge svg {
+  width: 17px;
+  height: 17px;
+}
+
+.icon-badge:hover {
+  background: #1a1a1a;
+  color: #fff;
+}
+
+.icon-badge--sm {
+  width: 26px;
+  height: 26px;
+}
+
+.icon-badge--sm svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* 공유 레이어 안의 큰 아이콘 (2026-09-12 신설) */
+.icon-badge--lg {
+  width: 52px;
+  height: 52px;
+}
+
+.icon-badge--lg svg {
+  width: 24px;
+  height: 24px;
+}
+
+/* 기사 상단 byline 안의 SVG 아이콘 공통 크기 — 기존엔 크기 지정이 없어 0×0으로 렌더링되던 문제도 함께 해결 (2026-09-12) */
+.article-byline svg {
   width: 16px;
   height: 16px;
 }
@@ -504,28 +750,55 @@ img {
 .site-footer {
   width: min(var(--max), calc(100% - (var(--page-gutter) * 2)));
   margin: 0 auto;
-  padding: 32px 0 48px;
-  display: flex;
-  justify-content: space-between;
-  gap: 24px;
+  padding: 28px 0 48px;
   border-top: 1px solid var(--hairline);
   color: var(--mute);
   font-size: 13px;
   line-height: 1.6;
 }
 
-.site-footer strong {
+.footer-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* 실사이트 하단 6개 링크 — 회사소개/기사제보/광고 및 제휴문의/개인정보취급방침/청소년보호정책/메일수집거부 (2026-09-12) */
+.footer-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--hairline);
+}
+
+.footer-nav a {
+  color: var(--mute);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.footer-nav a:hover {
+  color: var(--ink);
+  text-decoration: underline;
+}
+
+.footer-info strong {
   display: block;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
   color: var(--ink);
   font-size: 16px;
 }
 
-.footer-meta {
+.footer-info-grid {
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 4px;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  margin-bottom: 10px;
+}
+
+.footer-copyright {
+  margin: 0;
 }
 
 /* ---------- Article detail (styled like the prototype's reading layout) ---------- */
@@ -573,6 +846,25 @@ img {
   letter-spacing: -0.02em;
 }
 
+/* 부제목(요약) — 굵게 강조, 왼쪽 포인트 바로 요약 블록처럼 보이게 (2026-09-12) */
+.article-subtitles {
+  margin: 10px 0 16px;
+  padding-left: 12px;
+  border-left: 3px solid var(--accent);
+}
+
+.article-subtitles p {
+  margin: 0 0 4px;
+  color: var(--ink);
+  font-size: 15.5px;
+  font-weight: 700;
+  line-height: 1.6;
+}
+
+.article-subtitles p:last-child {
+  margin-bottom: 0;
+}
+
 .article-byline {
   margin: 14px 0 28px;
   color: var(--mute);
@@ -587,7 +879,7 @@ img {
 
 .article-content {
   color: var(--body);
-  font-size: calc(16.5px + 2pt);
+  font-size: calc((16.5px + 2pt) * var(--article-font-scale, 1));
   line-height: 1.85;
 }
 
@@ -597,9 +889,279 @@ img {
   border-radius: 12px;
 }
 
+/* 본문 중간 삽입 이미지 + 캡션 (작성 화면 에디터 / 발행된 기사 페이지 공통) */
+.article-figure {
+  margin: 20px 0;
+}
+
+.article-figure img {
+  width: 100%;
+  margin: 0 0 8px;
+  border-radius: 12px;
+  display: block;
+}
+
+.article-figure figcaption {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--mute);
+  text-align: center;
+  padding: 0 4px;
+}
+
+/* 캡션을 비워두면 발행된 기사에서는 보이지 않고, 작성 화면(contenteditable)에서만
+   "입력하세요" 안내문구와 함께 클릭 가능한 빈 줄로 남는다 */
+.article-figure figcaption:empty {
+  display: none;
+}
+
+[contenteditable] .article-figure figcaption:empty {
+  display: block;
+}
+
+[contenteditable] .article-figure figcaption:empty:before {
+  content: attr(data-placeholder);
+  color: #9ca3af;
+}
+
+/* 글쓰기 화면에서 본문 이미지를 클릭해 선택하면 테두리로 표시 — 이 상태에서 Delete/Backspace로 삭제 가능 (2026-09-12 신설) */
+[contenteditable] .article-figure.is-selected img {
+  outline: 3px solid #ec1561;
+  outline-offset: 2px;
+  border-radius: 12px;
+}
+
 .article-content p,
 .article-content div {
   margin: 0 0 1em;
+}
+
+/* 기사 본문 맨 마지막 줄광고 — 핫핑크 화살표 + 기사제목처럼 굵은 한 줄 (2026-09-12 신설) */
+.line-ads {
+  list-style: none;
+  margin: 24px 0;
+  padding: 16px 0 0;
+  border-top: 1px solid #e5e7eb;
+}
+
+.line-ad {
+  margin: 0;
+}
+
+.line-ad-link {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 10px 0;
+  text-decoration: none;
+}
+
+.line-ad-arrow {
+  color: #ec1561;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.line-ad-text {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #111827;
+  line-height: 1.4;
+}
+
+.line-ad-link:hover .line-ad-text {
+  color: #ec1561;
+}
+
+/* 기사 말미 "기자 프로필" 카드 — 프로필사진/이름/이메일/SNS + 최신 기사 5개 (2026-09-12 신설) */
+.reporter-card {
+  margin: 32px 0;
+  padding: 20px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--ink) 2%, transparent);
+}
+
+.reporter-card-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.reporter-card-avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 999px;
+  object-fit: cover;
+  flex: none;
+}
+
+.reporter-card-avatar--fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent);
+  color: #fff;
+  font-family: var(--title);
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.reporter-card-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.reporter-card-name {
+  margin: 0;
+  color: var(--ink);
+  font-family: var(--title);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.reporter-card-email {
+  margin: 2px 0 0;
+  color: var(--mute);
+  font-size: 13px;
+}
+
+/* 기자 프로필 카드 하단 — 왼쪽 "기자가 쓴 최신기사" / 오른쪽 "{기자명}의 BEST 기사(1년 누적)" 2단 배치 (2026-09-12) */
+.reporter-card-columns {
+  margin: 16px 0 0;
+  padding: 14px 0 0;
+  border-top: 1px solid var(--hairline);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+.reporter-card-column-title {
+  margin: 0 0 12px;
+  color: var(--ink);
+  font-family: var(--title);
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.reporter-card-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+@media (max-width: 640px) {
+  .reporter-card-columns {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+}
+
+.reporter-card-list li::before {
+  content: '· ';
+  color: var(--ash);
+}
+
+.reporter-card-list a {
+  color: var(--body);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.reporter-card-list a:hover {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+/* "공유하기" 레이어 — 기사 상단 공유 버튼 클릭 시 노출 (2026-09-12 신설) */
+.share-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(23, 21, 18, 0.55);
+}
+
+.share-modal {
+  width: min(420px, 100%);
+  padding: 24px;
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.share-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.share-modal-title {
+  margin: 0;
+  color: var(--ink);
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.share-modal-close {
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink-soft);
+  display: grid;
+  place-items: center;
+}
+
+.share-modal-close:hover {
+  background: var(--chip);
+}
+
+.share-modal-close svg {
+  width: 18px;
+  height: 18px;
+}
+
+.share-modal-article-title {
+  margin: 10px 0 0;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--hairline);
+  color: var(--mute);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.share-modal-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px 8px;
+  margin-top: 20px;
+}
+
+.share-modal-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  background: transparent;
+  color: var(--body);
+}
+
+.share-modal-item:disabled {
+  opacity: 0.3;
+}
+
+.share-modal-item-label {
+  font-size: 12px;
+  font-weight: 600;
 }
 
 .article-rail {
@@ -645,14 +1207,12 @@ img {
   }
 
   .brand-name,
-  .text-link,
-  .header-actions .cta,
-  .avatar {
+  .header-actions .cta {
     display: none;
   }
 
-  .header-actions .icon-button {
-    display: grid;
+  .market-ticker {
+    display: none;
   }
 
   .chips {
@@ -664,12 +1224,6 @@ img {
 
   .chip {
     flex: 0 0 auto;
-  }
-
-  .site-footer,
-  .footer-meta {
-    align-items: flex-start;
-    flex-direction: column;
   }
 }
 
@@ -692,7 +1246,7 @@ img {
 }
 
 .hl-mark {
-  background: rgba(250, 204, 21, 0.45);
+  /* 색상은 항상 인라인 style(background)로 지정됨 — 형광펜 3색 중 선택된 색 (2026-09-11, 기존 고정 노란색에서 변경) */
   padding: 0 1px;
   border-radius: 2px;
 }

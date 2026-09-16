@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { KakaoIcon, FacebookIcon, XIcon, ThreadsIcon, LinkIcon, TelegramIcon, ShareIcon, CloseIcon } from './icons';
 
 declare global {
   interface Window {
@@ -10,9 +11,12 @@ declare global {
 
 const KAKAO_JS_KEY = process.env.NEXT_PUBLIC_KAKAO_JS_KEY;
 
+// 기사 상단 "공유" 버튼 — 클릭 시 레이어(모달)로 페이스북/트위터/스레드/URL공유/카카오톡/텔레그램 6개 노출 (2026-09-12 신설)
 export default function ShareButtons({ title, coverImageUrl }: { title: string; coverImageUrl?: string | null }) {
   const [url, setUrl] = useState('');
   const [kakaoReady, setKakaoReady] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     setUrl(window.location.href);
@@ -47,6 +51,32 @@ export default function ShareButtons({ title, coverImageUrl }: { title: string; 
     );
   }
 
+  function shareThreads() {
+    window.open(
+      `https://www.threads.net/intent/post?text=${encodeURIComponent(`${title} ${url}`)}`,
+      '_blank',
+      'width=600,height=500'
+    );
+  }
+
+  function shareTelegram() {
+    window.open(
+      `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title)}`,
+      '_blank',
+      'width=600,height=500'
+    );
+  }
+
+  async function copyUrl() {
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      // 클립보드 권한이 없는 환경 — 조용히 무시
+    }
+  }
+
   function shareKakao() {
     if (!kakaoReady || !window.Kakao) return;
     window.Kakao.Share.sendDefault({
@@ -59,31 +89,60 @@ export default function ShareButtons({ title, coverImageUrl }: { title: string; 
     });
   }
 
+  const platforms = [
+    { key: 'facebook', label: '페이스북', icon: <FacebookIcon />, onClick: shareFacebook },
+    { key: 'x', label: '트위터', icon: <XIcon />, onClick: shareX },
+    { key: 'threads', label: '스레드', icon: <ThreadsIcon />, onClick: shareThreads },
+    { key: 'url', label: copied ? '복사됨!' : 'URL공유', icon: <LinkIcon />, onClick: copyUrl },
+    {
+      key: 'kakao',
+      label: '카카오톡',
+      icon: <KakaoIcon />,
+      onClick: shareKakao,
+      disabled: !KAKAO_JS_KEY,
+    },
+    { key: 'telegram', label: '텔레그램', icon: <TelegramIcon />, onClick: shareTelegram },
+  ];
+
   return (
-    <div className="flex items-center gap-2">
-      <span className="text-xs text-gray-400">공유</span>
+    <>
       <button
-        onClick={shareKakao}
-        disabled={!KAKAO_JS_KEY}
-        title={KAKAO_JS_KEY ? '카카오톡 공유' : '카카오 앱키 등록 후 활성화됩니다'}
-        className="w-8 h-8 rounded-full bg-[#FEE500] text-black text-xs font-bold flex items-center justify-center disabled:opacity-30"
+        type="button"
+        onClick={() => setOpen(true)}
+        title="공유"
+        aria-label="공유"
+        className="icon-badge"
       >
-        톡
+        <ShareIcon />
       </button>
-      <button
-        onClick={shareFacebook}
-        title="페이스북 공유"
-        className="w-8 h-8 rounded-full bg-[#1877F2] text-white text-xs font-bold flex items-center justify-center"
-      >
-        f
-      </button>
-      <button
-        onClick={shareX}
-        title="X(트위터) 공유"
-        className="w-8 h-8 rounded-full bg-black text-white text-xs font-bold flex items-center justify-center"
-      >
-        X
-      </button>
-    </div>
+
+      {open && (
+        <div className="share-modal-overlay" onClick={() => setOpen(false)}>
+          <div className="share-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="share-modal-header">
+              <h3 className="share-modal-title">공유하기</h3>
+              <button type="button" onClick={() => setOpen(false)} aria-label="닫기" className="share-modal-close">
+                <CloseIcon />
+              </button>
+            </div>
+            <p className="share-modal-article-title">{title}</p>
+            <div className="share-modal-grid">
+              {platforms.map((p) => (
+                <button
+                  key={p.key}
+                  type="button"
+                  onClick={p.onClick}
+                  disabled={p.disabled}
+                  className="share-modal-item"
+                >
+                  <span className="icon-badge icon-badge--lg">{p.icon}</span>
+                  <span className="share-modal-item-label">{p.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
