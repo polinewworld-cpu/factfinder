@@ -8,6 +8,9 @@ const providers = [
   GoogleProvider({
     clientId: process.env.GOOGLE_CLIENT_ID ?? '',
     clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? '',
+    // 편집장 계정(polinewworld@gmail.com)이 스크립트로 DB에 먼저 만들어져 있어서, 실제 구글 로그인 시
+    // NextAuth가 이메일은 같은데 연결된 Account가 없다며 막는 문제를 해결하기 위함.
+    allowDangerousEmailAccountLinking: true,
   }),
 ];
 
