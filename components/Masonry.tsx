@@ -20,7 +20,7 @@ function isVideoItem(item: GridItem): item is VideoGridItem {
 }
 
 // 메인화면 그리드의 3/5/7번째 카드 자리를 광고 슬롯으로 고정 (기능정의서 5) — 해당 순번의 기사 카드를 배너로 교체
-function withBanners(items: CardArticle[], banners: HomepageBanner[] = []): GridItem[] {
+function withBanners(items: (CardArticle | VideoGridItem)[], banners: HomepageBanner[] = []): GridItem[] {
   if (banners.length === 0) return items;
   const bySlot = new Map(banners.map((b) => [b.slot, b]));
   return items.map((item, index): GridItem => {
