@@ -1,0 +1,13 @@
+name: Keep Render instance awake
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping factfinder
+        run: curl -sS -o /dev/null -w "%{http_code}\n" https://factfinder-85w9.onrender.com/
