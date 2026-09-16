@@ -1,13 +1,18 @@
 import { getStore } from '@netlify/blobs';
+import { createClient } from '@supabase/supabase-js';
 import { promises as fs } from 'fs';
 import path from 'path';
 
-// Netlify Blobs는 실제 Netlify 배포 환경(또는 `netlify dev`)에서만 별도 설정 없이 동작함.
-// 로컬에서 그냥 `npm run dev`로 띄우면 Netlify Blobs 연결 정보가 없어서 업로드/조회 시 에러가 남
-// (커버이미지 업로드, 카드뉴스 zip 다운로드, 프로필사진, 배너 이미지 등 /api/upload를 쓰는 모든 기능이 영향받음).
-// 그래서 로컬 개발 환경(process.env.NETLIFY 없음)에서는 프로젝트 폴더 안에 파일로 저장하고,
-// 실제 Netlify 배포 환경에서만 Netlify Blobs를 쓰도록 분리함.
+// 저장 위치 우선순위: Supabase Storage(SUPABASE_SERVICE_ROLE_KEY 설정 시, Render 등 실제 배포 환경용)
+// > Netlify Blobs(예전 Netlify 배포용, 이제 미사용이지만 코드는 남겨둠)
+// > 로컬 파일(둘 다 없을 때만 — 순수 로컬 개발용 폴백).
+// Render는 재배포마다 디스크가 초기화되므로 로컬 파일 방식으로 두면 업로드한 파일이 사라짐 — 반드시 Supabase Storage를 써야 함.
 const isNetlify = !!process.env.NETLIFY;
+const SUPABASE_BUCKET = 'uploads';
+const supabase =
+  process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY
+    ? createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY)
+    : null;
 const LOCAL_DIR = path.join(process.cwd(), '.local-uploads');
 
 async function ensureLocalDir() {
@@ -19,6 +24,13 @@ function metaPath(filename: string) {
 }
 
 export async function putBlob(filename: string, buffer: Buffer, contentType: string): Promise<void> {
+  if (supabase) {
+    const { error } = await supabase.storage
+      .from(SUPABASE_BUCKET)
+      .upload(filename, buffer, { contentType, upsert: true });
+    if (error) throw error;
+    return;
+  }
   if (isNetlify) {
     const store = getStore('uploads');
     await store.set(filename, buffer, { metadata: { contentType } });
@@ -30,6 +42,12 @@ export async function putBlob(filename: string, buffer: Buffer, contentType: str
 }
 
 export async function getBlob(filename: string): Promise<{ data: ArrayBuffer; contentType: string } | null> {
+  if (supabase) {
+    const { data, error } = await supabase.storage.from(SUPABASE_BUCKET).download(filename);
+    if (error || !data) return null;
+    const contentType = data.type || 'application/octet-stream';
+    return { data: await data.arrayBuffer(), contentType };
+  }
   if (isNetlify) {
     const store = getStore('uploads');
     const result = await store.getWithMetadata(filename, { type: 'arrayBuffer' });
