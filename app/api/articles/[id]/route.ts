@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { getCurrentUser } from '@/lib/session';
 import { ROLES, WRITER_ROLES, initialStatusForRole } from '@/lib/roles';
 import { deriveExcerpt } from '@/lib/excerpt';
+import { sanitizeArticleContent } from '@/lib/sanitizeArticle';
 
 export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
   const article = await prisma.article.findUnique({
@@ -27,6 +28,8 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   // 요약문은 별도 입력을 받지 않고 본문에서 자동 추출 — 화면에는 노출하지 않고 RSS용으로만 사용 (2026-09-11)
   // 본문이 바뀌면 "읽어주기"용으로 캐싱해둔 오디오도 더 이상 최신 내용이 아니므로 초기화 — 다음 재생 요청 때 새 본문으로 재생성됨 (2026-09-12)
   if (typeof rest.content === 'string') {
+    // 저장 전 항상 새니타이즈 — POST(articles/route.ts)와 동일한 이유
+    rest.content = sanitizeArticleContent(rest.content);
     rest.excerpt = deriveExcerpt(rest.content);
     rest.audioUrl = null;
   }
@@ -119,6 +122,16 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
 }
 
 export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
+  const user = await getCurrentUser();
+  if (!user) return NextResponse.json({ error: '로그인이 필요합니다' }, { status: 401 });
+
+  const existing = await prisma.article.findUnique({ where: { id: params.id } });
+  if (!existing) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  // 편집장은 모든 기사 삭제 가능, 그 외엔 본인이 작성한 글만 (PUT과 동일한 권한 원칙)
+  if (existing.authorId !== user.id && user.role !== ROLES.CHIEF_EDITOR) {
+    return NextResponse.json({ error: '본인이 작성한 글만 삭제할 수 있습니다' }, { status: 403 });
+  }
+
   await prisma.article.delete({ where: { id: params.id } });
   return NextResponse.json({ ok: true });
 }

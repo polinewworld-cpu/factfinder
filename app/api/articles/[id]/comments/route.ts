@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getCurrentUser } from '@/lib/session';
+import { allowRequest } from '@/lib/rateLimit';
 
 // 댓글은 로그인 회원만 작성 가능 (구글 로그인 계정 단일화 방침)
 export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
@@ -15,6 +16,10 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: '로그인이 필요합니다' }, { status: 401 });
+
+  if (!allowRequest(`comment_${user.id}`, 10, 60_000)) {
+    return NextResponse.json({ error: '댓글을 너무 자주 작성했습니다. 잠시 후 다시 시도해주세요' }, { status: 429 });
+  }
 
   const { content } = await req.json();
   if (!content?.trim()) return NextResponse.json({ error: '댓글 내용을 입력해주세요' }, { status: 400 });

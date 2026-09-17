@@ -4,6 +4,7 @@ import { ROLES, initialStatusForRole } from '@/lib/roles';
 import { getCurrentUser } from '@/lib/session';
 import type { ArticleStatus } from '@prisma/client';
 import { deriveExcerpt } from '@/lib/excerpt';
+import { sanitizeArticleContent } from '@/lib/sanitizeArticle';
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -53,8 +54,11 @@ export async function POST(req: NextRequest) {
     subtitle1, subtitle2, subtitle3, relatedArticleIds,
     keywordIds, isFrontpageTop, intent, poll, // intent: 'autosave' | 'submit' (기본값 submit) / poll: { question, options: string[] } | null
   } = body;
+  // 저장 전 항상 새니타이즈 — 렌더링(app/article/[id]/page.tsx)이 dangerouslySetInnerHTML로
+  // 그대로 뿌리기 때문에 여기서 걸러지지 않으면 스크립트 태그 등이 방문자 브라우저에서 그대로 실행됨
+  const safeContent = sanitizeArticleContent(content ?? '');
   // 요약문은 별도 입력을 받지 않고 본문에서 자동 추출 — 화면에는 노출하지 않고 RSS용으로만 사용 (2026-09-11)
-  const excerpt = deriveExcerpt(content ?? '');
+  const excerpt = deriveExcerpt(safeContent);
   const authorId = user.id; // 클라이언트가 임의로 다른 사람 행세 못하도록 세션에서만 가져옴
 
   // intent='autosave' -> 작성중 임시저장(AUTOSAVE), 'submit' -> 기자=DRAFT(승인대기)/논설위원·편집장=PUBLISHED(즉시발행)
@@ -80,7 +84,7 @@ export async function POST(req: NextRequest) {
         subtitle1: subtitle1 || null,
         subtitle2: subtitle2 || null,
         subtitle3: subtitle3 || null,
-        content: content ?? '',
+        content: safeContent,
         excerpt,
         hoverText: hoverText || null,
         themeTags: Array.isArray(themeTags) && themeTags.length ? themeTags.join(',') : null,

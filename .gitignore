@@ -8,6 +8,7 @@ node_modules
 .netlify
 .local-uploads
 .env.production
+tsconfig.tsbuildinfo
 Claude outputs/
 factfinder-인수인계서.md
 인수인계서.md
