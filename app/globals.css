@@ -447,26 +447,10 @@ img {
   filter: grayscale(100%);
 }
 
-/* 사진이 없는 기사 카드 — 어두운 랜덤 컬러 배경(기사별로 고정, ArticleCard의 --pin-fallback-bg)에
-   핫핑크 타이포로 본문 첫 문장을 노출 (2026-09-12 개편 — 기존엔 제목을 크림색으로 노출) */
+/* 사진이 없는 기사 카드 — 어두운 랜덤 컬러 배경 위에 핫핑크 타이포가 그리드로 반복되며
+   나타나는 키네틱 효과 (2026-09-17: AppearText 적용, 색상/텍스트는 ArticleCard가 KineticTextGrid에 직접 전달) */
 .pin-fallback {
-  display: grid;
-  place-items: end start;
-  padding: 22px;
-  color: #ff2d8a;
-  background:
-    linear-gradient(180deg, rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.5)),
-    var(--pin-fallback-bg, #241b2d);
-  text-align: left;
-}
-
-.pin-fallback p {
-  margin: 0;
-  font-family: var(--title);
-  font-size: 22px;
-  font-weight: 800;
-  line-height: 1.42;
-  letter-spacing: -0.02em;
+  overflow: hidden;
 }
 
 .pin-overlay {

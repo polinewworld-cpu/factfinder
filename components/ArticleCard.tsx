@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { timeAgo } from '@/lib/time';
 import { ShareIcon, BookmarkIcon } from './icons';
 import { useSavedArticles } from './SavedArticlesProvider';
+import KineticTextGrid from './AppearText';
 
 export type CardArticle = {
   id: string;
@@ -50,7 +51,8 @@ export default function ArticleCard({
   const badges = article.keywords.map((k) => k.name).slice(0, 2);
   const firstTheme = (article.themeTags ?? '').split(',').map((t) => t.trim()).filter(Boolean)[0];
   const fallbackBg = FALLBACK_BG_COLORS[hashString(`${article.id}-bg`) % FALLBACK_BG_COLORS.length];
-  const fallbackText = (article.excerpt || article.title || '').slice(0, 120);
+  const fallbackText = article.title || article.excerpt || '';
+  const fallbackFontSize = featured ? 32 : wide ? 26 : 20;
   const href = `/article/${article.id}`;
 
   const { loggedIn, isChiefEditor, isSaved, setSaved } = useSavedArticles();
@@ -118,11 +120,28 @@ export default function ArticleCard({
         {article.coverImageUrl ? (
           <img src={article.coverImageUrl} alt="" style={{ aspectRatio: `1 / ${imageRatio}` }} />
         ) : (
-          <div
-            className="pin-fallback"
-            style={{ aspectRatio: `1 / ${imageRatio}`, ['--pin-fallback-bg' as any]: fallbackBg }}
-          >
-            <p>{fallbackText}</p>
+          <div className="pin-fallback" style={{ aspectRatio: `1 / ${imageRatio}` }}>
+            <KineticTextGrid
+              text={fallbackText}
+              backgroundColor={fallbackBg}
+              textColor="#ff2d8a"
+              rowCount={3}
+              repeatCount={3}
+              rowGap={10}
+              wordGap={18}
+              expandDurationSec={0.8}
+              holdDurationSec={0.9}
+              horizontalShiftPx={40}
+              zoomScalePct={110}
+              font={{
+                fontFamily: 'var(--title)',
+                fontWeight: 800,
+                fontSize: fallbackFontSize,
+                lineHeight: 1.3,
+                letterSpacing: '-0.02em',
+                textAlign: 'left',
+              }}
+            />
           </div>
         )}
 
