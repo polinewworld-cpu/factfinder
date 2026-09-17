@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { TextDownIcon, TextUpIcon } from './icons';
 
 // 기사 본문만 확대/축소 — 브라우저에 마지막 선택값 저장, .article-content에 CSS 변수로 반영 (2026-09-12 신설)
 const SCALES = [0.9, 1, 1.15, 1.3];
@@ -41,10 +42,9 @@ export default function TextSizeControl() {
         disabled={index === 0}
         aria-label="본문 글자 작게"
         title="본문 글자 작게"
-        className="px-1 disabled:opacity-30 hover:text-brand"
-        style={{ fontSize: 11 }}
+        className="flex items-center px-1 disabled:opacity-30 hover:text-brand"
       >
-        가
+        <TextDownIcon />
       </button>
       <span className="w-px h-3 bg-gray-200" />
       <button
@@ -53,10 +53,9 @@ export default function TextSizeControl() {
         disabled={index === SCALES.length - 1}
         aria-label="본문 글자 크게"
         title="본문 글자 크게"
-        className="px-1 disabled:opacity-30 hover:text-brand"
-        style={{ fontSize: 16 }}
+        className="flex items-center px-1 disabled:opacity-30 hover:text-brand"
       >
-        가
+        <TextUpIcon />
       </button>
     </span>
   );

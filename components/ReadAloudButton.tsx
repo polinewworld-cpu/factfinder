@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { MarsIcon, VenusIcon, VolumeIcon, VolumeOffIcon } from './icons';
 
 // 기사 읽어주기 — Google Cloud TTS(신경망 한국어 음성)로 서버에서 미리 만들어둔 오디오 파일을 재생.
 // 기사당 최초 1회만 생성되고(app/api/articles/[id]/audio) 이후엔 캐시된 파일을 그대로 재생함.
@@ -124,9 +125,10 @@ export default function ReadAloudButton({
         type="button"
         onClick={toggleVoiceGender}
         title="읽어주는 목소리 성별 전환"
-        className="text-xs font-semibold rounded-full px-2.5 py-1.5 border text-gray-500 border-gray-200 hover:border-brand hover:text-brand whitespace-nowrap"
+        className="flex items-center gap-1 text-xs font-semibold rounded-full px-2.5 py-1.5 border text-gray-500 border-gray-200 hover:border-brand hover:text-brand whitespace-nowrap"
       >
-        {voiceGender === 'FEMALE' ? '👩 여성' : '👨 남성'}
+        {voiceGender === 'FEMALE' ? <VenusIcon /> : <MarsIcon />}
+        {voiceGender === 'FEMALE' ? '여성' : '남성'}
       </button>
       <button
         type="button"
@@ -135,7 +137,17 @@ export default function ReadAloudButton({
         className="flex items-center justify-center gap-1.5 text-xs font-semibold text-gray-600 border border-gray-200 rounded-full px-3 py-1.5 hover:border-brand hover:text-brand disabled:opacity-60 whitespace-nowrap"
         style={{ minWidth: 108 }}
       >
-        {status === 'playing' ? '■ 정지' : status === 'loading' ? '⏳ 생성 중…' : '🔊 읽어주기'}
+        {status === 'playing' ? (
+          <>
+            <VolumeOffIcon /> 정지
+          </>
+        ) : status === 'loading' ? (
+          '⏳ 생성 중…'
+        ) : (
+          <>
+            <VolumeIcon /> 읽어주기
+          </>
+        )}
       </button>
     </div>
   );
