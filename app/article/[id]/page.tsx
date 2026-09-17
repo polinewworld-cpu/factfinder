@@ -13,7 +13,7 @@ import ArticleBodyBanner from '@/components/ArticleBodyBanner';
 import ReporterCard from '@/components/ReporterCard';
 import TextSizeControl from '@/components/TextSizeControl';
 import RecommendButton from '@/components/RecommendButton';
-import DonateButton from '@/components/DonateButton';
+import DonateButtonLarge from '@/components/DonateButtonLarge';
 import { CommentIcon } from '@/components/icons';
 import { stripHtml } from '@/lib/stripHtml';
 import { getCurrentUser } from '@/lib/session';
@@ -119,7 +119,6 @@ export default async function ArticlePage({ params }: { params: { id: string } }
                 text={`${article.title}. ${stripHtml(article.content)}`}
                 gender={article.author.gender}
               />
-              <DonateButton reporterId={article.authorId} />
               <RecommendButton articleId={article.id} initialCount={article.recommendCount} />
               <a href="#comments" className="icon-action">
                 <CommentIcon />
@@ -160,6 +159,7 @@ export default async function ArticlePage({ params }: { params: { id: string } }
             recentArticles={recentByAuthor}
             bestArticles={bestByAuthor}
           />
+          <DonateButtonLarge reporterId={article.authorId} />
           <CommentSection articleId={article.id} />
           {activeArticleBanners[2] && (
             <ArticleBodyBanner imageUrl={activeArticleBanners[2].imageUrl} linkUrl={activeArticleBanners[2].linkUrl} />

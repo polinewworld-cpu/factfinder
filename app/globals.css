@@ -1078,6 +1078,32 @@ img {
   color: var(--ash);
 }
 
+/* 기사 하단 "원고료로 응원하기" 큰 버튼 — 핫핑크 면 + 흰 아이콘/타이포 (2026-09-18) */
+.donate-cta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  margin: 24px 0;
+  padding: 18px;
+  border: none;
+  border-radius: var(--radius);
+  background: var(--accent);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.donate-cta svg {
+  width: 22px;
+  height: 22px;
+}
+
+.donate-cta:hover {
+  background: var(--accent-pressed);
+}
+
 .reporter-card-list a {
   color: var(--body);
   font-size: 14px;
