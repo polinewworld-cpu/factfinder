@@ -19,6 +19,8 @@ type Transition = {
 
 type Props = {
     text?: string;
+    /** 넘기면 행(row)마다 다른 문장을 씀 — 안 넘기면 기존처럼 text 하나를 전체에 반복 */
+    texts?: string[];
     font?: React.CSSProperties;
     textColor?: string;
     backgroundColor?: string;
@@ -37,6 +39,7 @@ type Props = {
 export default function KineticTextGrid(props: Props) {
     const {
         text = "APPEAR TEXT",
+        texts,
         font = {
             fontFamily: "Inter",
             fontWeight: 700,
@@ -136,6 +139,7 @@ export default function KineticTextGrid(props: Props) {
                 }}
             >
                 {rows.map((rowIndex) => {
+                    const rowText = texts && texts.length > 0 ? texts[rowIndex % texts.length] : text;
                     const isCenterRow = rowIndex === centerRowIndex;
                     const distanceFromCenterY = rowIndex - centerRowIndex;
                     const direction = rowIndex % 2 === 0 ? 1 : -1;
@@ -211,7 +215,7 @@ export default function KineticTextGrid(props: Props) {
                                                 ...fontStyles,
                                             }}
                                         >
-                                            {text}
+                                            {rowText}
                                         </span>
                                     );
                                 }
@@ -263,7 +267,7 @@ export default function KineticTextGrid(props: Props) {
                                             ...fontStyles,
                                         }}
                                     >
-                                        {text}
+                                        {rowText}
                                     </motion.span>
                                 );
                             })}
