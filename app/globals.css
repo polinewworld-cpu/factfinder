@@ -330,7 +330,7 @@ img {
 
 .chips {
   display: flex;
-  justify-content: center;
+  justify-content: flex-start;
   flex-wrap: wrap;
   gap: 8px;
   margin: 4px 0 20px;
