@@ -667,8 +667,8 @@ img {
 
 /* 기사 상단 byline 안의 SVG 아이콘 공통 크기 — 기존엔 크기 지정이 없어 0×0으로 렌더링되던 문제도 함께 해결 (2026-09-12) */
 .article-byline svg {
-  width: 16px;
-  height: 16px;
+  width: 32px;
+  height: 32px;
 }
 
 .pin-copy {
