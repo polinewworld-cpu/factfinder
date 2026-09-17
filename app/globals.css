@@ -249,11 +249,11 @@ img {
 }
 
 .market-up {
-  color: #e0293e;
+  color: var(--ink);
 }
 
 .market-down {
-  color: #2b6cd4;
+  color: var(--ink);
 }
 
 .market-flat {
