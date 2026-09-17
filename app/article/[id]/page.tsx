@@ -111,7 +111,7 @@ export default async function ArticlePage({ params }: { params: { id: string } }
             <span style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
               {article.author.name} 기자
             </span>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            <span className="icon-action-group">
               <SaveButton articleId={article.id} initialSaved={alreadySaved} loggedIn={!!currentUser} />
               <TextSizeControl />
               <ReadAloudButton
@@ -121,12 +121,9 @@ export default async function ArticlePage({ params }: { params: { id: string } }
               />
               <DonateButton reporterId={article.authorId} />
               <RecommendButton articleId={article.id} initialCount={article.recommendCount} />
-              <a
-                href="#comments"
-                className="flex items-center gap-1.5 text-xs font-semibold text-gray-600 border border-gray-200 rounded-full px-3 py-1.5 hover:border-brand hover:text-brand"
-              >
+              <a href="#comments" className="icon-action">
                 <CommentIcon />
-                댓글 {article._count.comments}
+                {article._count.comments}
               </a>
               <ShareButtons title={article.title} coverImageUrl={article.coverImageUrl} />
             </span>

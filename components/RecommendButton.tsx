@@ -44,12 +44,8 @@ export default function RecommendButton({ articleId, initialCount }: { articleId
       disabled={recommended || busy}
       title={recommended ? '추천 완료' : '추천'}
       aria-pressed={recommended}
-      className="flex items-center gap-1.5 text-xs font-semibold rounded-full px-3 py-1.5 border border-gray-200 hover:border-brand"
-      style={{
-        color: recommended ? 'var(--accent, #ff2d8a)' : '#4b5563',
-        borderColor: recommended ? 'var(--accent, #ff2d8a)' : undefined,
-        opacity: busy ? 0.6 : 1,
-      }}
+      className="icon-action"
+      style={{ opacity: busy ? 0.6 : 1 }}
     >
       <ThumbsUpIcon />
       {count}

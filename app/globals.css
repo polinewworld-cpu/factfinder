@@ -643,6 +643,28 @@ img {
   height: 24px;
 }
 
+/* 기사 액션바 아이콘 버튼 — 테두리/텍스트 없이 아이콘만, 항상 핫핑크 (2026-09-17: 텍스트+테두리 있던 pill 버튼에서 단순화) */
+.icon-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 4px;
+  border: none;
+  background: none;
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.icon-action:disabled {
+  opacity: 0.5;
+}
+
+.icon-action:hover:not(:disabled) {
+  opacity: 0.7;
+}
+
 /* 기사 상단 byline 안의 SVG 아이콘 공통 크기 — 기존엔 크기 지정이 없어 0×0으로 렌더링되던 문제도 함께 해결 (2026-09-12) */
 .article-byline svg {
   width: 16px;
@@ -857,7 +879,14 @@ img {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.article-byline .icon-action-group {
+  display: flex;
+  align-items: center;
+  gap: 2px;
   flex-wrap: wrap;
 }
 

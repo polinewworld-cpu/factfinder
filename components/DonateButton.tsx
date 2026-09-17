@@ -10,13 +10,8 @@ export default function DonateButton({ reporterId }: { reporterId: string }) {
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="flex items-center gap-1.5 text-xs font-semibold text-gray-600 border border-gray-200 rounded-full px-3 py-1.5 hover:border-brand hover:text-brand"
-      >
+      <button type="button" onClick={() => setOpen(true)} title="원고료로 응원하기" className="icon-action">
         <CreditCardIcon />
-        원고료로 응원하기
       </button>
       {open && <DonateModal reporterId={reporterId} onClose={() => setOpen(false)} />}
     </>

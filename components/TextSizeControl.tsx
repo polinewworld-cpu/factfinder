@@ -35,25 +35,24 @@ export default function TextSizeControl() {
   }
 
   return (
-    <span className="flex items-center gap-1 text-xs font-semibold text-gray-600 border border-gray-200 rounded-full px-2 py-1.5">
+    <span className="flex items-center">
       <button
         type="button"
         onClick={() => apply(index - 1)}
         disabled={index === 0}
         aria-label="본문 글자 작게"
         title="본문 글자 작게"
-        className="flex items-center px-1 disabled:opacity-30 hover:text-brand"
+        className="icon-action"
       >
         <TextDownIcon />
       </button>
-      <span className="w-px h-3 bg-gray-200" />
       <button
         type="button"
         onClick={() => apply(index + 1)}
         disabled={index === SCALES.length - 1}
         aria-label="본문 글자 크게"
         title="본문 글자 크게"
-        className="flex items-center px-1 disabled:opacity-30 hover:text-brand"
+        className="icon-action"
       >
         <TextUpIcon />
       </button>

@@ -106,13 +106,7 @@ export default function ShareButtons({ title, coverImageUrl }: { title: string; 
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        title="공유"
-        aria-label="공유"
-        className="icon-badge"
-      >
+      <button type="button" onClick={() => setOpen(true)} title="공유" aria-label="공유" className="icon-action">
         <ShareIcon />
       </button>
 

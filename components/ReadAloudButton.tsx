@@ -120,34 +120,23 @@ export default function ReadAloudButton({
   }
 
   return (
-    <div className="flex items-center gap-1">
+    <div className="flex items-center">
       <button
         type="button"
         onClick={toggleVoiceGender}
         title="읽어주는 목소리 성별 전환"
-        className="flex items-center gap-1 text-xs font-semibold rounded-full px-2.5 py-1.5 border text-gray-500 border-gray-200 hover:border-brand hover:text-brand whitespace-nowrap"
+        className="icon-action"
       >
         {voiceGender === 'FEMALE' ? <VenusIcon /> : <MarsIcon />}
-        {voiceGender === 'FEMALE' ? '여성' : '남성'}
       </button>
       <button
         type="button"
         onClick={toggle}
         disabled={status === 'loading'}
-        className="flex items-center justify-center gap-1.5 text-xs font-semibold text-gray-600 border border-gray-200 rounded-full px-3 py-1.5 hover:border-brand hover:text-brand disabled:opacity-60 whitespace-nowrap"
-        style={{ minWidth: 108 }}
+        title={status === 'playing' ? '정지' : '읽어주기'}
+        className="icon-action"
       >
-        {status === 'playing' ? (
-          <>
-            <VolumeOffIcon /> 정지
-          </>
-        ) : status === 'loading' ? (
-          '⏳ 생성 중…'
-        ) : (
-          <>
-            <VolumeIcon /> 읽어주기
-          </>
-        )}
+        {status === 'playing' ? <VolumeOffIcon /> : <VolumeIcon />}
       </button>
     </div>
   );
