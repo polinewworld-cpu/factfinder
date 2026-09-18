@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { ThumbsUpIcon } from './icons';
 
 // 기사 "추천" 버튼 — 로그인 불필요. 같은 브라우저에서 중복 추천 방지는 localStorage로만 처리(best-effort) (2026-09-12 신설)
-// variant="large": 기사 하단 "'좋아요'로 칭찬하기" 큰 버튼 (원고료로 응원하기와 같은 스타일, 2026-09-18)
+// variant="large": 기사 하단 큰 버튼 (원고료로 응원하기와 같은 스타일). 문구 대신 숫자만 — 모바일/PC 공통 (2026-09-18)
 export default function RecommendButton({
   articleId,
   initialCount,
@@ -57,7 +57,7 @@ export default function RecommendButton({
         style={{ opacity: busy ? 0.6 : 1 }}
       >
         <ThumbsUpIcon />
-        '좋아요'로 칭찬하기
+        {count}
       </button>
     );
   }

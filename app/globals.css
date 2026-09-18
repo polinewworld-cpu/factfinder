@@ -1109,11 +1109,8 @@ img {
 
 @media (max-width: 480px) {
   .donate-cta {
-    font-size: 12px;
+    font-size: 13px;
     padding: 12px 6px;
-  }
-  .donate-cta svg {
-    display: none;
   }
 }
 
