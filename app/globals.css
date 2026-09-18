@@ -1278,13 +1278,14 @@ img {
 
   .chips {
     justify-content: flex-start;
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    padding-bottom: 4px;
+    flex-wrap: wrap;
+    gap: 4px;
   }
 
   .chip {
-    flex: 0 0 auto;
+    height: 32px;
+    padding: 0 10px;
+    font-size: 13px;
   }
 }
 
