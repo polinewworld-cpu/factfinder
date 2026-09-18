@@ -1078,32 +1078,43 @@ img {
   color: var(--ash);
 }
 
-/* 기사 하단 "좋아요로 칭찬하기 / 공유로 전파하기 / 원고료로 응원하기" 3단 버튼 스택 (2026-09-18) */
-.donate-cta-stack {
+/* 기사 하단 "좋아요로 칭찬하기 / 공유로 전파하기 / 원고료로 응원하기" — 한 줄, 비율 1:1:2 (2026-09-18) */
+.donate-cta-row {
   display: flex;
-  flex-direction: column;
-  gap: 10px;
+  gap: 8px;
   margin: 24px 0;
 }
 
-.donate-cta-stack .donate-cta {
-  margin: 0;
+.donate-cta-row-item {
+  display: flex;
+  min-width: 0;
 }
 
 .donate-cta {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 6px;
   width: 100%;
-  margin: 24px 0;
-  padding: 18px;
+  padding: 14px 8px;
   border: none;
   border-radius: var(--radius);
   background: var(--accent);
   color: #fff;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 800;
+  text-align: center;
+  white-space: normal;
+}
+
+@media (max-width: 480px) {
+  .donate-cta {
+    font-size: 12px;
+    padding: 12px 6px;
+  }
+  .donate-cta svg {
+    display: none;
+  }
 }
 
 .donate-cta svg {

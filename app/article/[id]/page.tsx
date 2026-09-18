@@ -157,10 +157,16 @@ export default async function ArticlePage({ params }: { params: { id: string } }
             recentArticles={recentByAuthor}
             bestArticles={bestByAuthor}
           />
-          <div className="donate-cta-stack">
-            <RecommendButton articleId={article.id} initialCount={article.recommendCount} variant="large" />
-            <ShareButtons title={article.title} coverImageUrl={article.coverImageUrl} variant="large" />
-            <DonateButtonLarge reporterId={article.authorId} />
+          <div className="donate-cta-row">
+            <div className="donate-cta-row-item" style={{ flex: 1 }}>
+              <RecommendButton articleId={article.id} initialCount={article.recommendCount} variant="large" />
+            </div>
+            <div className="donate-cta-row-item" style={{ flex: 1 }}>
+              <ShareButtons title={article.title} coverImageUrl={article.coverImageUrl} variant="large" />
+            </div>
+            <div className="donate-cta-row-item" style={{ flex: 2 }}>
+              <DonateButtonLarge reporterId={article.authorId} />
+            </div>
           </div>
           <CommentSection articleId={article.id} />
           {activeArticleBanners[2] && (
