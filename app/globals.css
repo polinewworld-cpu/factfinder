@@ -1078,7 +1078,18 @@ img {
   color: var(--ash);
 }
 
-/* 기사 하단 "원고료로 응원하기" 큰 버튼 — 핫핑크 면 + 흰 아이콘/타이포 (2026-09-18) */
+/* 기사 하단 "좋아요로 칭찬하기 / 공유로 전파하기 / 원고료로 응원하기" 3단 버튼 스택 (2026-09-18) */
+.donate-cta-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 24px 0;
+}
+
+.donate-cta-stack .donate-cta {
+  margin: 0;
+}
+
 .donate-cta {
   display: flex;
   align-items: center;

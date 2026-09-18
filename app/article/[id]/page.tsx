@@ -119,12 +119,10 @@ export default async function ArticlePage({ params }: { params: { id: string } }
                 text={`${article.title}. ${stripHtml(article.content)}`}
                 gender={article.author.gender}
               />
-              <RecommendButton articleId={article.id} initialCount={article.recommendCount} />
               <a href="#comments" className="icon-action">
                 <CommentIcon />
                 {article._count.comments}
               </a>
-              <ShareButtons title={article.title} coverImageUrl={article.coverImageUrl} />
             </span>
           </div>
           <div className="article-content" dangerouslySetInnerHTML={{ __html: article.content }} />
@@ -159,7 +157,11 @@ export default async function ArticlePage({ params }: { params: { id: string } }
             recentArticles={recentByAuthor}
             bestArticles={bestByAuthor}
           />
-          <DonateButtonLarge reporterId={article.authorId} />
+          <div className="donate-cta-stack">
+            <RecommendButton articleId={article.id} initialCount={article.recommendCount} variant="large" />
+            <ShareButtons title={article.title} coverImageUrl={article.coverImageUrl} variant="large" />
+            <DonateButtonLarge reporterId={article.authorId} />
+          </div>
           <CommentSection articleId={article.id} />
           {activeArticleBanners[2] && (
             <ArticleBodyBanner imageUrl={activeArticleBanners[2].imageUrl} linkUrl={activeArticleBanners[2].linkUrl} />

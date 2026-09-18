@@ -11,8 +11,17 @@ declare global {
 
 const KAKAO_JS_KEY = process.env.NEXT_PUBLIC_KAKAO_JS_KEY;
 
-// 기사 상단 "공유" 버튼 — 클릭 시 레이어(모달)로 페이스북/트위터/스레드/URL공유/카카오톡/텔레그램 6개 노출 (2026-09-12 신설)
-export default function ShareButtons({ title, coverImageUrl }: { title: string; coverImageUrl?: string | null }) {
+// 기사 "공유" 버튼 — 클릭 시 레이어(모달)로 페이스북/트위터/스레드/URL공유/카카오톡/텔레그램 6개 노출 (2026-09-12 신설)
+// variant="large": 기사 하단 "공유로 전파하기" 큰 버튼 (원고료로 응원하기와 같은 스타일, 2026-09-18)
+export default function ShareButtons({
+  title,
+  coverImageUrl,
+  variant = 'icon',
+}: {
+  title: string;
+  coverImageUrl?: string | null;
+  variant?: 'icon' | 'large';
+}) {
   const [url, setUrl] = useState('');
   const [kakaoReady, setKakaoReady] = useState(false);
   const [open, setOpen] = useState(false);
@@ -106,9 +115,16 @@ export default function ShareButtons({ title, coverImageUrl }: { title: string; 
 
   return (
     <>
-      <button type="button" onClick={() => setOpen(true)} title="공유" aria-label="공유" className="icon-action">
-        <ShareIcon />
-      </button>
+      {variant === 'large' ? (
+        <button type="button" onClick={() => setOpen(true)} className="donate-cta">
+          <ShareIcon />
+          공유로 전파하기
+        </button>
+      ) : (
+        <button type="button" onClick={() => setOpen(true)} title="공유" aria-label="공유" className="icon-action">
+          <ShareIcon />
+        </button>
+      )}
 
       {open && (
         <div className="share-modal-overlay" onClick={() => setOpen(false)}>
