@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
   const {
     title, content, hoverText, themeTags, coverImageUrl, categoryId, images,
     subtitle1, subtitle2, subtitle3, relatedArticleIds,
-    keywordIds, intent, poll, // intent: 'autosave' | 'submit' (기본값 submit) / poll: { question, options: string[] } | null
+    keywordIds, isFrontpageTop, intent, poll, // intent: 'autosave' | 'submit' (기본값 submit) / poll: { question, options: string[] } | null
   } = body;
   // 저장 전 항상 새니타이즈 — 렌더링(app/article/[id]/page.tsx)이 dangerouslySetInnerHTML로
   // 그대로 뿌리기 때문에 여기서 걸러지지 않으면 스크립트 태그 등이 방문자 브라우저에서 그대로 실행됨
@@ -63,46 +63,58 @@ export async function POST(req: NextRequest) {
 
   // intent='autosave' -> 작성중 임시저장(AUTOSAVE), 'submit' -> 기자=DRAFT(승인대기)/논설위원·편집장=PUBLISHED(즉시발행)
   const status = initialStatusForRole(user.role, intent === 'autosave' ? 'autosave' : 'submit');
+  const wantsFrontpageTop = !!isFrontpageTop && status === 'PUBLISHED'; // 미승인 초안은 1면톱 지정 불가
 
   // 설문(투표) — 질문 + 유효한(공백아닌) 옵션 2개 이상일 때만 실제 생성
   const validPollOptions: string[] = (poll?.options ?? []).map((o: string) => (o ?? '').trim()).filter(Boolean);
   const wantsPoll = !!poll?.question?.trim() && validPollOptions.length >= 2;
 
-  const article = await prisma.article.create({
-    data: {
-      title: title ?? '',
-      subtitle1: subtitle1 || null,
-      subtitle2: subtitle2 || null,
-      subtitle3: subtitle3 || null,
-      content: safeContent,
-      excerpt,
-      hoverText: hoverText || null,
-      themeTags: Array.isArray(themeTags) && themeTags.length ? themeTags.join(',') : null,
-      coverImageUrl,
-      categoryId,
-      authorId,
-      status,
-      publishedAt: status === 'PUBLISHED' ? new Date() : null,
-      images: images?.length
-        ? { create: images.map((img: { url: string; caption?: string }, i: number) => ({ ...img, order: i })) }
-        : undefined,
-      keywords: keywordIds?.length
-        ? { connect: keywordIds.map((id: string) => ({ id })) }
-        : undefined,
-      // 관련기사 — 발행된 기사 중에서 작성자가 직접 선택 (기능정의서 8.2)
-      relatedArticles: relatedArticleIds?.length
-        ? { connect: relatedArticleIds.map((id: string) => ({ id })) }
-        : undefined,
-      poll: wantsPoll
-        ? {
-            create: {
-              question: poll.question.trim(),
-              options: { create: validPollOptions.map((text, i) => ({ text, order: i })) },
-            },
-          }
-        : undefined,
-    },
-    include: { images: true, keywords: true, relatedArticles: true, poll: { include: { options: true } } },
+  const article = await prisma.$transaction(async (tx) => {
+    if (wantsFrontpageTop) {
+      // 1면톱은 사이트 전체 1건만 유지 — 새로 지정 전 기존 지정 해제
+      await tx.article.updateMany({
+        where: { isFrontpageTop: true },
+        data: { isFrontpageTop: false },
+      });
+    }
+
+    return tx.article.create({
+      data: {
+        title: title ?? '',
+        subtitle1: subtitle1 || null,
+        subtitle2: subtitle2 || null,
+        subtitle3: subtitle3 || null,
+        content: safeContent,
+        excerpt,
+        hoverText: hoverText || null,
+        themeTags: Array.isArray(themeTags) && themeTags.length ? themeTags.join(',') : null,
+        coverImageUrl,
+        categoryId,
+        authorId,
+        status,
+        publishedAt: status === 'PUBLISHED' ? new Date() : null,
+        isFrontpageTop: wantsFrontpageTop,
+        images: images?.length
+          ? { create: images.map((img: { url: string; caption?: string }, i: number) => ({ ...img, order: i })) }
+          : undefined,
+        keywords: keywordIds?.length
+          ? { connect: keywordIds.map((id: string) => ({ id })) }
+          : undefined,
+        // 관련기사 — 발행된 기사 중에서 작성자가 직접 선택 (기능정의서 8.2)
+        relatedArticles: relatedArticleIds?.length
+          ? { connect: relatedArticleIds.map((id: string) => ({ id })) }
+          : undefined,
+        poll: wantsPoll
+          ? {
+              create: {
+                question: poll.question.trim(),
+                options: { create: validPollOptions.map((text, i) => ({ text, order: i })) },
+              },
+            }
+          : undefined,
+      },
+      include: { images: true, keywords: true, relatedArticles: true, poll: { include: { options: true } } },
+    });
   });
 
   return NextResponse.json(article, { status: 201 });

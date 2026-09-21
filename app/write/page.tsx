@@ -43,6 +43,7 @@ export default function WritePage() {
   // 커버이미지 — 별도 업로드 없이 본문에 삽입된 이미지 중 라디오로 선택 (첫 번째 삽입 이미지가 기본값, 2026-09-11 개편)
   const [coverImageUrl, setCoverImageUrl] = useState('');
   const [bodyImageUrls, setBodyImageUrls] = useState<string[]>([]);
+  const [isFrontpageTop, setIsFrontpageTop] = useState(false);
   const [cardImages, setCardImages] = useState<{ url: string; caption?: string }[]>([]);
   const [cardUploading, setCardUploading] = useState(false);
   const [bodyImageUploading, setBodyImageUploading] = useState(false);
@@ -93,15 +94,15 @@ export default function WritePage() {
   const selectedFigureRef = useRef<HTMLElement | null>(null); // 본문에서 클릭으로 선택된 이미지(figure) — Delete/Backspace로 삭제 가능 (2026-09-12 신설)
 
   const stateRef = useRef({
-    title, subtitle1, subtitle2, subtitle3, hoverText, themeTags, categoryId, keywordIds, coverImageUrl, cardImages,
+    title, subtitle1, subtitle2, subtitle3, hoverText, themeTags, categoryId, keywordIds, coverImageUrl, isFrontpageTop, cardImages,
     pollEnabled, pollQuestion, pollOptions, relatedSelected,
   });
   useEffect(() => {
     stateRef.current = {
-      title, subtitle1, subtitle2, subtitle3, hoverText, themeTags, categoryId, keywordIds, coverImageUrl, cardImages,
+      title, subtitle1, subtitle2, subtitle3, hoverText, themeTags, categoryId, keywordIds, coverImageUrl, isFrontpageTop, cardImages,
       pollEnabled, pollQuestion, pollOptions, relatedSelected,
     };
-  }, [title, subtitle1, subtitle2, subtitle3, hoverText, themeTags, categoryId, keywordIds, coverImageUrl, cardImages, pollEnabled, pollQuestion, pollOptions, relatedSelected]);
+  }, [title, subtitle1, subtitle2, subtitle3, hoverText, themeTags, categoryId, keywordIds, coverImageUrl, isFrontpageTop, cardImages, pollEnabled, pollQuestion, pollOptions, relatedSelected]);
 
   function pollPayload(s: typeof stateRef.current) {
     return s.pollEnabled ? { question: s.pollQuestion, options: s.pollOptions } : null;
@@ -168,6 +169,7 @@ export default function WritePage() {
         setCategoryId(data.categoryId ?? '');
         setKeywordIds((data.keywords ?? []).map((k: { id: string }) => k.id));
         setCoverImageUrl(data.coverImageUrl ?? '');
+        setIsFrontpageTop(!!data.isFrontpageTop);
         setCardImages((data.images ?? []).map((img: { url: string; caption?: string | null }) => ({ url: img.url, caption: img.caption ?? undefined })));
         setRelatedSelected(
           (data.relatedArticles ?? []).map((a: ArticleSearchResult) => ({
@@ -629,6 +631,7 @@ export default function WritePage() {
       relatedArticleIds: s.relatedSelected.map((a) => a.id),
       images: s.cardImages,
       poll: pollPayload(s),
+      isFrontpageTop: s.isFrontpageTop,
       intent: 'submit',
     };
 
@@ -714,7 +717,7 @@ export default function WritePage() {
 
       {errorMsg && <p className="text-red-600 text-sm mb-4">{errorMsg}</p>}
 
-      {/* 카테고리 — 제목보다 먼저 결정해야 함 (UX 개선 2026-09-11) */}
+      {/* 카테고리 + 1면톱 — 제목보다 먼저 결정해야 함 (UX 개선 2026-09-11) */}
       <div className="flex flex-wrap items-center gap-4 mb-4">
         <select
           value={categoryId}
@@ -731,6 +734,22 @@ export default function WritePage() {
             </option>
           ))}
         </select>
+
+        {me.role !== 'REPORTER' ? (
+          <label className="text-sm text-gray-600 flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={isFrontpageTop}
+              onChange={(e) => {
+                setIsFrontpageTop(e.target.checked);
+                markDirty();
+              }}
+            />
+            1면톱으로 지정
+          </label>
+        ) : (
+          <span className="text-xs text-gray-400 self-center">1면톱 지정은 발행 즉시 권한자만 가능합니다.</span>
+        )}
       </div>
 
       <input

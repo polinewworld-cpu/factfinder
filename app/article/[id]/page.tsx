@@ -126,6 +126,17 @@ export default async function ArticlePage({ params }: { params: { id: string } }
             </span>
           </div>
           <div className="article-content" dangerouslySetInnerHTML={{ __html: article.content }} />
+          <div className="donate-cta-row">
+            <div className="donate-cta-row-item" style={{ flex: 1 }}>
+              <RecommendButton articleId={article.id} initialCount={article.recommendCount} variant="large" />
+            </div>
+            <div className="donate-cta-row-item" style={{ flex: 1 }}>
+              <ShareButtons title={article.title} coverImageUrl={article.coverImageUrl} variant="large" />
+            </div>
+            <div className="donate-cta-row-item" style={{ flex: 2 }}>
+              <DonateButtonLarge reporterId={article.authorId} />
+            </div>
+          </div>
           {activeArticleBanners[0] && (
             <ArticleBodyBanner imageUrl={activeArticleBanners[0].imageUrl} linkUrl={activeArticleBanners[0].linkUrl} />
           )}
@@ -157,17 +168,6 @@ export default async function ArticlePage({ params }: { params: { id: string } }
             recentArticles={recentByAuthor}
             bestArticles={bestByAuthor}
           />
-          <div className="donate-cta-row">
-            <div className="donate-cta-row-item" style={{ flex: 1 }}>
-              <RecommendButton articleId={article.id} initialCount={article.recommendCount} variant="large" />
-            </div>
-            <div className="donate-cta-row-item" style={{ flex: 1 }}>
-              <ShareButtons title={article.title} coverImageUrl={article.coverImageUrl} variant="large" />
-            </div>
-            <div className="donate-cta-row-item" style={{ flex: 2 }}>
-              <DonateButtonLarge reporterId={article.authorId} />
-            </div>
-          </div>
           <CommentSection articleId={article.id} />
           {activeArticleBanners[2] && (
             <ArticleBodyBanner imageUrl={activeArticleBanners[2].imageUrl} linkUrl={activeArticleBanners[2].linkUrl} />
