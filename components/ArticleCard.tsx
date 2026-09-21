@@ -19,7 +19,6 @@ export type CardArticle = {
   author: { name: string };
   keywords: { name: string }[];
   category?: { name: string } | null;
-  isFrontpageTop?: boolean;
 };
 
 const RATIOS = [0.72, 0.88, 1.04, 1.22, 1.38, 0.64, 0.96, 1.16];

@@ -8,7 +8,6 @@ type Row = {
   title: string;
   status: 'AUTOSAVE' | 'DRAFT' | 'PUBLISHED';
   viewCount: number;
-  isFrontpageTop: boolean;
   showOnMain: boolean;
   createdAt: string;
   updatedAt: string;
@@ -212,7 +211,6 @@ export default function AdminArticlesPage() {
                 <tr key={r.id} className="border-b border-gray-100 hover:bg-gray-50">
                   <td className="py-2 pl-4 pr-4 max-w-[320px]">
                     <a href={`/write?id=${r.id}`} className="font-medium text-gray-900 hover:text-brand truncate block">
-                      {r.isFrontpageTop && <span className="text-brand mr-1">★</span>}
                       {r.title || '(제목 없음)'}
                     </a>
                   </td>

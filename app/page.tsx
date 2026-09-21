@@ -32,11 +32,9 @@ export default async function Home({ searchParams }: { searchParams: { category?
     ...(category ? { category: { name: category } } : {}),
   };
 
-  const [top, restRaw, homepageBanners, videoCards] = await Promise.all([
-    prisma.article.findFirst({
-      where: { ...where, isFrontpageTop: true },
-      include: { author: true, keywords: true, category: true },
-    }),
+  // 대표(featured)/두번째 슬롯도 수동 고정 없이 그냥 최신 기사 — 편집장이 지정해두고 잊으면 오래된 기사가
+  // 계속 상단에 남는 문제가 있어 1면톱 수동 지정 기능 자체를 없앰 (2026-09-22 사용자 지시: "그냥 시간순이면 충분해")
+  const [restRaw, homepageBanners, videoCards] = await Promise.all([
     prisma.article.findMany({
       where,
       include: { author: true, keywords: true, category: true },
@@ -51,7 +49,8 @@ export default async function Home({ searchParams }: { searchParams: { category?
       ? prisma.videoCard.findMany({ where: { showOnMain: true }, orderBy: { publishedAt: 'desc' }, take: 60 })
       : Promise.resolve([] as Awaited<ReturnType<typeof prisma.videoCard.findMany>>),
   ]);
-  const rest = restRaw.filter((a) => a.id !== top?.id).slice(0, 60);
+  const top = restRaw[0] ?? null;
+  const rest = restRaw.slice(1, 61);
   const SLOT_BY_PLACEMENT: Record<string, 3 | 5 | 7> = { HOMEPAGE_3: 3, HOMEPAGE_5: 5, HOMEPAGE_7: 7 };
   const banners = homepageBanners.map((b) => ({
     slot: SLOT_BY_PLACEMENT[b.placement],

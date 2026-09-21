@@ -60,7 +60,6 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
       const newStatus = initialStatusForRole(user.role, 'submit');
       rest.status = newStatus;
       if (newStatus === 'PUBLISHED' && !existing.publishedAt) rest.publishedAt = new Date();
-      rest.isFrontpageTop = !!rest.isFrontpageTop && newStatus === 'PUBLISHED';
     }
   }
 
@@ -69,12 +68,6 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   const wantsPoll = !!poll?.question?.trim() && validPollOptions.length >= 2;
 
   const updated = await prisma.$transaction(async (tx) => {
-    if (rest.isFrontpageTop) {
-      await tx.article.updateMany({
-        where: { isFrontpageTop: true, NOT: { id: params.id } },
-        data: { isFrontpageTop: false },
-      });
-    }
     if (pollProvided) {
       // 설문은 기사당 1개 — 매번 통째로 교체(기존 삭제 후 새로 생성). 옵션 변경 시 기존 투표는 초기화됨.
       await tx.poll.deleteMany({ where: { articleId: params.id } });
