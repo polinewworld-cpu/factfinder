@@ -18,9 +18,12 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     return NextResponse.json({ error: '요청이 너무 많습니다. 잠시 후 다시 시도해주세요' }, { status: 429 });
   }
 
+  // updatedAt은 @updatedAt이라 update() 호출만으로 자동 갱신됨 — 추천 클릭도 "수정"이 아니므로
+  // 기존 값을 그대로 돌려줘서 관리자 "최종편집일"이 오염되는 걸 막음 (2026-09-22)
+  const before = await prisma.article.findUnique({ where: { id: params.id }, select: { updatedAt: true } });
   const updated = await prisma.article.update({
     where: { id: params.id },
-    data: { recommendCount: { increment: 1 } },
+    data: { recommendCount: { increment: 1 }, updatedAt: before?.updatedAt },
   });
 
   const res = NextResponse.json({ recommendCount: updated.recommendCount });

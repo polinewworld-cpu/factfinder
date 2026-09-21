@@ -162,14 +162,15 @@ function classifyVideo(video: any): 'SHORT' | 'VIDEO' | 'LIVE' {
   const liveStatus = video.snippet?.liveBroadcastContent;
   if (liveStatus === 'live' || liveStatus === 'upcoming') return 'LIVE';
 
-  // 쇼츠 판별은 유튜브 API가 직접 알려주지 않아 재생시간(60초 이하)으로 추정 — 알려진 업계 관행상의 근사치
+  // 쇼츠 판별은 유튜브 API가 직접 알려주지 않아 재생시간으로 추정 — 알려진 업계 관행상의 근사치.
+  // 2024년 10월부터 유튜브 쇼츠 최대 길이가 60초 -> 3분(180초)으로 늘어남 — 기준도 맞춰서 조정 (2026-09-22)
   const duration = video.contentDetails?.duration as string | undefined; // ISO 8601, 예: PT45S
   if (duration) {
     const match = duration.match(/PT(?:(\d+)M)?(?:(\d+)S)?/);
     const minutes = match?.[1] ? parseInt(match[1], 10) : 0;
     const seconds = match?.[2] ? parseInt(match[2], 10) : 0;
     const totalSeconds = minutes * 60 + seconds;
-    if (totalSeconds > 0 && totalSeconds <= 60) return 'SHORT';
+    if (totalSeconds > 0 && totalSeconds <= 180) return 'SHORT';
   }
   return 'VIDEO';
 }

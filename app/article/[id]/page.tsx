@@ -72,7 +72,12 @@ export default async function ArticlePage({ params }: { params: { id: string } }
     : false;
 
   // 조회수 증가 (데모 단순화를 위해 상세 페이지 렌더링 시 직접 처리)
-  await prisma.article.update({ where: { id: article.id }, data: { viewCount: { increment: 1 } } });
+  // updatedAt은 @updatedAt이라 update() 호출만으로 자동 갱신됨 — 조회는 "수정"이 아니므로 기존 값을
+  // 그대로 돌려줘서 관리자 "최종편집일"이 조회수만 올라도 오늘로 밀리던 문제를 막음 (2026-09-22)
+  await prisma.article.update({
+    where: { id: article.id },
+    data: { viewCount: { increment: 1 }, updatedAt: article.updatedAt },
+  });
 
   const subtitles = [article.subtitle1, article.subtitle2, article.subtitle3].filter(Boolean) as string[];
   const activeArticleBanners = articleBanners.slice(0, siteConfig?.articleBannerCount ?? 0);

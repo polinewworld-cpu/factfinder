@@ -13,9 +13,11 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
 
   if (!article) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
+  // updatedAt은 @updatedAt이라 update() 호출만으로 자동 갱신됨 — 조회수 증가는 "수정"이 아니므로
+  // 명시적으로 기존 값을 그대로 돌려줘서 "최종편집일"이 조회할 때마다 오늘로 밀리는 걸 막음 (2026-09-22)
   await prisma.article.update({
     where: { id: params.id },
-    data: { viewCount: { increment: 1 } },
+    data: { viewCount: { increment: 1 }, updatedAt: article.updatedAt },
   });
 
   return NextResponse.json(article);

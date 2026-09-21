@@ -49,7 +49,12 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   const url = `/api/blob/${filename}`;
 
   if (isDefaultVoice) {
-    await prisma.article.update({ where: { id: article.id }, data: { audioUrl: url } });
+    // updatedAt은 @updatedAt이라 update() 호출만으로 자동 갱신됨 — 오디오 캐시 채우기는
+    // "수정"이 아니므로 기존 값을 그대로 돌려줌 (2026-09-22)
+    await prisma.article.update({
+      where: { id: article.id },
+      data: { audioUrl: url, updatedAt: article.updatedAt },
+    });
   }
 
   return NextResponse.json({ url, cached: false, tierUsed });
