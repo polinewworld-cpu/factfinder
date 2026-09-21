@@ -55,7 +55,11 @@ export default function VideoMasonryCard({ video }: { video: MasonryVideo }) {
   return (
     <article className="pin">
       <a className="pin-media" href={href} target="_blank" rel="noopener noreferrer">
-        <img src={video.thumbnailUrl} alt="" style={{ aspectRatio: '1 / 0.72' }} />
+        <img
+          src={video.thumbnailUrl}
+          alt=""
+          style={{ aspectRatio: video.kind === 'SHORT' ? '9 / 16' : '16 / 9', objectFit: 'cover' }}
+        />
         <div className="pin-overlay">
           {isChiefEditor && (
             <button
