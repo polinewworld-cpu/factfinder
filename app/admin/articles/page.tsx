@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState } from 'react';
 
 type Me = { id: string; role: string };
-type Category = { id: string; name: string };
 type Row = {
   id: string;
   title: string;
@@ -15,7 +14,6 @@ type Row = {
   updatedAt: string;
   publishedAt: string | null;
   author: { id: string; name: string };
-  category: { id: string; name: string } | null;
   commentCount: number;
 };
 
@@ -44,12 +42,10 @@ function fmtDateTime(v: string | null) {
 // 사용자 지시: 검색 영역은 한 줄로 압축, 정렬은 필수, 제목을 눌러 어떤 기사든 편집장이 바로 수정 가능해야 함.
 export default function AdminArticlesPage() {
   const [me, setMe] = useState<Me | null | 'loading'>('loading');
-  const [categories, setCategories] = useState<Category[]>([]);
 
   const [queryInput, setQueryInput] = useState('');
   const [query, setQuery] = useState('');
   const [status, setStatus] = useState('ALL');
-  const [categoryId, setCategoryId] = useState('');
   const [sortBy, setSortBy] = useState<SortField>('updatedAt');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [page, setPage] = useState(1);
@@ -62,8 +58,6 @@ export default function AdminArticlesPage() {
     (async () => {
       const meRes = await fetch('/api/me');
       setMe(meRes.ok ? await meRes.json() : null);
-      const catRes = await fetch('/api/categories');
-      if (catRes.ok) setCategories(await catRes.json());
     })();
   }, []);
 
@@ -73,7 +67,6 @@ export default function AdminArticlesPage() {
     const params = new URLSearchParams();
     if (query.trim()) params.set('q', query.trim());
     if (status !== 'ALL') params.set('status', status);
-    if (categoryId) params.set('categoryId', categoryId);
     params.set('sortBy', sortBy);
     params.set('sortDir', sortDir);
     params.set('page', String(page));
@@ -85,7 +78,7 @@ export default function AdminArticlesPage() {
         setTotal(data.total ?? 0);
       })
       .finally(() => setLoading(false));
-  }, [me, query, status, categoryId, sortBy, sortDir, page]);
+  }, [me, query, status, sortBy, sortDir, page]);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const windowStart = Math.floor((page - 1) / PAGE_WINDOW) * PAGE_WINDOW + 1;
@@ -177,21 +170,6 @@ export default function AdminArticlesPage() {
           <option value="DRAFT">승인대기</option>
           <option value="AUTOSAVE">임시저장</option>
         </select>
-        <select
-          value={categoryId}
-          onChange={(e) => {
-            setCategoryId(e.target.value);
-            setPage(1);
-          }}
-          className="text-sm border border-gray-200 rounded-lg px-2 py-1.5 outline-none focus:border-brand"
-        >
-          <option value="">전체 카테고리</option>
-          {categories.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name}
-            </option>
-          ))}
-        </select>
         <button
           type="button"
           onClick={submitSearch}
@@ -202,11 +180,10 @@ export default function AdminArticlesPage() {
       </div>
 
       <div className="overflow-x-auto border border-gray-200 rounded-xl">
-        <table className="w-full text-sm border-collapse min-w-[720px]">
+        <table className="w-full text-sm border-collapse min-w-[620px]">
           <thead>
-            <tr className="text-left text-gray-400 border-b border-gray-200 bg-gray-50">
+            <tr className="text-left text-gray-400 border-b border-gray-200 bg-gray-50 whitespace-nowrap">
               <SortTh field="title" label="제목" className="pl-4 pr-4" />
-              <th className="py-2 pr-4 font-semibold">카테고리</th>
               <th className="py-2 pr-4 font-semibold">작성자</th>
               <SortTh field="status" label="상태" className="pr-4" />
               <SortTh field="viewCount" label="조회수" className="pr-4" />
@@ -218,14 +195,14 @@ export default function AdminArticlesPage() {
           <tbody>
             {loading && (
               <tr>
-                <td colSpan={8} className="py-8 text-center text-gray-400">
+                <td colSpan={7} className="py-8 text-center text-gray-400">
                   불러오는 중…
                 </td>
               </tr>
             )}
             {!loading && rows.length === 0 && (
               <tr>
-                <td colSpan={8} className="py-8 text-center text-gray-400">
+                <td colSpan={7} className="py-8 text-center text-gray-400">
                   검색 결과가 없습니다.
                 </td>
               </tr>
@@ -239,28 +216,33 @@ export default function AdminArticlesPage() {
                       {r.title || '(제목 없음)'}
                     </a>
                   </td>
-                  <td className="py-2 pr-4 text-gray-500">{r.category?.name ?? '-'}</td>
-                  <td className="py-2 pr-4 text-gray-500">{r.author?.name ?? '-'}</td>
-                  <td className="py-2 pr-4">
-                    <span className={`text-xs font-semibold border rounded-full px-2 py-0.5 ${STATUS_STYLE[r.status]}`}>
+                  <td className="py-2 pr-4 text-gray-500 whitespace-nowrap">{r.author?.name ?? '-'}</td>
+                  <td className="py-2 pr-4 whitespace-nowrap">
+                    <span className={`text-xs font-semibold border rounded-full px-2 py-0.5 whitespace-nowrap ${STATUS_STYLE[r.status]}`}>
                       {STATUS_LABEL[r.status]}
                     </span>
                   </td>
-                  <td className="py-2 pr-4 text-gray-500">{r.viewCount.toLocaleString('ko-KR')}</td>
-                  <td className="py-2 pr-4 text-gray-500">{r.commentCount.toLocaleString('ko-KR')}</td>
-                  <td className="py-2 pr-4">
-                    <button
-                      type="button"
-                      onClick={() => toggleShowOnMain(r)}
-                      className={`text-xs font-semibold border rounded-full px-2 py-0.5 ${
-                        r.showOnMain
-                          ? 'bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100'
-                          : 'bg-brand/10 text-brand border-brand/30 hover:bg-brand/20'
-                      }`}
-                      title={r.showOnMain ? '메인에서 제외' : '메인에 다시 노출'}
-                    >
-                      {r.showOnMain ? '노출중' : '메인제외됨 · 복구'}
-                    </button>
+                  <td className="py-2 pr-4 text-gray-500 whitespace-nowrap">{r.viewCount.toLocaleString('ko-KR')}</td>
+                  <td className="py-2 pr-4 text-gray-500 whitespace-nowrap">{r.commentCount.toLocaleString('ko-KR')}</td>
+                  <td className="py-2 pr-4 whitespace-nowrap">
+                    {/* 승인대기(DRAFT)·임시저장(AUTOSAVE)은 애초에 메인에 노출될 수 없으므로(홈 피드는 PUBLISHED만 조회)
+                        showOnMain 값과 무관하게 공란 — 발행된 기사만 노출 상태를 표시/전환 (2026-09-22) */}
+                    {r.status === 'PUBLISHED' ? (
+                      <button
+                        type="button"
+                        onClick={() => toggleShowOnMain(r)}
+                        className={`text-xs font-semibold border rounded-full px-2 py-0.5 whitespace-nowrap ${
+                          r.showOnMain
+                            ? 'bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100'
+                            : 'bg-brand/10 text-brand border-brand/30 hover:bg-brand/20'
+                        }`}
+                        title={r.showOnMain ? '메인에서 제외' : '메인에 다시 노출'}
+                      >
+                        {r.showOnMain ? '노출중' : '메인제외됨 · 복구'}
+                      </button>
+                    ) : (
+                      <span className="text-gray-300 text-xs">–</span>
+                    )}
                   </td>
                   <td className="py-2 pr-4 text-gray-400 text-xs">{fmtDateTime(r.updatedAt)}</td>
                 </tr>
