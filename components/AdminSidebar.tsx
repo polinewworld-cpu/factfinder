@@ -31,7 +31,7 @@ export default function AdminSidebar() {
   const pathname = usePathname();
 
   return (
-    <nav className="w-52 shrink-0 py-8 pr-2" aria-label="관리자 메뉴">
+    <nav className="w-40 shrink-0 py-8" aria-label="관리자 메뉴">
       <p className="mb-4 px-3 text-xs font-bold uppercase tracking-wide text-gray-400">관리자</p>
       <div className="space-y-1">
         {NAV.map((item) => {
