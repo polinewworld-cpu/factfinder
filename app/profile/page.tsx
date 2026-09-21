@@ -224,7 +224,7 @@ export default function ProfilePage() {
         저장
       </button>
 
-      {(me.role === 'READER' || me.role === 'DONOR_READER') && (
+      {me.role === 'READER' && (
         <div className="mt-10 pt-6 border-t border-gray-200">
           <h2 className="text-sm font-bold text-gray-900 mb-2">기자 신청</h2>
           {me.reporterApplicationStatus === 'PENDING' && (
