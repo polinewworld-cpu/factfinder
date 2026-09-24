@@ -4,30 +4,16 @@ import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { SearchIcon } from './icons';
 
-// 헤더 검색창 — 평소엔 동그란 돋보기 버튼, 마우스를 올리거나 클릭/⌘K(Ctrl+K)하면 캡슐로 펼쳐짐.
+// 헤더 검색창 — 평소엔 동그란 돋보기 버튼, 마우스를 올리거나 클릭하면 캡슐로 펼쳐짐.
 // 제출은 기존과 동일하게 /search?q= 로 이동.
 export default function HeaderSearch() {
   const [isHovered, setIsHovered] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
   const [wantFocus, setWantFocus] = useState(false);
   const [query, setQuery] = useState('');
-  const [isMac, setIsMac] = useState(true);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const isExpanded = isHovered || isFocused || wantFocus || query.length > 0;
-
-  useEffect(() => {
-    setIsMac(/Mac|iPhone|iPad/.test(navigator.platform));
-    const onKey = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
-        e.preventDefault();
-        setWantFocus(true);
-        inputRef.current?.focus();
-      }
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, []);
 
   // 접힌 상태에선 input이 아직 없으므로, 펼쳐져 렌더된 뒤에 포커스
   useEffect(() => {
@@ -92,7 +78,7 @@ export default function HeaderSearch() {
                 placeholder="기사제목, 본문, 기자이름으로 검색해주세요"
                 aria-label="기사 검색"
               />
-              {query.length > 0 ? (
+              {query.length > 0 && (
                 <motion.button
                   type="button"
                   className="search-capsule-clear"
@@ -108,8 +94,6 @@ export default function HeaderSearch() {
                     <path d="M6 6l12 12M18 6 6 18" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
                   </svg>
                 </motion.button>
-              ) : (
-                <kbd className="search-capsule-kbd">{isMac ? '⌘ K' : 'Ctrl K'}</kbd>
               )}
             </motion.div>
           )}
