@@ -1,6 +1,6 @@
 'use client';
 
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 
 type NavItem = { href: string; label: string };
 
@@ -20,22 +20,25 @@ const NAV: NavItem[] = [
   { href: '/admin/newsletter', label: '뉴스레터 발송' },
 ];
 
-function isActive(href: string, pathname: string | null) {
+// 같은 경로라도 쿼리가 다르면 다른 메뉴(예: 전체 회원 vs 기자관리 ?role=REPORTER) — role 값까지 비교해야 두 개가 동시에 켜지지 않음
+function isActive(href: string, pathname: string | null, role: string | null) {
   if (!pathname) return false;
-  const path = href.split('?')[0];
+  const [path, query] = href.split('?');
   if (path === '/admin') return pathname === '/admin';
-  return pathname === path || pathname.startsWith(`${path}/`);
+  if (pathname !== path && !pathname.startsWith(`${path}/`)) return false;
+  return (new URLSearchParams(query).get('role') ?? null) === role;
 }
 
 export default function AdminSidebar() {
   const pathname = usePathname();
+  const role = useSearchParams().get('role');
 
   return (
     <nav className="w-40 shrink-0 py-8" aria-label="관리자 메뉴">
       <p className="mb-4 px-3 text-xs font-bold uppercase tracking-wide text-gray-400">관리자</p>
       <div className="space-y-1">
         {NAV.map((item) => {
-          const active = isActive(item.href, pathname);
+          const active = isActive(item.href, pathname, role);
           return (
             <a
               key={item.href}
