@@ -1,0 +1,14 @@
+# Render 무료 인스턴스가 15분 무접속 시 잠드는 것 방지 — 10분마다 /api/health 호출
+name: keepalive
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping health endpoint
+        run: curl -fsS --retry 3 --retry-delay 10 --max-time 90 https://factfinder-85w9.onrender.com/api/health
