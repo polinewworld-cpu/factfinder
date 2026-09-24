@@ -1,6 +1,7 @@
 import { getCurrentUser } from '@/lib/session';
 import { ROLES, WRITER_ROLES } from '@/lib/roles';
-import { LogoMark, SearchIcon } from './icons';
+import { LogoMark } from './icons';
+import HeaderSearch from './HeaderSearch';
 import AccountMenu from './AccountMenu';
 import MarketTicker from './MarketTicker';
 import CategoryNav from './CategoryNav';
@@ -15,10 +16,7 @@ export default async function Header() {
           <LogoMark />
         </a>
 
-        <form className="search" action="/search" role="search">
-          <SearchIcon />
-          <input name="q" placeholder="기사, 인물, 이슈 검색" aria-label="기사 검색" />
-        </form>
+        <HeaderSearch />
 
         <nav className="header-actions" aria-label="주요 메뉴">
           <MarketTicker />
