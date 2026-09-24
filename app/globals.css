@@ -95,7 +95,8 @@ img {
 .logo-mark {
   /* 새 로고(가로형 워드마크, 843.54 x 281.08)가 자체적으로 "팩트파인더" 텍스트를 포함하고 있어서
      별도의 .brand-name 텍스트 없이 이 하나만으로 브랜드를 표시함 (2026-09-12 로고 교체) */
-  height: 34px;
+  /* 로고 박스의 가장 짧은 세로 구간(viewBox 248.06)이 검색창 높이(52px)와 같도록: 52 * 281.08 / 248.06 */
+  height: 58.9px;
   width: auto;
   display: block;
 }
@@ -162,7 +163,7 @@ img {
 }
 
 .search-capsule.is-expanded {
-  box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.12), 0 0 0 1.5px rgba(193, 180, 216, 0.5),
+  box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.12), 0 0 0 1.5px rgba(255, 45, 138, 0.45),
     inset 0 1px 1px rgba(255, 255, 255, 0.9);
 }
 
