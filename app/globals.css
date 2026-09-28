@@ -883,9 +883,6 @@ img {
 }
 
 .composer-actions {
-  position: sticky;
-  bottom: 16px;
-  z-index: 10;
   display: flex;
   align-items: center;
   justify-content: flex-end;
