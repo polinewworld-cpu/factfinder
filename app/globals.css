@@ -1442,6 +1442,14 @@ img {
   font-weight: 800;
 }
 
+.article-kicker a {
+  color: inherit;
+}
+
+.article-kicker a:hover {
+  text-decoration: underline;
+}
+
 .article-body h1 {
   margin: 0;
   font-family: var(--title);
