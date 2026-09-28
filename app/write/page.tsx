@@ -906,10 +906,14 @@ export default function WritePage() {
       </div>
 
       <div className="composer-panel">
-        <label className={`composer-chip${pollEnabled ? ' is-on' : ''}`}>
-          <input type="checkbox" checked={pollEnabled} onChange={(e) => togglePoll(e.target.checked)} />
+        <button
+          type="button"
+          aria-pressed={pollEnabled}
+          onClick={() => togglePoll(!pollEnabled)}
+          className={`composer-toggle${pollEnabled ? ' is-on' : ''}`}
+        >
           설문 추가
-        </label>
+        </button>
         {pollEnabled && (
           <div className="mt-3 space-y-2">
             <input

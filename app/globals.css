@@ -474,31 +474,6 @@ img {
   border-color: var(--accent);
 }
 
-.composer-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  height: 30px;
-  padding: 0 12px;
-  border: 1px solid var(--hairline);
-  border-radius: 999px;
-  background: var(--surface);
-  color: var(--mute);
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.composer-chip.is-on {
-  border-color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 8%, var(--surface));
-  color: var(--accent);
-}
-
-.composer-chip input {
-  accent-color: var(--accent);
-}
-
 .composer-toggle,
 .composer-submit {
   display: inline-flex;
