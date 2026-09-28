@@ -5,7 +5,7 @@ import { randomUUID } from 'crypto';
 
 // 커버이미지 등 파일 업로드 — Netlify 배포 환경에선 Netlify Blobs에, 로컬 개발 환경에선 프로젝트 폴더에 저장 (lib/blobStorage 참고).
 // 업로드된 파일은 /api/blob/[filename] 라우트로 서빙됨.
-const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/avif'];
 const MAX_SIZE = 10 * 1024 * 1024; // 10MB
 
 export async function POST(req: NextRequest) {
@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: '파일이 없습니다' }, { status: 400 });
   }
   if (!ALLOWED_TYPES.includes(file.type)) {
-    return NextResponse.json({ error: '이미지 파일만 업로드 가능합니다 (jpg/png/webp/gif)' }, { status: 400 });
+    return NextResponse.json({ error: '이미지 파일만 업로드 가능합니다 (jpg/png/webp/gif/avif)' }, { status: 400 });
   }
   if (file.size > MAX_SIZE) {
     // 브라우저 쪽(lib/imageCompress.ts)에서 업로드 전에 10MB 이내로 자동 압축을 시도하므로
