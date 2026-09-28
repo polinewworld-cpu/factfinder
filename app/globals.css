@@ -1585,19 +1585,22 @@ img {
   color: #ec1561;
 }
 
-/* 기사 말미 "기자 프로필" 카드 — 프로필사진/이름/이메일/SNS + 최신 기사 5개 (2026-09-12 신설) */
+/* 기사 말미 기자 프로필 — 푸터와 같이 검정 상단선에 매달리고, 회색 하단선 아래로 목록이 매달림. 박스/배경 없음 */
 .reporter-card {
-  margin: 32px 0;
-  padding: 20px;
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius);
-  background: color-mix(in srgb, var(--ink) 2%, transparent);
+  margin: 40px 0 32px;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  border-top: 1px solid #000;
 }
 
 .reporter-card-head {
   display: flex;
   align-items: center;
   gap: 12px;
+  padding: 8px 0 14px;
+  border-bottom: 1px solid var(--hairline);
 }
 
 .reporter-card-avatar {
@@ -1638,21 +1641,21 @@ img {
   font-size: 13px;
 }
 
-/* 기자 프로필 카드 하단 — 왼쪽 "기자가 쓴 최신기사" / 오른쪽 "{기자명}의 BEST 기사(1년 누적)" 2단 배치 (2026-09-12) */
+/* 기자 프로필 아래 — 왼쪽 최신기사 / 오른쪽 BEST 기사. 회색선에서 매달림 */
 .reporter-card-columns {
-  margin: 16px 0 0;
-  padding: 14px 0 0;
-  border-top: 1px solid var(--hairline);
+  margin: 0;
+  padding: 8px 0 0;
+  border-top: none;
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 24px;
 }
 
 .reporter-card-column-title {
-  margin: 0 0 12px;
+  margin: 0 0 8px;
   color: var(--ink);
   font-family: var(--title);
-  font-size: 17px;
+  font-size: 15px;
   font-weight: 700;
 }
 
