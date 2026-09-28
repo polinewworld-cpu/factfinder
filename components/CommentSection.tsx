@@ -57,8 +57,8 @@ export default function CommentSection({ articleId }: { articleId: string }) {
   }
 
   return (
-    <section id="comments" className="mt-10 pt-8 border-t border-gray-200">
-      <h3 className="font-bold text-gray-900 mb-4">댓글 {comments.length}</h3>
+    <section id="comments" className="article-comments">
+      <h3 className="article-comments-title">댓글 {comments.length}</h3>
 
       {/* 비로그인 상태에서도 입력창은 그대로 보이고, "등록"을 누르는 순간에만 로그인 유도 레이어가 뜸 (2026-09-12 개편) */}
       <div className="mb-6">
@@ -123,7 +123,6 @@ export default function CommentSection({ articleId }: { articleId: string }) {
             )}
           </li>
         ))}
-        {comments.length === 0 && <p className="text-gray-400 text-sm">첫 댓글을 남겨보세요.</p>}
       </ul>
     </section>
   );
