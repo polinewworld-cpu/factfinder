@@ -3,20 +3,20 @@
 @tailwind utilities;
 
 :root {
-  --canvas: #f7f5f1;
+  --canvas: #ffffff;
   --surface: #ffffff;
-  --ink: #171512;
-  --ink-soft: #2c2924;
-  --body: #3b3833;
-  --mute: #6f6a63;
-  --ash: #918c84;
-  --hairline: #e4dfd6;
-  --chip: #efece6;
-  --chip-hover: #e6e1d8;
+  --ink: #1a1a1a;
+  --ink-soft: #2e2e2e;
+  --body: #404040;
+  --mute: #808080;
+  --ash: #808080;
+  --hairline: #e6e6e6;
+  --chip: #f2f2f2;
+  --chip-hover: #ebebeb;
   --accent: #ff2d8a;
   --accent-pressed: #e01874;
-  --overlay: rgba(23, 21, 18, 0.42);
-  --shadow: 0 12px 32px rgba(23, 21, 18, 0.16);
+  --overlay: rgba(0, 0, 0, 0.42);
+  --shadow: 0 12px 32px rgba(0, 0, 0, 0.16);
   --header-h: 80px;
   --radius: 16px;
   --radius-lg: 24px;
@@ -160,7 +160,7 @@ img {
   border-radius: 999px;
   background: #fff;
   border: 1px solid rgba(0, 0, 0, 0.08);
-  color: #111827;
+  color: var(--ink);
   box-shadow: 0 10px 25px -8px rgba(0, 0, 0, 0.08), inset 0 1px 1px rgba(255, 255, 255, 0.9);
   transition: box-shadow 0.2s;
 }
@@ -199,15 +199,15 @@ img {
   border: 0;
   outline: none;
   background: transparent;
-  color: #111827;
-  caret-color: #111827;
+  color: var(--ink);
+  caret-color: var(--ink);
   font-size: 15px;
   font-weight: 500;
   cursor: text;
 }
 
 .search-capsule-body input::placeholder {
-  color: #9ca3af;
+  color: var(--ash);
 }
 
 
@@ -300,8 +300,8 @@ img {
   overflow: hidden;
   display: grid;
   place-items: center;
-  background: #2a241c;
-  color: #f4efe6;
+  background: #1a1a1a;
+  color: #ffffff;
   font-size: 13px;
   font-weight: 700;
   text-decoration: none;
@@ -437,7 +437,7 @@ img {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 10px;
+  margin-bottom: 28px;
 }
 
 .composer-bar-left {
@@ -488,48 +488,90 @@ img {
   accent-color: var(--accent);
 }
 
+.composer-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 16px;
+  border: 1px solid var(--hairline);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--mute);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.25;
+}
+
+.composer-toggle:hover {
+  border-color: var(--accent);
+}
+
+.composer-toggle.is-on {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #fff;
+  font-weight: 700;
+}
+
+.composer-toggle.is-on:hover {
+  background: var(--accent-pressed);
+  border-color: var(--accent-pressed);
+}
+
 .composer-save {
   margin-left: auto;
+  padding-top: 10px;
   font-size: 12px;
   color: var(--ash);
   white-space: nowrap;
 }
 
+.composer-title-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.composer-title-row .composer-title {
+  flex: 1;
+  min-width: 0;
+}
+
 .composer-title {
   width: 100%;
-  margin: 0 0 2px;
+  margin: 0 0 8px;
   padding: 0;
   border: 0;
   background: transparent;
   outline: none;
   color: var(--ink);
   font-family: var(--title);
-  font-size: 26px;
+  font-size: 34px;
   font-weight: 700;
   letter-spacing: -0.03em;
-  line-height: 1.2;
+  line-height: 1.25;
 }
 
 .composer-title::placeholder {
-  color: #c8c2b8;
+  color: var(--ash);
 }
 
 .composer-title:disabled,
 .composer-title:disabled::placeholder {
-  color: #ddd8cf;
+  color: var(--ash);
 }
 
 .composer-line {
   width: 100%;
   margin: 0;
-  padding: 3px 0;
+  padding: 8px 0;
   border: 0;
   border-bottom: 1px solid transparent;
   background: transparent;
   outline: none;
   color: var(--body);
-  font-size: 14px;
-  line-height: 1.4;
+  font-size: 15px;
+  line-height: 1.5;
 }
 
 .composer-line:focus {
@@ -537,29 +579,36 @@ img {
 }
 
 .composer-line::placeholder {
-  color: #c8c2b8;
+  color: var(--ash);
 }
 
 .composer-subs {
   display: flex;
   flex-direction: column;
   gap: 0;
-  margin: 0 0 14px;
+  margin: 4px 0 8px;
 }
 
 .composer-picks {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr;
   gap: 12px;
   margin: 22px 0 0;
   align-items: start;
 }
 
+@media (max-width: 720px) {
+  .composer-picks {
+    grid-template-columns: 1fr;
+  }
+}
+
 .tag-select {
   position: relative;
   display: flex;
-  align-items: center;
-  gap: 8px;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
   min-width: 0;
 }
 
@@ -710,8 +759,7 @@ img {
 }
 
 .composer-editor {
-  margin-top: 0;
-  overflow: hidden;
+  margin-top: 28px;
   border: 1px solid var(--hairline);
   border-radius: 18px;
   background: var(--surface);
@@ -763,11 +811,15 @@ img {
   font-size: 17px;
   line-height: 1.8;
   outline: none;
+  cursor: text;
+  -webkit-user-select: text;
+  user-select: text;
 }
 
 .composer-body[data-placeholder]:empty:before {
   content: attr(data-placeholder);
-  color: #c8c2b8;
+  color: var(--ash);
+  pointer-events: none;
 }
 
 .composer-panel {
@@ -802,14 +854,18 @@ img {
   bottom: 16px;
   z-index: 10;
   display: flex;
+  align-items: center;
   justify-content: flex-end;
   gap: 8px;
   margin-top: 28px;
-  padding: 10px;
-  border: 1px solid var(--hairline);
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--surface) 90%, transparent);
-  backdrop-filter: blur(16px);
+  padding: 0;
+}
+
+.composer-actions-btns {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
 }
 
 .sr-only {
@@ -932,7 +988,7 @@ img {
 .pin-fallback {
   width: 100%;
   object-fit: cover;
-  background: #ddd8cf;
+  background: var(--hairline);
 }
 
 /* 카드 마우스 오버 시 메인 이미지를 흑백으로 전환 (2026-09-12 신설) */
@@ -1432,7 +1488,7 @@ img {
 
 [contenteditable] .article-figure figcaption:empty:before {
   content: attr(data-placeholder);
-  color: #9ca3af;
+  color: var(--ash);
 }
 
 /* 글쓰기 화면에서 본문 이미지를 클릭해 선택하면 테두리로 표시 — 이 상태에서 Delete/Backspace로 삭제 가능 (2026-09-12 신설) */
@@ -1452,7 +1508,7 @@ img {
   list-style: none;
   margin: 24px 0;
   padding: 16px 0 0;
-  border-top: 1px solid #e5e7eb;
+  border-top: 1px solid var(--hairline);
 }
 
 .line-ad {
@@ -1476,7 +1532,7 @@ img {
 .line-ad-text {
   font-size: 1.05rem;
   font-weight: 700;
-  color: #111827;
+  color: var(--ink);
   line-height: 1.4;
 }
 
@@ -1641,7 +1697,7 @@ img {
   align-items: center;
   justify-content: center;
   padding: 20px;
-  background: rgba(23, 21, 18, 0.55);
+  background: rgba(0, 0, 0, 0.55);
 }
 
 .share-modal {
@@ -1802,7 +1858,7 @@ img {
 }
 
 .hl-mark {
-  /* 색상은 인라인 style(background) — 형광펜 노란/시안 */
+  /* 색상은 인라인 style(background) — 형광펜 시안 */
   padding: 0 1px;
   border-radius: 2px;
 }

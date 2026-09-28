@@ -17,11 +17,8 @@ type ArticleSearchResult = { id: string; title: string; author: { name: string }
 
 const WRITER_ROLES = ['REPORTER', 'COLUMNIST', 'CHIEF_EDITOR'];
 
-// 형광펜 2종 — swatch는 툴바의 동그라미 버튼 색, mark는 본문에 칠해지는 반투명 하이라이트 색
-const HL_COLORS = [
-  { key: 'yellow', swatch: '#f5ff3d', mark: 'rgba(245,255,61,0.55)' },
-  { key: 'cyan', swatch: '#6ef4ff', mark: 'rgba(110,244,255,0.5)' },
-];
+// 형광펜 — swatch는 툴바의 동그라미 버튼 색, mark는 본문에 칠해지는 반투명 하이라이트 색
+const HL_COLORS = [{ key: 'cyan', swatch: '#6ef4ff', mark: 'rgba(110,244,255,0.5)' }];
 
 // 기사 수정 — /write?id=... 로 들어오면 해당 기사를 불러와 채워넣음 (2026-09-11 신설, 관리자 "전체 기사"에서 진입)
 function getEditIdFromUrl(): string | null {
@@ -686,54 +683,20 @@ export default function WritePage() {
     <div className="composer">
       {errorMsg && <p className="text-red-600 text-sm mb-4">{errorMsg}</p>}
 
-      <div className="composer-bar">
-        <div className="composer-bar-left">
-          <select
-            value={categoryId}
-            onChange={(e) => {
-              setCategoryId(e.target.value);
-              markDirty();
-            }}
-            className="composer-select"
-            aria-label="카테고리"
-          >
-            <option value="">카테고리</option>
-            {categories.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
-
-          {me.role !== 'REPORTER' ? (
-            <label className={`composer-chip${isFrontpageTop ? ' is-on' : ''}`}>
-              <input
-                type="checkbox"
-                checked={isFrontpageTop}
-                onChange={(e) => {
-                  setIsFrontpageTop(e.target.checked);
-                  markDirty();
-                }}
-              />
-              1면톱
-            </label>
-          ) : null}
-        </div>
+      <div className="composer-title-row">
+        <input
+          value={title}
+          onChange={(e) => {
+            setTitle(e.target.value);
+            markDirty();
+          }}
+          placeholder="제목"
+          className="composer-title"
+        />
         <span className="composer-save">
           {saving ? '저장 중…' : lastSavedAt ? `저장됨 ${lastSavedAt.toLocaleTimeString('ko-KR')}` : ''}
         </span>
       </div>
-
-      <input
-        value={title}
-        onChange={(e) => {
-          setTitle(e.target.value);
-          markDirty();
-        }}
-        disabled={!categoryId}
-        placeholder={categoryId ? '제목' : '카테고리를 먼저 선택하세요'}
-        className="composer-title"
-      />
 
       <div className="composer-subs">
         {[
@@ -782,7 +745,7 @@ export default function WritePage() {
                 onClick={() => applyHighlight(c.mark)}
                 className="w-5 h-5 rounded-full border border-black/10 shrink-0"
                 style={{ background: c.swatch, boxShadow: `0 0 8px ${c.swatch}` }}
-                title={c.key === 'yellow' ? '형광펜 노랑' : '형광펜 시안'}
+                title="형광펜"
               />
             ))}
           </span>
@@ -820,7 +783,7 @@ export default function WritePage() {
             className="toolbar-btn"
             title="특수문자 삽입 (누르면 문자 레이어가 열립니다)"
           >
-            @
+            특수문자
           </button>
         </div>
         <div
@@ -834,10 +797,24 @@ export default function WritePage() {
           onBlur={clearImageSelection}
           className="composer-body"
           data-placeholder="본문을 입력하세요"
+          tabIndex={0}
         />
       </div>
 
       <div className="composer-picks">
+        <TagMultiSelect
+          label="카테고리"
+          options={categories.map((c) => ({ id: c.id, name: c.name }))}
+          selectedIds={categoryId ? [categoryId] : []}
+          onToggle={(id) => {
+            setCategoryId(id);
+            markDirty();
+          }}
+          multiple={false}
+          canCreate={false}
+          searchable={false}
+          placeholder="카테고리"
+        />
         <TagMultiSelect
           label="키워드"
           options={keywords}
@@ -976,21 +953,36 @@ export default function WritePage() {
       </div>
 
       <div className="composer-actions">
-        <button
-          type="button"
-          onClick={doAutosave}
-          className="text-sm text-gray-500 border border-gray-200 rounded-full px-4 py-2 hover:border-brand"
-        >
-          임시저장
-        </button>
-        <button
-          type="button"
-          disabled={submitting}
-          onClick={handleSubmit}
-          className="text-sm font-bold text-white bg-brand rounded-full px-6 py-2 hover:bg-brand-dark disabled:opacity-50"
-        >
-          {submitting ? '처리 중…' : submitLabel}
-        </button>
+        {me.role !== 'REPORTER' ? (
+          <button
+            type="button"
+            aria-pressed={isFrontpageTop}
+            onClick={() => {
+              setIsFrontpageTop((v) => !v);
+              markDirty();
+            }}
+            className={`composer-toggle${isFrontpageTop ? ' is-on' : ''}`}
+          >
+            1면톱
+          </button>
+        ) : null}
+        <div className="composer-actions-btns">
+          <button
+            type="button"
+            onClick={doAutosave}
+            className="text-sm text-gray-500 border border-gray-200 rounded-full px-4 py-2 hover:border-brand"
+          >
+            임시저장
+          </button>
+          <button
+            type="button"
+            disabled={submitting}
+            onClick={handleSubmit}
+            className="text-sm font-bold text-white bg-brand rounded-full px-6 py-2 hover:bg-brand-dark disabled:opacity-50"
+          >
+            {submitting ? '처리 중…' : submitLabel}
+          </button>
+        </div>
       </div>
 
       <PhotoGalleryModal

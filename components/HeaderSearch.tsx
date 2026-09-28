@@ -52,7 +52,7 @@ export default function HeaderSearch() {
         <motion.span
           className="search-capsule-icon"
           initial={false}
-          animate={{ scale: isExpanded ? 1.08 : 1, color: isExpanded ? '#ff2d8a' : '#6B7280' }}
+          animate={{ scale: isExpanded ? 1.08 : 1, color: isExpanded ? '#ff2d8a' : '#808080' }}
           transition={{ type: 'spring', stiffness: 300, damping: 20 }}
         >
           <SearchIcon />
