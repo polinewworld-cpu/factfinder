@@ -873,7 +873,12 @@ export default function WritePage() {
 
       <div className="composer-panel">
         <div className="composer-panel-head">
-          <p className="composer-panel-title">관련기사</p>
+          <div>
+            <p className="composer-panel-title">관련기사</p>
+            {relatedSelected.length === 0 && (
+              <p className="composer-hint">아직 연결된 기사가 없습니다.</p>
+            )}
+          </div>
           <button
             type="button"
             onClick={() => setRelatedModalOpen(true)}
@@ -882,8 +887,8 @@ export default function WritePage() {
             추가
           </button>
         </div>
-        {relatedSelected.length > 0 ? (
-          <div className="flex flex-wrap gap-2">
+        {relatedSelected.length > 0 && (
+          <div className="composer-panel-body flex flex-wrap gap-2">
             {relatedSelected.map((a) => (
               <span
                 key={a.id}
@@ -900,8 +905,6 @@ export default function WritePage() {
               </span>
             ))}
           </div>
-        ) : (
-          <p className="composer-hint">아직 연결된 기사가 없습니다.</p>
         )}
       </div>
 
