@@ -708,49 +708,45 @@ export default function WritePage() {
   }
 
   const formBody = (
-    <>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-xl font-bold text-gray-900">{editId ? '기사 수정' : '기사 작성'}</h1>
-        <span className="text-xs text-gray-400">
-          {saving ? '저장 중…' : lastSavedAt ? `자동저장됨 ${lastSavedAt.toLocaleTimeString('ko-KR')}` : ''}
-        </span>
-      </div>
-
+    <div className="composer">
       {errorMsg && <p className="text-red-600 text-sm mb-4">{errorMsg}</p>}
 
-      {/* 카테고리 + 1면톱 — 제목보다 먼저 결정해야 함 (UX 개선 2026-09-11) */}
-      <div className="flex flex-wrap items-center gap-4 mb-4">
-        <select
-          value={categoryId}
-          onChange={(e) => {
-            setCategoryId(e.target.value);
-            markDirty();
-          }}
-          className="border-2 border-brand/40 rounded-lg px-3 py-2 text-sm font-semibold focus:border-brand"
-        >
-          <option value="">① 카테고리 먼저 선택</option>
-          {categories.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name}
-            </option>
-          ))}
-        </select>
+      <div className="composer-bar">
+        <div className="composer-bar-left">
+          <select
+            value={categoryId}
+            onChange={(e) => {
+              setCategoryId(e.target.value);
+              markDirty();
+            }}
+            className="composer-select"
+            aria-label="카테고리"
+          >
+            <option value="">카테고리</option>
+            {categories.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </select>
 
-        {me.role !== 'REPORTER' ? (
-          <label className="text-sm text-gray-600 flex items-center gap-2">
-            <input
-              type="checkbox"
-              checked={isFrontpageTop}
-              onChange={(e) => {
-                setIsFrontpageTop(e.target.checked);
-                markDirty();
-              }}
-            />
-            1면톱으로 지정
-          </label>
-        ) : (
-          <span className="text-xs text-gray-400 self-center">1면톱 지정은 발행 즉시 권한자만 가능합니다.</span>
-        )}
+          {me.role !== 'REPORTER' ? (
+            <label className={`composer-chip${isFrontpageTop ? ' is-on' : ''}`}>
+              <input
+                type="checkbox"
+                checked={isFrontpageTop}
+                onChange={(e) => {
+                  setIsFrontpageTop(e.target.checked);
+                  markDirty();
+                }}
+              />
+              1면톱
+            </label>
+          ) : null}
+        </div>
+        <span className="composer-save">
+          {saving ? '저장 중…' : lastSavedAt ? `저장됨 ${lastSavedAt.toLocaleTimeString('ko-KR')}` : ''}
+        </span>
       </div>
 
       <input
@@ -760,15 +756,15 @@ export default function WritePage() {
           markDirty();
         }}
         disabled={!categoryId}
-        placeholder={categoryId ? '② 제목을 입력하세요' : '먼저 카테고리를 선택하세요'}
-        className="w-full text-2xl font-bold border-b border-gray-200 pb-3 mb-4 outline-none focus:border-brand disabled:bg-transparent disabled:text-gray-300 disabled:placeholder:text-gray-300 disabled:cursor-not-allowed"
+        placeholder={categoryId ? '제목' : '카테고리를 먼저 선택하세요'}
+        className="composer-title"
       />
 
-      <div className="space-y-1.5 mb-4">
+      <div className="composer-subs">
         {[
-          { value: subtitle1, set: setSubtitle1 },
-          { value: subtitle2, set: setSubtitle2 },
-          { value: subtitle3, set: setSubtitle3 },
+          { value: subtitle1, set: setSubtitle1, ph: '부제목 1' },
+          { value: subtitle2, set: setSubtitle2, ph: '부제목 2' },
+          { value: subtitle3, set: setSubtitle3, ph: '부제목 3' },
         ].map((sub, i) => (
           <input
             key={i}
@@ -777,213 +773,201 @@ export default function WritePage() {
               sub.set(e.target.value);
               markDirty();
             }}
-            placeholder={`부제목 ${i + 1} (선택, 제목 하단에 노출)`}
-            className="w-full text-sm text-gray-700 border-b border-gray-100 pb-1.5 outline-none focus:border-brand"
+            placeholder={sub.ph}
+            className="composer-line"
           />
         ))}
+        <input
+          value={hoverText}
+          onChange={(e) => {
+            setHoverText(e.target.value);
+            markDirty();
+          }}
+          placeholder="카드 마우스 오버 문안"
+          className="composer-line"
+        />
       </div>
 
-      {/* 마우스 오버 문안 — 카드 이미지에 마우스를 올리면 이미지가 dimmed되며 흰 글씨로 뜨는 문구 (2026-09-11 신설) */}
-      <input
-        value={hoverText}
-        onChange={(e) => {
-          setHoverText(e.target.value);
-          markDirty();
-        }}
-        placeholder="마우스 오버 문안(카드 이미지에 마우스를 올리면 어둡게 되며 뜨는 흰색 문구, 선택)"
-        className="w-full text-sm text-gray-600 border-b border-gray-100 pb-2 mb-3 outline-none focus:border-brand"
-      />
-
-      {/* 키워드 — 타이틀 옆에 바로 태그 나열 (공간 압축, 2026-09-11 개편) */}
-      <div className="mb-2">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-xs font-semibold text-gray-500 shrink-0">키워드</span>
-          {keywords.map((k) => (
-            <span key={k.id} className="inline-flex items-stretch h-7">
-              <button
-                type="button"
-                onClick={() => toggleKeyword(k.id)}
-                className={`inline-flex items-center text-xs font-bold rounded-full px-3 border ${
-                  keywordIds.includes(k.id)
-                    ? 'bg-brand text-white border-brand'
-                    : 'bg-white text-gray-500 border-gray-200'
-                } ${me.role === 'CHIEF_EDITOR' ? 'rounded-r-none border-r-0' : ''}`}
-              >
-                {k.name}
-              </button>
-              {me.role === 'CHIEF_EDITOR' && (
-                <button
-                  type="button"
-                  disabled={keywordBusy}
-                  onClick={() => deleteKeywordInline(k.id)}
-                  title="키워드 삭제"
-                  className={`inline-flex items-center text-xs leading-none rounded-r-full border border-l-0 px-2 ${
-                    keywordIds.includes(k.id)
-                      ? 'bg-brand text-white border-brand'
-                      : 'bg-white text-gray-400 border-gray-200'
-                  }`}
-                >
-                  ✕
-                </button>
-              )}
-            </span>
-          ))}
-          {me.role === 'CHIEF_EDITOR' && (
-            <span className="inline-flex items-center gap-1">
-              <input
-                value={newKeywordName}
-                onChange={(e) => setNewKeywordName(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && addKeywordInline()}
-                placeholder="새 키워드"
-                className="w-24 text-xs border border-gray-200 rounded-full px-3 py-1.5 outline-none focus:border-brand"
-              />
+      <div className="composer-tags">
+        <span className="composer-tags-label">키워드</span>
+        {keywords.map((k) => (
+          <span key={k.id} className="inline-flex items-stretch h-7">
+            <button
+              type="button"
+              onClick={() => toggleKeyword(k.id)}
+              className={`inline-flex items-center text-xs font-bold rounded-full px-3 border ${
+                keywordIds.includes(k.id)
+                  ? 'bg-brand text-white border-brand'
+                  : 'bg-white text-gray-500 border-gray-200'
+              } ${me.role === 'CHIEF_EDITOR' ? 'rounded-r-none border-r-0' : ''}`}
+            >
+              {k.name}
+            </button>
+            {me.role === 'CHIEF_EDITOR' && (
               <button
                 type="button"
                 disabled={keywordBusy}
-                onClick={addKeywordInline}
-                className="text-xs font-bold text-brand border border-brand/30 rounded-full px-2.5 py-1.5 hover:bg-brand/5 disabled:opacity-50"
+                onClick={() => deleteKeywordInline(k.id)}
+                title="키워드 삭제"
+                className={`inline-flex items-center text-xs leading-none rounded-r-full border border-l-0 px-2 ${
+                  keywordIds.includes(k.id)
+                    ? 'bg-brand text-white border-brand'
+                    : 'bg-white text-gray-400 border-gray-200'
+                }`}
               >
-                + 추가
+                x
               </button>
-            </span>
-          )}
-        </div>
-        {keywordErrorMsg && <p className="text-red-600 text-xs mt-1">{keywordErrorMsg}</p>}
-      </div>
-
-      {/* 테마 — 키워드와 같은 토글 방식으로 기존 테마를 선택하거나(클릭 시 강조) 새 테마를 입력해 추가 (2026-09-12: 선택 기능 신설)
-          메인 화면 카드에 마우스를 올리면 상단 중앙에 핫핑크 배지로 노출됨 */}
-      <div className="mb-4">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-xs font-semibold text-gray-500 shrink-0">테마</span>
-          {Array.from(new Set([...allThemes, ...themeTags])).map((t) => (
-            <span key={t} className="inline-flex items-stretch h-7">
-              <button
-                type="button"
-                onClick={() => toggleTheme(t)}
-                className={`inline-flex items-center text-xs font-bold px-3 border ${
-                  themeTags.includes(t) ? 'bg-brand text-white border-brand' : 'bg-white text-gray-500 border-gray-200'
-                } ${me.role === 'CHIEF_EDITOR' ? 'rounded-l-full border-r-0' : 'rounded-full'}`}
-              >
-                {t}
-              </button>
-              {me.role === 'CHIEF_EDITOR' && (
-                <button
-                  type="button"
-                  disabled={themeBusy}
-                  onClick={() => deleteThemeInline(t)}
-                  title="테마 삭제"
-                  className={`inline-flex items-center text-xs leading-none rounded-r-full border border-l-0 px-2 ${
-                    themeTags.includes(t) ? 'bg-brand text-white border-brand' : 'bg-white text-gray-400 border-gray-200'
-                  }`}
-                >
-                  ✕
-                </button>
-              )}
-            </span>
-          ))}
+            )}
+          </span>
+        ))}
+        {me.role === 'CHIEF_EDITOR' && (
           <span className="inline-flex items-center gap-1">
             <input
-              value={newThemeName}
-              onChange={(e) => setNewThemeName(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && addThemeInline()}
-              placeholder="새 테마"
+              value={newKeywordName}
+              onChange={(e) => setNewKeywordName(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && addKeywordInline()}
+              placeholder="새 키워드"
               className="w-24 text-xs border border-gray-200 rounded-full px-3 py-1.5 outline-none focus:border-brand"
             />
             <button
               type="button"
-              onClick={addThemeInline}
-              className="text-xs font-bold text-brand border border-brand/30 rounded-full px-2.5 py-1.5 hover:bg-brand/5"
+              disabled={keywordBusy}
+              onClick={addKeywordInline}
+              className="text-xs font-bold text-brand border border-brand/30 rounded-full px-2.5 py-1.5 hover:bg-brand/5 disabled:opacity-50"
             >
-              + 추가
+              추가
             </button>
           </span>
-        </div>
+        )}
       </div>
+      {keywordErrorMsg && <p className="text-red-600 text-xs mt-1">{keywordErrorMsg}</p>}
 
-      {/* 에디터 툴바 — 스크롤해도 사이트 헤더(--header-h, 80px) 바로 아래에 붙어서 계속 보이게 고정 (2026-09-11) */}
-      <div
-        className="sticky top-20 z-10 flex flex-wrap items-center gap-1 border border-gray-200 rounded-t-lg bg-gray-50 px-2 py-1.5 shadow-sm"
-        onMouseDown={(e) => e.preventDefault()}
-      >
-        <button type="button" onClick={() => exec('bold')} className="toolbar-btn font-bold" title="굵게">
-          B
-        </button>
-        <button type="button" onClick={() => exec('italic')} className="toolbar-btn italic" title="기울임">
-          I
-        </button>
-        <button type="button" onClick={() => exec('underline')} className="toolbar-btn underline" title="밑줄">
-          U
-        </button>
-        <span className="inline-flex items-center gap-1 px-0.5">
-          {HL_COLORS.map((c) => (
+      <div className="composer-tags">
+        <span className="composer-tags-label">테마</span>
+        {Array.from(new Set([...allThemes, ...themeTags])).map((t) => (
+          <span key={t} className="inline-flex items-stretch h-7">
             <button
-              key={c.key}
               type="button"
-              onClick={() => applyHighlight(c.mark)}
-              className="w-5 h-5 rounded-full border border-black/10 shrink-0"
-              style={{ background: c.swatch }}
-              title="형광펜 마킹 (문장을 드래그로 선택 후 클릭)"
-            />
-          ))}
-        </span>
-        <button
-          type="button"
-          onClick={insertLinkForSelection}
-          className="toolbar-btn"
-          title="선택한 문장을 드래그한 뒤 누르면 URL 링크로 연결됩니다"
-        >
-          🔗링크
-        </button>
-        <span className="w-px h-5 bg-gray-300 mx-1" />
-        <label className="toolbar-btn cursor-pointer" title="사진을 업로드해서 커서 위치에 삽입">
+              onClick={() => toggleTheme(t)}
+              className={`inline-flex items-center text-xs font-bold px-3 border ${
+                themeTags.includes(t) ? 'bg-brand text-white border-brand' : 'bg-white text-gray-500 border-gray-200'
+              } ${me.role === 'CHIEF_EDITOR' ? 'rounded-l-full border-r-0' : 'rounded-full'}`}
+            >
+              {t}
+            </button>
+            {me.role === 'CHIEF_EDITOR' && (
+              <button
+                type="button"
+                disabled={themeBusy}
+                onClick={() => deleteThemeInline(t)}
+                title="테마 삭제"
+                className={`inline-flex items-center text-xs leading-none rounded-r-full border border-l-0 px-2 ${
+                  themeTags.includes(t) ? 'bg-brand text-white border-brand' : 'bg-white text-gray-400 border-gray-200'
+                }`}
+              >
+                x
+              </button>
+            )}
+          </span>
+        ))}
+        <span className="inline-flex items-center gap-1">
           <input
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onClick={captureEditorSelection}
-            onChange={handleBodyImageUpload}
+            value={newThemeName}
+            onChange={(e) => setNewThemeName(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && addThemeInline()}
+            placeholder="새 테마"
+            className="w-24 text-xs border border-gray-200 rounded-full px-3 py-1.5 outline-none focus:border-brand"
           />
-          {bodyImageUploading ? '업로드 중…' : '📷사진'}
-        </label>
-        <button
-          type="button"
-          onClick={openBodyGallery}
-          className="toolbar-btn"
-          title="사진 라이브러리(갤러리)에서 골라 커서 위치에 삽입"
-        >
-          🖼갤러리
-        </button>
-        <span className="w-px h-5 bg-gray-300 mx-1" />
-        <button
-          type="button"
-          onClick={openSpecialCharModal}
-          className="toolbar-btn"
-          title="특수문자 삽입 (누르면 문자 레이어가 열립니다)"
-        >
-          @
-        </button>
+          <button
+            type="button"
+            onClick={addThemeInline}
+            className="text-xs font-bold text-brand border border-brand/30 rounded-full px-2.5 py-1.5 hover:bg-brand/5"
+          >
+            추가
+          </button>
+        </span>
       </div>
-      <div
-        ref={editorRef}
-        contentEditable
-        suppressContentEditableWarning
-        onInput={handleEditorInput}
-        onPaste={handleEditorPaste}
-        onClick={handleEditorClick}
-        onKeyDown={handleEditorKeyDown}
-        onBlur={clearImageSelection}
-        className="min-h-[300px] border border-gray-200 rounded-b-lg p-4 leading-relaxed outline-none focus:border-brand text-gray-900"
-        data-placeholder="본문을 입력하세요"
-      />
 
-      {/* 커버이미지 — 별도 업로드 없이 본문에 삽입된 이미지 중 라디오로 선택 (첫 삽입 이미지가 기본값, 2026-09-11 개편) */}
-      <div className="mt-4">
-        <p className="text-xs font-semibold text-gray-500 mb-2">커버이미지 (본문에 삽입된 사진 중 선택)</p>
+      <div className="composer-editor">
+        <div className="composer-toolbar" onMouseDown={(e) => e.preventDefault()}>
+          <button type="button" onClick={() => exec('bold')} className="toolbar-btn font-bold" title="굵게">
+            B
+          </button>
+          <button type="button" onClick={() => exec('italic')} className="toolbar-btn italic" title="기울임">
+            I
+          </button>
+          <button type="button" onClick={() => exec('underline')} className="toolbar-btn underline" title="밑줄">
+            U
+          </button>
+          <span className="inline-flex items-center gap-1 px-0.5">
+            {HL_COLORS.map((c) => (
+              <button
+                key={c.key}
+                type="button"
+                onClick={() => applyHighlight(c.mark)}
+                className="w-5 h-5 rounded-full border border-black/10 shrink-0"
+                style={{ background: c.swatch }}
+                title="형광펜 마킹 (문장을 드래그로 선택 후 클릭)"
+              />
+            ))}
+          </span>
+          <button
+            type="button"
+            onClick={insertLinkForSelection}
+            className="toolbar-btn"
+            title="선택한 문장을 드래그한 뒤 누르면 URL 링크로 연결됩니다"
+          >
+            링크
+          </button>
+          <span className="composer-rule" />
+          <label className="toolbar-btn cursor-pointer" title="사진을 업로드해서 커서 위치에 삽입">
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onClick={captureEditorSelection}
+              onChange={handleBodyImageUpload}
+            />
+            {bodyImageUploading ? '업로드 중…' : '사진'}
+          </label>
+          <button
+            type="button"
+            onClick={openBodyGallery}
+            className="toolbar-btn"
+            title="사진 라이브러리(갤러리)에서 골라 커서 위치에 삽입"
+          >
+            갤러리
+          </button>
+          <span className="composer-rule" />
+          <button
+            type="button"
+            onClick={openSpecialCharModal}
+            className="toolbar-btn"
+            title="특수문자 삽입 (누르면 문자 레이어가 열립니다)"
+          >
+            @
+          </button>
+        </div>
+        <div
+          ref={editorRef}
+          contentEditable
+          suppressContentEditableWarning
+          onInput={handleEditorInput}
+          onPaste={handleEditorPaste}
+          onClick={handleEditorClick}
+          onKeyDown={handleEditorKeyDown}
+          onBlur={clearImageSelection}
+          className="composer-body"
+          data-placeholder="본문을 입력하세요"
+        />
+      </div>
+
+      <div className="composer-panel">
+        <p className="composer-panel-title">커버 이미지</p>
         {bodyImageUrls.length === 0 ? (
-          <p className="text-xs text-gray-400">본문에 사진을 삽입하면 여기서 커버이미지를 선택할 수 있습니다.</p>
+          <p className="composer-hint">본문에 사진을 넣으면 여기서 커버를 고를 수 있습니다.</p>
         ) : (
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap gap-3 mt-3">
             {bodyImageUrls.map((url, i) => (
               <label key={`${url}-${i}`} className="flex flex-col items-center gap-1 cursor-pointer">
                 <span className="relative">
@@ -1013,16 +997,15 @@ export default function WritePage() {
         )}
       </div>
 
-      {/* 관련기사 — 별도 레이어(모달)에서 검색+페이지네이션으로 선택 (기능정의서 8.2, UX 개선 2026-09-11) */}
-      <div className="mt-8 pt-6 border-t border-gray-200">
-        <div className="flex items-center justify-between mb-2">
-          <p className="text-sm font-semibold text-gray-700">관련기사</p>
+      <div className="composer-panel">
+        <div className="composer-panel-head">
+          <p className="composer-panel-title">관련기사</p>
           <button
             type="button"
             onClick={() => setRelatedModalOpen(true)}
             className="text-xs font-bold text-brand border border-brand/30 rounded-full px-3 py-1.5 hover:bg-brand/5"
           >
-            + 관련기사 추가
+            추가
           </button>
         </div>
         {relatedSelected.length > 0 ? (
@@ -1038,68 +1021,65 @@ export default function WritePage() {
                   onClick={() => removeRelatedArticle(a.id)}
                   className="w-4 h-4 rounded-full text-gray-400 hover:text-red-500"
                 >
-                  ✕
+                  x
                 </button>
               </span>
             ))}
           </div>
         ) : (
-          <p className="text-xs text-gray-400">선택된 관련기사가 없습니다.</p>
+          <p className="composer-hint">아직 연결된 기사가 없습니다.</p>
         )}
       </div>
 
-      {/* 설문(투표) — 기사 본문 작성을 마친 뒤 별도로 추가하는 선택 항목 */}
-      <div className="mt-8 pt-6 border-t border-gray-200">
-        <div className="border border-gray-200 rounded-lg p-4">
-          <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 cursor-pointer">
-            <input type="checkbox" checked={pollEnabled} onChange={(e) => togglePoll(e.target.checked)} />
-            설문(투표) 추가
-          </label>
-          {pollEnabled && (
-            <div className="mt-3 space-y-2">
-              <input
-                value={pollQuestion}
-                onChange={(e) => {
-                  setPollQuestion(e.target.value);
-                  markDirty();
-                }}
-                placeholder="질문을 입력하세요 (예: 이번 정책에 찬성하시나요?)"
-                className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-brand"
-              />
-              {pollOptions.map((opt, i) => (
-                <div key={i} className="flex items-center gap-2">
-                  <input
-                    value={opt}
-                    onChange={(e) => updatePollOption(i, e.target.value)}
-                    placeholder={`항목 ${i + 1}`}
-                    className="flex-1 text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-brand"
-                  />
-                  {pollOptions.length > 2 && (
-                    <button
-                      type="button"
-                      onClick={() => removePollOption(i)}
-                      className="w-7 h-7 shrink-0 rounded-full text-gray-400 hover:text-red-500 hover:bg-red-50"
-                    >
-                      ✕
-                    </button>
-                  )}
-                </div>
-              ))}
-              {pollOptions.length < 6 && (
-                <button
-                  type="button"
-                  onClick={addPollOption}
-                  className="text-xs font-semibold text-brand border border-brand/30 rounded-full px-3 py-1 hover:bg-brand/5"
-                >
-                  + 항목 추가
-                </button>
-              )}
-            </div>
-          )}
-        </div>
+      <div className="composer-panel">
+        <label className={`composer-chip${pollEnabled ? ' is-on' : ''}`}>
+          <input type="checkbox" checked={pollEnabled} onChange={(e) => togglePoll(e.target.checked)} />
+          설문 추가
+        </label>
+        {pollEnabled && (
+          <div className="mt-3 space-y-2">
+            <input
+              value={pollQuestion}
+              onChange={(e) => {
+                setPollQuestion(e.target.value);
+                markDirty();
+              }}
+              placeholder="질문"
+              className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-brand"
+            />
+            {pollOptions.map((opt, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <input
+                  value={opt}
+                  onChange={(e) => updatePollOption(i, e.target.value)}
+                  placeholder={`항목 ${i + 1}`}
+                  className="flex-1 text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-brand"
+                />
+                {pollOptions.length > 2 && (
+                  <button
+                    type="button"
+                    onClick={() => removePollOption(i)}
+                    className="w-7 h-7 shrink-0 rounded-full text-gray-400 hover:text-red-500 hover:bg-red-50"
+                  >
+                    x
+                  </button>
+                )}
+              </div>
+            ))}
+            {pollOptions.length < 6 && (
+              <button
+                type="button"
+                onClick={addPollOption}
+                className="text-xs font-semibold text-brand border border-brand/30 rounded-full px-3 py-1 hover:bg-brand/5"
+              >
+                항목 추가
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
-      <div className="flex justify-end gap-3 mt-6">
+      <div className="composer-actions">
         <button
           type="button"
           onClick={doAutosave}
@@ -1116,42 +1096,6 @@ export default function WritePage() {
           {submitting ? '처리 중…' : submitLabel}
         </button>
       </div>
-
-      <style jsx>{`
-        .toolbar-btn {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          min-width: 28px;
-          height: 28px;
-          padding: 0 6px;
-          border-radius: 6px;
-          font-size: 13px;
-          color: #374151;
-        }
-        .toolbar-btn:hover {
-          background: rgba(0, 0, 0, 0.06);
-        }
-        .icon-btn {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          width: 32px;
-          height: 32px;
-          border: 1px solid #e5e7eb;
-          border-radius: 8px;
-          font-size: 15px;
-          color: #374151;
-          background: #fff;
-        }
-        .icon-btn:hover {
-          background: rgba(0, 0, 0, 0.04);
-        }
-        [contenteditable][data-placeholder]:empty:before {
-          content: attr(data-placeholder);
-          color: #9ca3af;
-        }
-      `}</style>
 
       <PhotoGalleryModal
         open={galleryTarget !== null}
@@ -1174,7 +1118,7 @@ export default function WritePage() {
         onSelect={insertSpecialChar}
         canManage={me.role === 'CHIEF_EDITOR'}
       />
-    </>
+    </div>
   );
 
   // 편집장은 좌측 관리자 메뉴와 함께, 그 외(기자/논설위원)는 기존처럼 단독 화면으로 노출 (2026-09-11 신설)

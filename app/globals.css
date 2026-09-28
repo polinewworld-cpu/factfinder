@@ -426,6 +426,248 @@ img {
   padding: 8px 0 80px;
 }
 
+/* ---------- Write / edit composer ---------- */
+
+.composer {
+  padding-bottom: 48px;
+}
+
+.composer-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 28px;
+}
+
+.composer-bar-left {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.composer-select {
+  height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--hairline);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 600;
+  outline: none;
+}
+
+.composer-select:focus {
+  border-color: var(--accent);
+}
+
+.composer-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--hairline);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--mute);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.composer-chip.is-on {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, var(--surface));
+  color: var(--accent);
+}
+
+.composer-chip input {
+  accent-color: var(--accent);
+}
+
+.composer-save {
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--ash);
+  white-space: nowrap;
+}
+
+.composer-title {
+  width: 100%;
+  margin: 0 0 8px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  outline: none;
+  color: var(--ink);
+  font-family: var(--title);
+  font-size: 34px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.25;
+}
+
+.composer-title::placeholder {
+  color: #c8c2b8;
+}
+
+.composer-title:disabled,
+.composer-title:disabled::placeholder {
+  color: #ddd8cf;
+}
+
+.composer-line {
+  width: 100%;
+  margin: 0;
+  padding: 8px 0;
+  border: 0;
+  border-bottom: 1px solid transparent;
+  background: transparent;
+  outline: none;
+  color: var(--body);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.composer-line:focus {
+  border-bottom-color: var(--hairline);
+}
+
+.composer-line::placeholder {
+  color: #c8c2b8;
+}
+
+.composer-subs {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin: 4px 0 8px;
+}
+
+.composer-tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 18px 0 0;
+}
+
+.composer-tags-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ash);
+  width: 3.5rem;
+  flex-shrink: 0;
+}
+
+.composer-editor {
+  margin-top: 28px;
+  overflow: hidden;
+  border: 1px solid var(--hairline);
+  border-radius: 18px;
+  background: var(--surface);
+}
+
+.composer-toolbar {
+  position: sticky;
+  top: var(--header-h);
+  z-index: 10;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--hairline);
+  background: color-mix(in srgb, var(--surface) 92%, var(--canvas));
+}
+
+.composer-toolbar .toolbar-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink-soft);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.composer-toolbar .toolbar-btn:hover {
+  background: var(--chip);
+}
+
+.composer-rule {
+  width: 1px;
+  height: 16px;
+  margin: 0 6px;
+  background: var(--hairline);
+}
+
+.composer-body {
+  min-height: 360px;
+  padding: 28px 28px 40px;
+  color: var(--ink);
+  font-size: 17px;
+  line-height: 1.8;
+  outline: none;
+}
+
+.composer-body[data-placeholder]:empty:before {
+  content: attr(data-placeholder);
+  color: #c8c2b8;
+}
+
+.composer-panel {
+  margin-top: 28px;
+  padding-top: 22px;
+  border-top: 1px solid var(--hairline);
+}
+
+.composer-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.composer-panel-title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink-soft);
+}
+
+.composer-hint {
+  margin: 0;
+  font-size: 13px;
+  color: var(--ash);
+}
+
+.composer-actions {
+  position: sticky;
+  bottom: 16px;
+  z-index: 10;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 28px;
+  padding: 10px;
+  border: 1px solid var(--hairline);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface) 90%, transparent);
+  backdrop-filter: blur(16px);
+}
+
 .sr-only {
   position: absolute;
   width: 1px;
