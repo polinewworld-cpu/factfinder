@@ -2,11 +2,20 @@
 
 import { useState } from 'react';
 import { compressImageFile } from '@/lib/imageCompress';
+import InitialAvatar from '@/components/InitialAvatar';
 
 // 첫 가입 직후(닉네임 미설정 회원) 사이트 어느 페이지로 들어오든 본문 대신 이 화면을 보여줌.
 // 닉네임(필수·중복불가) + 프로필사진(구글 사진 기본값) 설정 → 저장하면 새로고침되어 원래 보던 페이지로 복귀.
 // 이후 수정은 /profile(내 프로필)에서.
-export default function WelcomeSetup({ defaultImage }: { defaultImage?: string | null }) {
+export default function WelcomeSetup({
+  defaultImage,
+  name,
+  userId,
+}: {
+  defaultImage?: string | null;
+  name?: string | null;
+  userId?: string | null;
+}) {
   const [nickname, setNickname] = useState('');
   const [image, setImage] = useState(defaultImage ?? '');
   const [uploading, setUploading] = useState(false);
@@ -58,8 +67,12 @@ export default function WelcomeSetup({ defaultImage }: { defaultImage?: string |
 
       <form onSubmit={submit}>
         <div className="flex items-center gap-4 mb-6">
-          <div className="w-20 h-20 rounded-full bg-gray-100 overflow-hidden flex items-center justify-center text-gray-300 text-xs shrink-0">
-            {image ? <img src={image} alt="" className="w-full h-full object-cover" /> : '사진'}
+          <div className="w-20 h-20 rounded-full overflow-hidden flex items-center justify-center shrink-0">
+            {image ? (
+              <img src={image} alt="" className="w-full h-full object-cover" />
+            ) : (
+              <InitialAvatar seed={userId || name || 'welcome'} name={nickname || name} className="w-20 h-20 text-2xl" />
+            )}
           </div>
           <div className="flex flex-col gap-2 text-sm">
             <label className="text-gray-600 cursor-pointer">
