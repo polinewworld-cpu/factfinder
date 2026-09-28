@@ -412,30 +412,6 @@ img {
   margin-inline: auto;
 }
 
-/* Write page: form is centered in the full page column; sidebar overlays the left edge */
-.write-shell {
-  position: relative;
-}
-
-.write-shell-main {
-  min-width: 0;
-  width: min(48rem, 100%);
-  margin-inline: auto;
-}
-
-.write-shell:not(.is-nav-hidden) .write-shell-main {
-  width: min(48rem, calc(100% - 10rem - 24px));
-  margin-left: max(calc(10rem + 24px), calc((100% - min(48rem, 100%)) / 2));
-  margin-right: auto;
-}
-
-.write-shell > nav {
-  position: absolute;
-  left: 0;
-  top: 0;
-  z-index: 2;
-}
-
 .admin-nav-toggle {
   color: var(--mute);
 }
