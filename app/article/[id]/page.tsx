@@ -14,7 +14,6 @@ import ReporterCard from '@/components/ReporterCard';
 import TextSizeControl from '@/components/TextSizeControl';
 import RecommendButton from '@/components/RecommendButton';
 import DonateButtonLarge from '@/components/DonateButtonLarge';
-import { CommentIcon } from '@/components/icons';
 import { stripHtml } from '@/lib/stripHtml';
 import { getCurrentUser } from '@/lib/session';
 
@@ -29,7 +28,6 @@ export default async function ArticlePage({ params }: { params: { id: string } }
         images: true,
         poll: true,
         relatedArticles: { include: { author: true } },
-        _count: { select: { comments: true } },
       },
     }),
     getCurrentUser(),
@@ -121,10 +119,6 @@ export default async function ArticlePage({ params }: { params: { id: string } }
                 text={`${article.title}. ${stripHtml(article.content)}`}
                 gender={article.author.gender}
               />
-              <a href="#comments" className="icon-action">
-                <CommentIcon />
-                {article._count.comments}
-              </a>
             </span>
           </div>
           <div className="article-content" dangerouslySetInnerHTML={{ __html: article.content }} />
