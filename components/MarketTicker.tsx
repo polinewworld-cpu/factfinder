@@ -8,6 +8,12 @@ import { useEffect, useState } from 'react';
 type Quote = { price: number; change: number; changePercent: number } | null;
 type MarketData = { kospi: Quote; usdkrw: Quote };
 
+const MOVE_THRESHOLD = 3;
+
+function isBigMove(q: Quote) {
+  return !!q && Math.abs(q.changePercent) >= MOVE_THRESHOLD;
+}
+
 function fmt(n: number, digits = 2) {
   return n.toLocaleString('ko-KR', { minimumFractionDigits: digits, maximumFractionDigits: digits });
 }
@@ -55,12 +61,16 @@ export default function MarketTicker() {
     };
   }, []);
 
-  if (!data || (!data.kospi && !data.usdkrw)) return null;
+  if (!data) return null;
+
+  const kospi = isBigMove(data.kospi) ? data.kospi : null;
+  const usdkrw = isBigMove(data.usdkrw) ? data.usdkrw : null;
+  if (!kospi && !usdkrw) return null;
 
   return (
     <div className="market-ticker" aria-label="실시간 코스피·환율">
-      <QuoteItem label="코스피" q={data.kospi} />
-      <QuoteItem label="환율" q={data.usdkrw} />
+      <QuoteItem label="코스피" q={kospi} />
+      <QuoteItem label="환율" q={usdkrw} />
     </div>
   );
 }
