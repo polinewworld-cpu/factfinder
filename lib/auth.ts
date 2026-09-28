@@ -3,6 +3,7 @@ import GoogleProvider from 'next-auth/providers/google';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { PrismaAdapter } from '@next-auth/prisma-adapter';
 import { prisma } from '@/lib/prisma';
+import { usableAvatarUrl } from '@/lib/avatarGradient';
 
 const providers = [
   GoogleProvider({
@@ -52,6 +53,7 @@ export const authOptions: NextAuthOptions = {
       if (session.user) {
         (session.user as any).id = token.id;
         (session.user as any).role = token.role;
+        session.user.image = usableAvatarUrl(session.user.image);
       }
       return session;
     },

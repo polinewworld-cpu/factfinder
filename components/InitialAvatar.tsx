@@ -1,4 +1,4 @@
-import { avatarGradientStyle } from '@/lib/avatarGradient';
+import { avatarGradientStyle, usableAvatarUrl } from '@/lib/avatarGradient';
 
 export default function InitialAvatar({
   seed,
@@ -15,4 +15,20 @@ export default function InitialAvatar({
       {letter}
     </span>
   );
+}
+
+export function UserAvatar({
+  image,
+  seed,
+  name,
+  className,
+}: {
+  image?: string | null;
+  seed: string;
+  name?: string | null;
+  className?: string;
+}) {
+  const src = usableAvatarUrl(image);
+  if (src) return <img src={src} alt="" className={className} />;
+  return <InitialAvatar seed={seed} name={name} className={className} />;
 }

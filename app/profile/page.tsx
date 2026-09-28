@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { detectSnsPlatform, SNS_PLATFORM_LABELS } from '@/lib/sns';
-import InitialAvatar from '@/components/InitialAvatar';
+import { UserAvatar } from '@/components/InitialAvatar';
+import { usableAvatarUrl } from '@/lib/avatarGradient';
 
 type SavedArticleItem = { id: string; title: string; author: { name: string } };
 
@@ -29,7 +30,7 @@ export default function ProfilePage() {
       const data = await res.json();
       setMe(data);
       setNickname(data.nickname ?? '');
-      setImage(data.image ?? '');
+      setImage(usableAvatarUrl(data.image) ?? '');
       setBio(data.bio ?? '');
       setSnsLinks((data.snsLinks ?? []).map((l: { url: string }) => l.url));
       setNewsletterOptIn(!!data.newsletterOptIn);
@@ -131,15 +132,12 @@ export default function ProfilePage() {
 
       <div className="flex items-center gap-4 mb-6">
         <div className="w-16 h-16 rounded-full overflow-hidden flex items-center justify-center shrink-0">
-          {image ? (
-            <img src={image} alt="" className="w-full h-full object-cover" />
-          ) : (
-            <InitialAvatar
-              seed={me.id || me.email || me.name}
-              name={nickname || me.nickname || me.name}
-              className="w-16 h-16 text-xl"
-            />
-          )}
+          <UserAvatar
+            image={image}
+            seed={me.id || me.email || me.name}
+            name={nickname || me.nickname || me.name}
+            className="w-16 h-16 text-xl object-cover"
+          />
         </div>
         <label className="text-sm text-gray-600 cursor-pointer">
           <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />

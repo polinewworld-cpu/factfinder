@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { detectSnsPlatform, SNS_PLATFORM_LABELS } from '@/lib/sns';
-import InitialAvatar from '@/components/InitialAvatar';
+import { UserAvatar } from '@/components/InitialAvatar';
 
 type Applicant = {
   id: string;
@@ -59,11 +59,12 @@ export default function ReporterApplicationsPage() {
             <div className="flex items-start justify-between gap-4">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center shrink-0">
-                  {a.image ? (
-                    <img src={a.image} alt="" className="w-full h-full object-cover" />
-                  ) : (
-                    <InitialAvatar seed={a.id || a.email || a.name} name={a.nickname ?? a.name} className="w-12 h-12 text-sm" />
-                  )}
+                  <UserAvatar
+                    image={a.image}
+                    seed={a.id || a.email || a.name}
+                    name={a.nickname ?? a.name}
+                    className="w-12 h-12 text-sm object-cover"
+                  />
                 </div>
                 <div>
                   <p className="font-semibold text-gray-900">

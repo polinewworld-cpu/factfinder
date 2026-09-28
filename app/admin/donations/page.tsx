@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import InitialAvatar from '@/components/InitialAvatar';
+import { UserAvatar } from '@/components/InitialAvatar';
 
 const STATUS_LABELS: Record<string, string> = {
   ACTIVE: '후원중',
@@ -62,15 +62,12 @@ export default function DonationsAdminPage() {
                 <tr key={d.id} className="border-b border-gray-100">
                   <td className="py-2 pr-4 text-gray-900 font-medium">
                     <div className="flex items-center gap-2">
-                      {d.user?.image ? (
-                        <img src={d.user.image} alt="" className="w-7 h-7 rounded-full object-cover shrink-0" />
-                      ) : (
-                        <InitialAvatar
-                          seed={d.user?.id || d.user?.email || d.user?.name || 'user'}
-                          name={d.user?.nickname ?? d.user?.name}
-                          className="w-7 h-7 text-[11px]"
-                        />
-                      )}
+                      <UserAvatar
+                        image={d.user?.image}
+                        seed={d.user?.id || d.user?.email || d.user?.name || 'user'}
+                        name={d.user?.nickname ?? d.user?.name}
+                        className="w-7 h-7 text-[11px] rounded-full object-cover shrink-0"
+                      />
                       <span>
                         {d.user?.nickname ?? d.user?.name ?? '-'}
                         <span className="block text-xs text-gray-400 font-normal">{d.user?.email}</span>
