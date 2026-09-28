@@ -967,18 +967,14 @@ export default function WritePage() {
           </button>
         ) : null}
         <div className="composer-actions-btns">
-          <button
-            type="button"
-            onClick={doAutosave}
-            className="text-sm text-gray-500 border border-gray-200 rounded-full px-4 py-2 hover:border-brand"
-          >
+          <button type="button" onClick={doAutosave} className="composer-toggle">
             임시저장
           </button>
           <button
             type="button"
             disabled={submitting}
             onClick={handleSubmit}
-            className="text-sm font-bold text-white bg-brand rounded-full px-6 py-2 hover:bg-brand-dark disabled:opacity-50"
+            className="composer-submit"
           >
             {submitting ? '처리 중…' : submitLabel}
           </button>
