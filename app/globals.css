@@ -1587,7 +1587,7 @@ img {
 
 /* 기사 말미 기자 프로필 — 푸터와 같이 검정 상단선에 매달리고, 회색 하단선 아래로 목록이 매달림. 박스/배경 없음 */
 .reporter-card {
-  margin: 40px 0 32px;
+  margin: 40px 0 0;
   padding: 0;
   border: none;
   border-radius: 0;
@@ -1599,7 +1599,7 @@ img {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 8px 0 14px;
+  padding: 16px 0 14px;
   border-bottom: 1px solid var(--hairline);
 }
 
@@ -1678,6 +1678,19 @@ img {
 .reporter-card-list li::before {
   content: '· ';
   color: var(--ash);
+}
+
+.article-comments {
+  margin: 28px 0 0;
+  padding: 8px 0 0;
+  border-top: 1px solid var(--hairline);
+}
+
+.article-comments-title {
+  margin: 0 0 16px;
+  color: var(--ink);
+  font-size: 16px;
+  font-weight: 700;
 }
 
 /* 기사 하단 "좋아요로 칭찬하기 / 공유로 전파하기 / 원고료로 응원하기" — 한 줄, 비율 1:1:2 (2026-09-18) */
