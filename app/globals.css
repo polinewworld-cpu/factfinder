@@ -17,7 +17,7 @@
   --accent-pressed: #e01874;
   --overlay: rgba(0, 0, 0, 0.42);
   --shadow: 0 12px 32px rgba(0, 0, 0, 0.16);
-  --header-h: 123px;
+  --header-h: 111px;
   --radius: 16px;
   --radius-lg: 24px;
   --gap: 16px;
@@ -81,7 +81,7 @@ img {
   align-items: center;
   justify-content: space-between;
   gap: 18px;
-  padding: 32px max(var(--page-gutter), calc((100% - var(--max)) / 2));
+  padding: 32px max(var(--page-gutter), calc((100% - var(--max)) / 2)) 20px;
   background: color-mix(in srgb, var(--canvas) 88%, transparent);
   backdrop-filter: blur(16px);
 }
@@ -880,7 +880,7 @@ img {
 
 .category-bar {
   width: var(--page-width);
-  margin: 4px auto 20px;
+  margin: 0 auto 20px;
   display: flex;
   align-items: center;
   gap: 16px;
