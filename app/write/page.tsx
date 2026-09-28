@@ -18,7 +18,7 @@ type ArticleSearchResult = { id: string; title: string; author: { name: string }
 const WRITER_ROLES = ['REPORTER', 'COLUMNIST', 'CHIEF_EDITOR'];
 
 // 형광펜 — swatch는 툴바의 동그라미 버튼 색, mark는 본문에 칠해지는 반투명 하이라이트 색
-const HL_COLORS = [{ key: 'cyan', swatch: '#6ef4ff', mark: 'rgba(110,244,255,0.5)' }];
+const HL_COLORS = [{ key: 'cyan', swatch: '#7FD7F5', mark: 'rgba(127,215,245,0.55)' }];
 
 // 기사 수정 — /write?id=... 로 들어오면 해당 기사를 불러와 채워넣음 (2026-09-11 신설, 관리자 "전체 기사"에서 진입)
 function getEditIdFromUrl(): string | null {
