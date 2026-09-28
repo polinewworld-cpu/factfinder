@@ -1265,8 +1265,8 @@ img {
 
 /* 기사 상단 byline 안의 SVG 아이콘 공통 크기 */
 .article-byline svg {
-  width: 20px;
-  height: 20px;
+  width: 23px;
+  height: 23px;
 }
 
 .article-byline .icon-action-group {
@@ -1277,8 +1277,8 @@ img {
 }
 
 .article-byline .icon-action {
-  width: 36px;
-  height: 36px;
+  width: 42px;
+  height: 42px;
   padding: 0;
   justify-content: center;
   color: var(--ink);
@@ -1287,7 +1287,7 @@ img {
 
 .article-byline a.icon-action {
   width: auto;
-  min-width: 36px;
+  min-width: 42px;
   padding: 0 6px 0 8px;
   gap: 5px;
   font-size: 12px;
