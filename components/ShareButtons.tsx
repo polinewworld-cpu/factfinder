@@ -118,7 +118,7 @@ export default function ShareButtons({
       {variant === 'large' ? (
         <button type="button" onClick={() => setOpen(true)} className="donate-cta">
           <ShareIcon />
-          <span className="hidden sm:inline">공유로 전파하기</span>
+          공유로 전파하기
         </button>
       ) : (
         <button type="button" onClick={() => setOpen(true)} title="공유" aria-label="공유" className="icon-action">

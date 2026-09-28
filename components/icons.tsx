@@ -56,12 +56,11 @@ export function BellIcon() {
 
 export function ShareIcon() {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <circle cx="18" cy="5" r="3" />
-      <circle cx="6" cy="12" r="3" />
-      <circle cx="18" cy="19" r="3" />
-      <line x1="8.59" x2="15.42" y1="13.51" y2="17.49" />
-      <line x1="15.41" x2="8.59" y1="6.51" y2="10.49" />
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <circle cx="18" cy="5.5" r="2.4" stroke="currentColor" strokeWidth="1.5" />
+      <circle cx="6" cy="12" r="2.4" stroke="currentColor" strokeWidth="1.5" />
+      <circle cx="18" cy="18.5" r="2.4" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M8.2 10.9 15.8 6.7M8.2 13.1l7.6 4.2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
     </svg>
   );
 }
@@ -203,9 +202,19 @@ export function TelegramIcon() {
 // 기사 "추천" 버튼용 (2026-09-12 신설)
 export function ThumbsUpIcon() {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z" />
-      <path d="M7 10v12" />
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M7.25 10.5v10.25H5.5A1.75 1.75 0 0 1 3.75 19V12.25A1.75 1.75 0 0 1 5.5 10.5h1.75Z"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M7.25 10.5 10.4 4.6A1.7 1.7 0 0 1 13.2 5.5v3.2h5.55a1.85 1.85 0 0 1 1.8 2.28l-1.7 7.1a1.85 1.85 0 0 1-1.8 1.42H7.25"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }
@@ -227,12 +236,10 @@ export function CommentIcon() {
 // "원고료로 응원하기" 버튼용 아이콘 (2026-09-17: 동전 → 카드+ 아이콘으로 교체)
 export function CreditCardIcon() {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M22 11.354V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h8.536" />
-      <path d="M22 10H2" />
-      <path d="M6 14h2" />
-      <path d="M16 17h6" />
-      <path d="M19 14v6" />
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <rect x="3.25" y="5.75" width="17.5" height="12.5" rx="2" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M3.25 10.25h17.5" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M16.25 15.5h4.5M18.5 13.25v4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
     </svg>
   );
 }
