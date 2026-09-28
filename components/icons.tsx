@@ -74,6 +74,16 @@ export function CloseIcon() {
   );
 }
 
+// Cursor-style primary sidebar toggle — rounded frame with a left pane
+export function SidebarPanelIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <rect x="3.5" y="4.5" width="17" height="15" rx="2.5" fill="none" stroke="currentColor" strokeWidth="1.7" />
+      <path d="M9.5 4.5v15" fill="none" stroke="currentColor" strokeWidth="1.7" />
+    </svg>
+  );
+}
+
 // 기자 프로필 SNS 링크용 아이콘 (기능정의서 3.2.1)
 export function InstagramIcon() {
   return (

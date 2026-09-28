@@ -1,6 +1,7 @@
 'use client';
 
 import { usePathname, useSearchParams } from 'next/navigation';
+import { useAdminNav } from './AdminNav';
 
 type NavItem = { href: string; label: string };
 
@@ -32,6 +33,8 @@ function isActive(href: string, pathname: string | null, role: string | null) {
 export default function AdminSidebar() {
   const pathname = usePathname();
   const role = useSearchParams().get('role');
+  const { open } = useAdminNav();
+  if (!open) return null;
 
   return (
     <nav className="w-40 shrink-0 py-8" aria-label="관리자 메뉴">

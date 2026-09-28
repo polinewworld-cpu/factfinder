@@ -6,6 +6,7 @@ import { getCurrentUser } from '@/lib/session';
 import { ROLES } from '@/lib/roles';
 import { prisma } from '@/lib/prisma';
 import WelcomeSetup from '@/components/WelcomeSetup';
+import { AdminNavProvider } from '@/components/AdminNav';
 
 export const metadata = {
   title: '팩트파인더',
@@ -34,11 +35,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       </head>
       <body className="min-h-screen">
         <div className="page">
-          <Header />
-          <SavedArticlesProvider loggedIn={!!user} isChiefEditor={user?.role === ROLES.CHIEF_EDITOR}>
-            {needsSetup ? <WelcomeSetup defaultImage={user?.image} /> : children}
-          </SavedArticlesProvider>
-          <Footer />
+          <AdminNavProvider>
+            <Header />
+            <SavedArticlesProvider loggedIn={!!user} isChiefEditor={user?.role === ROLES.CHIEF_EDITOR}>
+              {needsSetup ? <WelcomeSetup defaultImage={user?.image} /> : children}
+            </SavedArticlesProvider>
+            <Footer />
+          </AdminNavProvider>
         </div>
       </body>
     </html>

@@ -5,6 +5,7 @@ import HeaderSearch from './HeaderSearch';
 import AccountMenu from './AccountMenu';
 import MarketTicker from './MarketTicker';
 import CategoryNav from './CategoryNav';
+import { AdminSidebarToggle } from './AdminNav';
 
 export default async function Header() {
   const user = await getCurrentUser();
@@ -12,9 +13,12 @@ export default async function Header() {
   return (
     <>
       <header className="site-header">
-        <a className="brand" href="/" aria-label="팩트파인더 홈">
-          <LogoMark />
-        </a>
+        <div className="header-left">
+          <a className="brand" href="/" aria-label="팩트파인더 홈">
+            <LogoMark />
+          </a>
+          <AdminSidebarToggle enabled={user?.role === ROLES.CHIEF_EDITOR} />
+        </div>
 
         <HeaderSearch />
 

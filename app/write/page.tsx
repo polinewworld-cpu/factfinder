@@ -7,6 +7,7 @@ import PhotoGalleryModal, { GalleryPickedPhoto } from '@/components/PhotoGallery
 import RelatedArticlePickerModal from '@/components/RelatedArticlePickerModal';
 import SpecialCharacterModal from '@/components/SpecialCharacterModal';
 import AdminSidebar from '@/components/AdminSidebar';
+import { WriteShell } from '@/components/AdminNav';
 
 type Me = { id: string; role: string; name?: string; email?: string };
 type Category = { id: string; name: string; slug: string };
@@ -1177,11 +1178,12 @@ export default function WritePage() {
   );
 
   // 편집장은 좌측 관리자 메뉴와 함께, 그 외(기자/논설위원)는 기존처럼 단독 화면으로 노출 (2026-09-11 신설)
+  // 작성 폼은 페이지 셸 전체 기준으로 가운데 두고, 메뉴는 로고와 같은 왼쪽 가장자리에 둔다
   return me.role === 'CHIEF_EDITOR' ? (
-    <div className="page-shell flex items-start gap-6 py-8">
+    <WriteShell>
       <AdminSidebar />
-      <div className="min-w-0 flex-1 max-w-3xl">{formBody}</div>
-    </div>
+      <div className="write-shell-main">{formBody}</div>
+    </WriteShell>
   ) : (
     <main className="max-w-3xl mx-auto px-4 py-8">{formBody}</main>
   );
