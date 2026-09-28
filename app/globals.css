@@ -1632,15 +1632,15 @@ img {
 
 .reporter-card-head {
   display: flex;
-  align-items: center;
-  gap: 12px;
+  align-items: flex-start;
+  gap: 10px;
   padding: 16px 0 14px;
   border-bottom: 1px solid var(--hairline);
 }
 
 .reporter-card-avatar {
-  width: 52px;
-  height: 52px;
+  width: calc(16px * 1.25 + 2px + 13px * 1.2);
+  height: calc(16px * 1.25 + 2px + 13px * 1.2);
   border-radius: 999px;
   object-fit: cover;
   flex: none;
@@ -1652,7 +1652,7 @@ img {
   justify-content: center;
   background: var(--accent);
   color: #fff;
-  font-size: 20px;
+  font-size: 13px;
   font-weight: 700;
 }
 
@@ -1666,12 +1666,14 @@ img {
   color: var(--ink);
   font-size: 16px;
   font-weight: 700;
+  line-height: 1.25;
 }
 
 .reporter-card-email {
   margin: 2px 0 0;
   color: var(--mute);
   font-size: 13px;
+  line-height: 1.2;
 }
 
 /* 기자 프로필 아래 — 왼쪽 최신기사 / 오른쪽 BEST 기사. 회색선에서 매달림 */
