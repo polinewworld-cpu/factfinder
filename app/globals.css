@@ -15,6 +15,8 @@
   --chip-hover: #ebebeb;
   --accent: #ff2d8a;
   --accent-pressed: #e01874;
+  --brand-rgb: 236 21 97;
+  --brand-dark-rgb: 192 16 80;
   --overlay: rgba(0, 0, 0, 0.42);
   --shadow: 0 12px 32px rgba(0, 0, 0, 0.16);
   --header-h: 111px;
@@ -403,6 +405,21 @@ img {
 .page-shell {
   width: var(--page-width);
   margin-inline: auto;
+}
+
+/* 관리자·작성 등 백스테이지 — 하이라이터 스카이블루를 액센트로 씀 */
+.backstage {
+  --accent: #7fd7f5;
+  --accent-pressed: #5ec8ee;
+  --brand-rgb: 127 215 245;
+  --brand-dark-rgb: 94 200 238;
+}
+
+.backstage .bg-brand,
+.backstage .composer-submit,
+.backstage .composer-toggle.is-on,
+.backstage .cta {
+  color: var(--ink);
 }
 
 .admin-nav-toggle {

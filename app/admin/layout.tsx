@@ -15,7 +15,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   }
 
   return (
-    <div className="page-shell flex items-start gap-6">
+    <div className="page-shell backstage flex items-start gap-6">
       <AdminSidebar />
       <div className="min-w-0 flex-1">{children}</div>
     </div>

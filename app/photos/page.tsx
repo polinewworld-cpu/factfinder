@@ -107,7 +107,7 @@ export default function PhotosLibraryPage() {
   }
 
   return (
-    <main className="max-w-5xl mx-auto px-4 py-8">
+    <main className="backstage max-w-5xl mx-auto px-4 py-8">
       <h1 className="text-xl font-bold text-gray-900 mb-6">보도사진 관리</h1>
 
       <div className="border border-gray-200 rounded-xl p-4 mb-6">
