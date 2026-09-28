@@ -16,7 +16,7 @@ import RecommendButton from '@/components/RecommendButton';
 import DonateButtonLarge from '@/components/DonateButtonLarge';
 import { stripHtml } from '@/lib/stripHtml';
 import { getCurrentUser } from '@/lib/session';
-import { EditIcon } from '@/components/icons';
+import { EditIcon, ThinArrowIcon } from '@/components/icons';
 import { ROLES } from '@/lib/roles';
 
 export default async function ArticlePage({ params }: { params: { id: string } }) {
@@ -162,7 +162,9 @@ export default async function ArticlePage({ params }: { params: { id: string } }
               {lineAds.map((ad) => (
                 <li key={ad.id} className="line-ad">
                   <a href={ad.linkUrl} target="_blank" rel="noopener noreferrer sponsored" className="line-ad-link">
-                    <span className="line-ad-arrow">➜</span>
+                    <span className="line-ad-arrow">
+                      <ThinArrowIcon />
+                    </span>
                     <span className="line-ad-text">{ad.text}</span>
                   </a>
                 </li>

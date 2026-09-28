@@ -322,3 +322,17 @@ export function VolumeOffIcon() {
     </svg>
   );
 }
+
+export function ThinArrowIcon() {
+  return (
+    <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path
+        d="M2 8h11.5M10 4.25 13.75 8 10 11.75"
+        stroke="currentColor"
+        strokeWidth="1.15"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
