@@ -92,10 +92,11 @@ export default function VideoCardGrid({
               href={videoUrl(card)}
               target="_blank"
               rel="noopener noreferrer"
+              title={card.title}
               className="block rounded-xl overflow-hidden border border-gray-200 hover:border-brand"
             >
               <div className={`relative bg-gray-100 ${card.kind === 'SHORT' ? 'aspect-[9/16]' : 'aspect-video'}`}>
-                <img src={card.thumbnailUrl} alt="" className="w-full h-full object-cover" />
+                <img src={card.thumbnailUrl} alt={card.title} className="w-full h-full object-cover" />
                 <span className="absolute top-2 left-2 text-[11px] font-bold text-white bg-black/60 rounded-full px-2 py-0.5">
                   {KIND_LABEL[card.kind]}
                 </span>
@@ -122,7 +123,6 @@ export default function VideoCardGrid({
                   </>
                 )}
               </div>
-              <p className="text-sm font-semibold text-gray-900 p-2 line-clamp-2">{card.title}</p>
             </a>
           ))}
         </div>
