@@ -165,20 +165,26 @@ export default function ArticleCard({
           </div>
         )}
 
+        {badges.length > 0 ? (
+          <div className="pin-badges">
+            {badges.map((badge) => (
+              <button
+                key={badge}
+                type="button"
+                className="pin-badge-chip"
+                onClick={(event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  window.location.href = `/keyword/${encodeURIComponent(badge)}`;
+                }}
+              >
+                {badge}
+              </button>
+            ))}
+          </div>
+        ) : null}
+
         <div className="pin-overlay">
-          {article.keywords[0] && (
-            <button
-              type="button"
-              className="pin-keyword-badge"
-              onClick={(event) => {
-                event.preventDefault();
-                event.stopPropagation();
-                window.location.href = `/keyword/${encodeURIComponent(article.keywords[0].name)}`;
-              }}
-            >
-              #{article.keywords[0].name}
-            </button>
-          )}
           {firstTheme && <span className="pin-theme-badge">{firstTheme}</span>}
           {article.hoverText && <p className="pin-hover-text">{article.hoverText}</p>}
           {isChiefEditor && (
@@ -212,15 +218,6 @@ export default function ArticleCard({
       </a>
 
       <div className="pin-copy">
-        {badges.length > 0 && (
-          <div className="badge-row">
-            {badges.map((badge) => (
-              <span key={badge} className="badge">
-                {badge}
-              </span>
-            ))}
-          </div>
-        )}
         <h2>
           <a href={href}>{article.title}</a>
         </h2>
