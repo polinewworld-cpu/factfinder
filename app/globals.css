@@ -846,10 +846,13 @@ img {
 
 .composer-panel-head {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 12px;
+}
+
+.composer-panel-body {
+  margin-top: 12px;
 }
 
 .composer-panel-title {
