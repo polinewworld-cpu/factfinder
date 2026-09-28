@@ -20,6 +20,27 @@ function hsl(hue: number, sat: number, light: number) {
   return `hsl(${Math.round(hue)} ${Math.round(sat)}% ${Math.round(light)}%)`;
 }
 
+/**
+ * Google always sends an image URL, even when the account has no photo —
+ * a generated coloured-letter avatar on googleusercontent.com.
+ * Real uploads use `/a-/…`; generated defaults use `/a/…` (no hyphen).
+ */
+export function usableAvatarUrl(url?: string | null): string | null {
+  if (!url) return null;
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    return url;
+  }
+  if (!parsed.hostname.endsWith('googleusercontent.com')) return url;
+  const path = parsed.pathname;
+  if (path.includes('AAAAAAAAAAA') || path.includes('default-user')) return null;
+  if (path.includes('/a-/')) return url;
+  if (path.includes('/a/')) return null;
+  return url;
+}
+
 /** Seeded 3-colour gradient so the same person keeps the same avatar. */
 export function avatarGradientStyle(seed: string): { background: string } {
   const rng = mulberry32(hashString(seed || 'factfinder'));

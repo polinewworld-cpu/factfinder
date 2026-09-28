@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { compressImageFile } from '@/lib/imageCompress';
 import InitialAvatar from '@/components/InitialAvatar';
+import { usableAvatarUrl } from '@/lib/avatarGradient';
 
 // 첫 가입 직후(닉네임 미설정 회원) 사이트 어느 페이지로 들어오든 본문 대신 이 화면을 보여줌.
 // 닉네임(필수·중복불가) + 프로필사진(구글 사진 기본값) 설정 → 저장하면 새로고침되어 원래 보던 페이지로 복귀.
@@ -17,7 +18,7 @@ export default function WelcomeSetup({
   userId?: string | null;
 }) {
   const [nickname, setNickname] = useState('');
-  const [image, setImage] = useState(defaultImage ?? '');
+  const [image, setImage] = useState(usableAvatarUrl(defaultImage) ?? '');
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
@@ -58,6 +59,8 @@ export default function WelcomeSetup({
     setSaving(false);
   }
 
+  const photo = usableAvatarUrl(image);
+
   return (
     <main className="max-w-md mx-auto px-4 py-12">
       <h1 className="text-2xl font-bold text-gray-900 mb-2">팩트파인더에 오신 것을 환영합니다</h1>
@@ -68,8 +71,8 @@ export default function WelcomeSetup({
       <form onSubmit={submit}>
         <div className="flex items-center gap-4 mb-6">
           <div className="w-20 h-20 rounded-full overflow-hidden flex items-center justify-center shrink-0">
-            {image ? (
-              <img src={image} alt="" className="w-full h-full object-cover" />
+            {photo ? (
+              <img src={photo} alt="" className="w-full h-full object-cover" />
             ) : (
               <InitialAvatar seed={userId || name || 'welcome'} name={nickname || name} className="w-20 h-20 text-2xl" />
             )}
@@ -81,7 +84,7 @@ export default function WelcomeSetup({
                 {uploading ? '업로드 중…' : '사진 변경'}
               </span>
             </label>
-            {image && (
+            {photo && (
               <button type="button" onClick={() => setImage('')} className="text-xs text-gray-400 text-left hover:text-gray-600">
                 사진 없이 시작
               </button>
