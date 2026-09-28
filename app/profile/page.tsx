@@ -183,7 +183,7 @@ export default function ProfilePage() {
               <button
                 type="button"
                 onClick={() => removeSnsLink(i)}
-                className="w-6 h-6 shrink-0 rounded-full text-gray-400 hover:text-red-500 hover:bg-red-50"
+                className="w-6 h-6 shrink-0 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50"
               >
                 ✕
               </button>
@@ -206,7 +206,7 @@ export default function ProfilePage() {
         <button
           type="button"
           onClick={addSnsLink}
-          className="text-xs font-bold text-brand border border-brand/30 rounded-full px-3 py-1.5 hover:bg-brand/5"
+          className="text-xs font-bold text-brand border border-brand/30 rounded-lg px-3 py-1.5 hover:bg-brand/5"
         >
           + 추가
         </button>
@@ -226,7 +226,7 @@ export default function ProfilePage() {
       <button
         onClick={save}
         disabled={saving}
-        className="text-sm font-bold text-white bg-brand rounded-full px-6 py-2 disabled:opacity-50"
+        className="text-sm font-bold text-white bg-brand rounded-lg px-6 py-2 disabled:opacity-50"
       >
         저장
       </button>
@@ -240,7 +240,7 @@ export default function ProfilePage() {
               <button
                 onClick={cancelApplication}
                 disabled={applying}
-                className="text-xs text-gray-500 border border-gray-200 rounded-full px-4 py-1.5 hover:border-gray-400 disabled:opacity-50"
+                className="text-xs text-gray-500 border border-gray-200 rounded-lg px-4 py-1.5 hover:border-gray-400 disabled:opacity-50"
               >
                 신청 취소
               </button>
@@ -252,7 +252,7 @@ export default function ProfilePage() {
               <button
                 onClick={applyReporter}
                 disabled={applying}
-                className="text-sm font-bold text-white bg-brand rounded-full px-6 py-2 disabled:opacity-50"
+                className="text-sm font-bold text-white bg-brand rounded-lg px-6 py-2 disabled:opacity-50"
               >
                 다시 신청하기
               </button>
@@ -267,7 +267,7 @@ export default function ProfilePage() {
               <button
                 onClick={applyReporter}
                 disabled={applying}
-                className="text-sm font-bold text-white bg-brand rounded-full px-6 py-2 disabled:opacity-50"
+                className="text-sm font-bold text-white bg-brand rounded-lg px-6 py-2 disabled:opacity-50"
               >
                 기자로 신청하기
               </button>

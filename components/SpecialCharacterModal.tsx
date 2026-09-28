@@ -129,7 +129,7 @@ export default function SpecialCharacterModal({
                 key={cat}
                 type="button"
                 onClick={() => setActiveCategory(cat)}
-                className={`text-xs font-bold rounded-full px-3 py-1 border ${
+                className={`text-xs font-bold rounded-lg px-3 py-1 border ${
                   activeCategory === cat ? 'bg-brand text-white border-brand' : 'bg-white text-gray-500 border-gray-200'
                 }`}
               >
@@ -162,7 +162,7 @@ export default function SpecialCharacterModal({
                       deleteChar(c.id);
                     }}
                     title="삭제"
-                    className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-gray-400 hover:bg-red-500 text-white text-[10px] leading-4 text-center"
+                    className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-lg bg-gray-400 hover:bg-red-500 text-white text-[10px] leading-4 text-center"
                   >
                     ✕
                   </span>

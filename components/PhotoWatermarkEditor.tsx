@@ -223,7 +223,7 @@ export default function PhotoWatermarkEditor({
             <button
               type="button"
               onClick={() => setPickMode((v) => !v)}
-              className={`text-xs font-bold rounded-full px-3 py-1.5 border ${
+              className={`text-xs font-bold rounded-lg px-3 py-1.5 border ${
                 pickMode ? 'bg-brand text-white border-brand' : 'bg-white text-gray-600 border-gray-200 hover:border-brand'
               }`}
             >
@@ -244,14 +244,14 @@ export default function PhotoWatermarkEditor({
               type="button"
               disabled={!canUndo}
               onClick={undo}
-              className="text-xs font-bold text-gray-500 border border-gray-200 rounded-full px-3 py-1.5 disabled:opacity-40"
+              className="text-xs font-bold text-gray-500 border border-gray-200 rounded-lg px-3 py-1.5 disabled:opacity-40"
             >
               ↩ 실행취소
             </button>
             <button
               type="button"
               onClick={resetToOriginal}
-              className="text-xs font-bold text-gray-500 border border-gray-200 rounded-full px-3 py-1.5"
+              className="text-xs font-bold text-gray-500 border border-gray-200 rounded-lg px-3 py-1.5"
             >
               처음으로 초기화
             </button>
@@ -280,7 +280,7 @@ export default function PhotoWatermarkEditor({
           <button
             type="button"
             onClick={onClose}
-            className="text-sm font-bold text-gray-500 border border-gray-200 rounded-full px-4 py-2"
+            className="text-sm font-bold text-gray-500 border border-gray-200 rounded-lg px-4 py-2"
           >
             취소
           </button>
@@ -288,7 +288,7 @@ export default function PhotoWatermarkEditor({
             type="button"
             disabled={saving}
             onClick={save}
-            className="text-sm font-bold text-white bg-brand rounded-full px-5 py-2 disabled:opacity-50"
+            className="text-sm font-bold text-white bg-brand rounded-lg px-5 py-2 disabled:opacity-50"
           >
             {saving ? '저장 중…' : '편집본으로 저장'}
           </button>

@@ -147,7 +147,7 @@ export default function PhotosLibraryPage() {
             <button
               type="button"
               onClick={() => setActiveTag(null)}
-              className={`text-xs font-bold rounded-full px-3 py-1 border ${
+              className={`text-xs font-bold rounded-lg px-3 py-1 border ${
                 !activeTag ? 'bg-brand text-white border-brand' : 'bg-white text-gray-500 border-gray-200'
               }`}
             >
@@ -158,7 +158,7 @@ export default function PhotosLibraryPage() {
                 key={t.id}
                 type="button"
                 onClick={() => setActiveTag(t.name === activeTag ? null : t.name)}
-                className={`text-xs font-bold rounded-full px-3 py-1 border ${
+                className={`text-xs font-bold rounded-lg px-3 py-1 border ${
                   activeTag === t.name ? 'bg-brand text-white border-brand' : 'bg-white text-gray-500 border-gray-200'
                 }`}
               >
@@ -184,7 +184,7 @@ export default function PhotosLibraryPage() {
               <button
                 type="button"
                 onClick={() => deletePhoto(p.id)}
-                className="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/50 text-white text-xs opacity-0 group-hover:opacity-100"
+                className="absolute top-1 right-1 w-6 h-6 rounded-lg bg-black/50 text-white text-xs opacity-0 group-hover:opacity-100"
               >
                 ✕
               </button>

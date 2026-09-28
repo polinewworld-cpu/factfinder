@@ -94,7 +94,7 @@ export default function NewsletterAdminPage() {
             type="button"
             disabled={busy || !preview.emailConfigured || preview.subscriberCount === 0}
             onClick={send}
-            className="text-sm font-bold text-white bg-brand rounded-full px-6 py-2 disabled:opacity-50 mb-6"
+            className="text-sm font-bold text-white bg-brand rounded-lg px-6 py-2 disabled:opacity-50 mb-6"
           >
             {busy ? '발송 중…' : '지금 발송하기'}
           </button>

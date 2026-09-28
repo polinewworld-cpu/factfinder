@@ -73,7 +73,7 @@ export default function CommentSection({ articleId }: { articleId: string }) {
           <button
             disabled={posting}
             onClick={submit}
-            className="text-sm font-bold text-white bg-brand rounded-full px-5 py-1.5 disabled:opacity-50"
+            className="text-sm font-bold text-white bg-brand rounded-lg px-5 py-1.5 disabled:opacity-50"
           >
             등록
           </button>
@@ -97,7 +97,7 @@ export default function CommentSection({ articleId }: { articleId: string }) {
             <p className="text-sm text-gray-600 mt-3 mb-5">댓글을 작성하려면 구글 로그인이 필요합니다.</p>
             <button
               onClick={() => (window.location.href = '/api/auth/signin/google')}
-              className="w-full text-sm font-bold text-white bg-brand rounded-full py-3"
+              className="w-full text-sm font-bold text-white bg-brand rounded-lg py-3"
             >
               구글로 로그인
             </button>

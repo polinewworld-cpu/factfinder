@@ -171,7 +171,7 @@ export default function RelatedArticlePickerModal({
                 key={p}
                 type="button"
                 onClick={() => setPage(p)}
-                className={`w-7 h-7 rounded-full ${p === page ? 'bg-brand text-white font-bold' : 'text-gray-600 hover:bg-gray-100'}`}
+                className={`w-7 h-7 rounded-lg ${p === page ? 'bg-brand text-white font-bold' : 'text-gray-600 hover:bg-gray-100'}`}
               >
                 {p}
               </button>
@@ -200,7 +200,7 @@ export default function RelatedArticlePickerModal({
             type="button"
             disabled={checkedCount === 0}
             onClick={confirmSelection}
-            className="text-sm font-bold text-white bg-brand rounded-full px-5 py-2 disabled:opacity-50"
+            className="text-sm font-bold text-white bg-brand rounded-lg px-5 py-2 disabled:opacity-50"
           >
             선택기사 추가 ({checkedCount})
           </button>

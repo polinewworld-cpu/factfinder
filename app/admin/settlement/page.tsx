@@ -121,7 +121,7 @@ export default function SettlementAdminPage() {
           type="button"
           disabled={busy}
           onClick={runSettlement}
-          className="text-sm font-bold text-white bg-brand rounded-full px-5 py-2 disabled:opacity-50"
+          className="text-sm font-bold text-white bg-brand rounded-lg px-5 py-2 disabled:opacity-50"
         >
           정산
         </button>
@@ -173,7 +173,7 @@ export default function SettlementAdminPage() {
                   type="button"
                   disabled={busy}
                   onClick={completeSelected}
-                  className="text-sm font-bold text-white bg-brand rounded-full px-5 py-2 disabled:opacity-50"
+                  className="text-sm font-bold text-white bg-brand rounded-lg px-5 py-2 disabled:opacity-50"
                 >
                   정산 완료 처리
                 </button>

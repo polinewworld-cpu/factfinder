@@ -24,6 +24,12 @@ module.exports = {
           950: '#0d0d0d',
         },
       },
+      borderRadius: {
+        md: 'var(--radius)',
+        lg: 'var(--radius)',
+        xl: 'var(--radius)',
+        '2xl': 'var(--radius)',
+      },
     },
   },
   plugins: [require('@tailwindcss/typography')],
