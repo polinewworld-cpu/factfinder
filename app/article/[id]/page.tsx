@@ -82,10 +82,6 @@ export default async function ArticlePage({ params }: { params: { id: string } }
   const subtitles = [article.subtitle1, article.subtitle2, article.subtitle3].filter(Boolean) as string[];
   const activeArticleBanners = articleBanners.slice(0, siteConfig?.articleBannerCount ?? 0);
 
-  const kicker = article.keywords.length > 0
-    ? article.keywords.map((k) => k.name).join(' · ')
-    : article.category?.name ?? '팩트파인더';
-
   return (
     <div className="article-layout">
       <article className="article-main">
@@ -93,17 +89,18 @@ export default async function ArticlePage({ params }: { params: { id: string } }
             여기서는 렌더링하지 않음 (다른 곳: 메인 카드 썸네일, 공유 미리보기, 관련기사 카드 등은 계속 사용) (2026-09-12) */}
         <div className="article-body">
           <p className="article-kicker">
-            {kicker} · {article.publishedAt ? timeAgo(article.publishedAt) : ''}
+            {article.keywords.length > 0 ? (
+              article.keywords.map((k, i) => (
+                <span key={k.name}>
+                  {i > 0 ? ' · ' : ''}
+                  <a href={`/keyword/${encodeURIComponent(k.name)}`}>{k.name}</a>
+                </span>
+              ))
+            ) : (
+              article.category?.name ?? '팩트파인더'
+            )}
+            {article.publishedAt ? ` · ${timeAgo(article.publishedAt)}` : ''}
           </p>
-          {article.keywords.length > 0 && (
-            <div style={{ marginBottom: 12 }}>
-              {article.keywords.map((k) => (
-                <a key={k.name} href={`/keyword/${encodeURIComponent(k.name)}`} className="keyword-badge">
-                  {k.name}
-                </a>
-              ))}
-            </div>
-          )}
           <h1>{article.title}</h1>
           {subtitles.length > 0 && (
             <div className="article-subtitles">
