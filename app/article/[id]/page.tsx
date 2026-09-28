@@ -117,7 +117,6 @@ export default async function ArticlePage({ params }: { params: { id: string } }
               <ReadAloudButton
                 articleId={article.id}
                 text={`${article.title}. ${stripHtml(article.content)}`}
-                gender={article.author.gender}
               />
             </span>
           </div>
