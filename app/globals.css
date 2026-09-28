@@ -86,13 +86,6 @@ img {
   backdrop-filter: blur(16px);
 }
 
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  min-width: max-content;
-}
-
 .brand {
   display: flex;
   align-items: center;
@@ -419,12 +412,9 @@ img {
   margin-inline: auto;
 }
 
-/* Write page: sidebar on the logo edge, form centered in the full content column */
+/* Write page: form is centered in the full page column; sidebar overlays the left edge */
 .write-shell {
-  display: grid;
-  grid-template-columns: 10rem minmax(0, 1fr) 10rem;
-  align-items: start;
-  column-gap: 24px;
+  position: relative;
 }
 
 .write-shell-main {
@@ -433,9 +423,17 @@ img {
   margin-inline: auto;
 }
 
-.write-shell.is-nav-hidden {
-  grid-template-columns: minmax(0, 1fr);
-  column-gap: 0;
+.write-shell:not(.is-nav-hidden) .write-shell-main {
+  width: min(48rem, calc(100% - 10rem - 24px));
+  margin-left: max(calc(10rem + 24px), calc((100% - min(48rem, 100%)) / 2));
+  margin-right: auto;
+}
+
+.write-shell > nav {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 2;
 }
 
 .admin-nav-toggle {
@@ -1408,16 +1406,6 @@ img {
 
   .market-ticker {
     display: none;
-  }
-
-  .write-shell {
-    grid-template-columns: 10rem minmax(0, 1fr);
-    column-gap: 16px;
-  }
-
-  .write-shell.is-nav-hidden {
-    grid-template-columns: minmax(0, 1fr);
-    column-gap: 0;
   }
 
   .chips {
