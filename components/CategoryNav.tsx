@@ -8,7 +8,7 @@ const CATEGORIES = ['전체', '정치', '국제', '사회', '문화', '정치신
 export default function CategoryNav() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  if (pathname?.startsWith('/admin')) return null;
+  if (pathname?.startsWith('/admin') || pathname === '/write') return null;
 
   // 카테고리는 쿼리스트링(?category=)으로 구분되고 전부 '/'로 오므로, pathname만으론 현재 탭을 알 수 없었음
   // — 그래서 지금까지 활성 탭 표시가 아예 안 되던 문제 (2026-09-22)
