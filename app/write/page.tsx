@@ -1011,7 +1011,7 @@ export default function WritePage() {
     <WriteShell>
       <AdminSidebar />
       <div className="min-w-0 flex-1">
-        <div className="mx-auto max-w-3xl">{formBody}</div>
+        <div className="mx-auto max-w-3xl py-8">{formBody}</div>
       </div>
     </WriteShell>
   ) : (
