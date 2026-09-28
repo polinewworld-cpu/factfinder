@@ -60,6 +60,9 @@ export default function VideoMasonryCard({ video }: { video: MasonryVideo }) {
           alt=""
           style={{ aspectRatio: video.kind === 'SHORT' ? '9 / 16' : '16 / 9', objectFit: 'cover' }}
         />
+        <div className="pin-badges">
+          <span className="pin-badge-chip">정치신세계</span>
+        </div>
         <div className="pin-overlay">
           {isChiefEditor && (
             <button
@@ -77,10 +80,6 @@ export default function VideoMasonryCard({ video }: { video: MasonryVideo }) {
       </a>
 
       <div className="pin-copy">
-        {/* 메인 피드에 노출되는 건 개별 영상 종류가 아니라 '정치신세계' 코너 자체 — 배지는 고정, 영상 종류는 메타 정보로 (2026-09-11 개편) */}
-        <div className="badge-row">
-          <span className="badge">정치신세계</span>
-        </div>
         <h2>
           <a href={href} target="_blank" rel="noopener noreferrer">
             {video.title}
