@@ -6,12 +6,13 @@ import { ShareIcon, BookmarkIcon } from './icons';
 import { useSavedArticles } from './SavedArticlesProvider';
 import KineticTextGrid from './AppearText';
 import { stripHtml } from '@/lib/stripHtml';
+import { deriveExcerpt } from '@/lib/excerpt';
 
 export type CardArticle = {
   id: string;
   title: string;
   content?: string | null; // 사진 없는 카드의 키네틱 배경 텍스트를 문장 단위로 뽑아내는 데 씀 (2026-09-17)
-  excerpt?: string | null; // 본문 첫 문장 요약 — 사진이 없는 카드의 대체 문구로 노출 (2026-09-12 기능 구현)
+  excerpt?: string | null; // 본문 앞부분 요약 — 카드 제목 아래 1~2줄로 노출
   hoverText?: string | null; // 카드 이미지 마우스 오버 시 dimmed 배경 위에 흰색으로 표시되는 문구
   themeTags?: string | null; // 콤마 구분 문자열 — 마우스 오버 시 상단 중앙 핫핑크 배지로 노출 (2026-09-12 기능 구현)
   coverImageUrl?: string | null;
@@ -72,6 +73,7 @@ export default function ArticleCard({
   })();
   const fallbackFontSize = featured ? 22 : wide ? 20 : 14;
   const href = `/article/${article.id}`;
+  const excerpt = article.excerpt || (article.content ? deriveExcerpt(article.content) : '');
 
   const { loggedIn, isChiefEditor, isSaved, setSaved } = useSavedArticles();
   const [saveBusy, setSaveBusy] = useState(false);
@@ -222,6 +224,7 @@ export default function ArticleCard({
         <h2>
           <a href={href}>{article.title}</a>
         </h2>
+        {excerpt ? <p className="pin-excerpt">{excerpt}</p> : null}
         <div className="pin-meta">
           <span>{article.author.name}</span>
           <span className="dot" />

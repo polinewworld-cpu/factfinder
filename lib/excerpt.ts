@@ -1,5 +1,5 @@
-// 기사 요약문(excerpt) 자동 생성 — 별도 입력 없이 본문 첫 문장을 사용.
-// 화면 어디에도 노출하지 않고 RSS 등 외부 신디케이션용으로만 사용한다 (2026-09-11 신설).
+// 기사 요약문(excerpt) 자동 생성 — 별도 입력 없이 본문 앞부분을 사용.
+// 카드 제목 아래 1~2줄과 RSS 등 외부 신디케이션에 쓴다.
 export function deriveExcerpt(html: string, maxLen = 140): string {
   if (!html) return '';
 
