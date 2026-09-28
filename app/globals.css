@@ -23,6 +23,8 @@
   --gap: 16px;
   --page-gutter: 56px;
   --max: 1760px;
+  /* Shared column measure for header, feed, article, and footer so chrome lines up with the main box */
+  --page-width: min(var(--max), calc(100% - (var(--page-gutter) * 2)));
   --title: 'Gowun Batang', '고운바탕', serif;
 }
 
@@ -78,7 +80,8 @@ img {
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 18px;
-  padding: 0 var(--page-gutter);
+  /* Full-bleed sticky bar, but logo/search/account sit on the same edges as .content */
+  padding: 0 max(var(--page-gutter), calc((100% - var(--max)) / 2));
   background: color-mix(in srgb, var(--canvas) 88%, transparent);
   backdrop-filter: blur(16px);
 }
@@ -405,7 +408,7 @@ img {
 /* ---------- Layout shell ---------- */
 
 .content {
-  width: min(var(--max), calc(100% - (var(--page-gutter) * 2)));
+  width: var(--page-width);
   margin: 0 auto;
   padding: 8px 0 80px;
 }
@@ -850,7 +853,7 @@ img {
 /* ---------- Footer ---------- */
 
 .site-footer {
-  width: min(var(--max), calc(100% - (var(--page-gutter) * 2)));
+  width: var(--page-width);
   margin: 0 auto;
   padding: 28px 0 48px;
   border-top: 1px solid var(--hairline);
@@ -906,7 +909,7 @@ img {
 /* ---------- Article detail (styled like the prototype's reading layout) ---------- */
 
 .article-layout {
-  width: min(var(--max), calc(100% - (var(--page-gutter) * 2)));
+  width: var(--page-width);
   margin: 0 auto;
   padding: 24px 0 64px;
   display: grid;
@@ -1356,7 +1359,6 @@ img {
 
   .site-header {
     grid-template-columns: auto minmax(0, 1fr) auto;
-    padding: 0 var(--page-gutter);
     gap: 10px;
   }
 
