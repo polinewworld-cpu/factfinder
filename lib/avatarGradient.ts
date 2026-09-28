@@ -20,6 +20,33 @@ function hsl(hue: number, sat: number, light: number) {
   return `hsl(${Math.round(hue)} ${Math.round(sat)}% ${Math.round(light)}%)`;
 }
 
+/** Neighbouring vivid hues only — no complementary pairs, no yellow-green / olive in-betweens. */
+const WARM: [number, number, number][] = [
+  [322, 86, 54],
+  [340, 90, 54],
+  [6, 92, 52],
+  [24, 94, 52],
+];
+
+const COOL: [number, number, number][] = [
+  [152, 82, 44],
+  [186, 86, 46],
+  [214, 90, 52],
+  [252, 78, 56],
+  [292, 76, 54],
+];
+
+function pickVividTrio(rng: () => number): [number, number, number][] {
+  const family = rng() < 0.5 ? WARM : COOL;
+  const start = Math.floor(rng() * (family.length - 2));
+  const trio = family.slice(start, start + 3);
+  for (let i = trio.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(rng() * (i + 1));
+    [trio[i], trio[j]] = [trio[j], trio[i]];
+  }
+  return trio;
+}
+
 /**
  * Google always sends an image URL, even when the account has no photo —
  * a generated coloured-letter avatar on googleusercontent.com.
@@ -44,14 +71,9 @@ export function usableAvatarUrl(url?: string | null): string | null {
 /** Seeded 3-colour gradient so the same person keeps the same avatar. */
 export function avatarGradientStyle(seed: string): { background: string } {
   const rng = mulberry32(hashString(seed || 'factfinder'));
-  const hue1 = rng() * 360;
-  const hue2 = (hue1 + 40 + rng() * 70) % 360;
-  const hue3 = (hue1 + 155 + rng() * 90) % 360;
-  const c1 = hsl(hue1, 58 + rng() * 28, 42 + rng() * 16);
-  const c2 = hsl(hue2, 58 + rng() * 28, 42 + rng() * 16);
-  const c3 = hsl(hue3, 58 + rng() * 28, 42 + rng() * 16);
+  const [a, b, c] = pickVividTrio(rng);
   const angle = Math.floor(rng() * 360);
   return {
-    background: `linear-gradient(${angle}deg, ${c1} 0%, ${c2} 48%, ${c3} 100%)`,
+    background: `linear-gradient(${angle}deg, ${hsl(...a)} 0%, ${hsl(...b)} 48%, ${hsl(...c)} 100%)`,
   };
 }
