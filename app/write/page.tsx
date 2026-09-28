@@ -8,6 +8,7 @@ import RelatedArticlePickerModal from '@/components/RelatedArticlePickerModal';
 import SpecialCharacterModal from '@/components/SpecialCharacterModal';
 import AdminSidebar from '@/components/AdminSidebar';
 import { WriteShell } from '@/components/AdminNav';
+import TagMultiSelect from '@/components/TagMultiSelect';
 
 type Me = { id: string; role: string; name?: string; email?: string };
 type Category = { id: string; name: string; slug: string };
@@ -50,16 +51,12 @@ export default function WritePage() {
   // 보도사진 라이브러리 갤러리 픽커 (기능정의서 8.1) — null | 'card' | 'body'(본문 삽입)
   const [galleryTarget, setGalleryTarget] = useState<null | 'card' | 'body'>(null);
 
-  // 키워드 인라인 생성/삭제 — 편집장 전용 (기능정의서 4.3)
-  const [newKeywordName, setNewKeywordName] = useState('');
   const [keywordBusy, setKeywordBusy] = useState(false);
   const [keywordErrorMsg, setKeywordErrorMsg] = useState('');
 
   // 테마 — 메인 카드 마우스 오버 시 상단 중앙 핫핑크 배지로 노출됨 (2026-09-11 필드 신설, 2026-09-12 실제 기능 구현)
   const [themeTags, setThemeTags] = useState<string[]>([]);
-  const [newThemeName, setNewThemeName] = useState('');
-  const [allThemes, setAllThemes] = useState<string[]>([]); // 기존에 다른 기사에서 이미 쓰인 테마 목록 — 선택해서 재사용 가능 (2026-09-12 신설)
-  const [themeBusy, setThemeBusy] = useState(false);
+  const [allThemes, setAllThemes] = useState<string[]>([]);
 
   // 특수문자 — 에디터 툴바의 @ 버튼으로 여는 레이어(SpecialCharacterModal)에서 삽입/관리 (2026-09-11: 관리자 메뉴 → 에디터 내장으로 이동)
   const [specialCharModalOpen, setSpecialCharModalOpen] = useState(false);
@@ -430,70 +427,49 @@ export default function WritePage() {
     markDirty();
   }
 
-  // 키워드 인라인 생성/삭제 — 편집장 전용 (기능정의서 4.3: "글쓰기 화면에서 바로 편하게 생성/수정/삭제")
-  async function addKeywordInline() {
-    const name = newKeywordName.trim();
-    if (!name) return;
+  async function addKeywordInline(name: string) {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    const existing = keywords.find((k) => k.name === trimmed);
+    if (existing) {
+      if (!keywordIds.includes(existing.id)) {
+        setKeywordIds((prev) => [...prev, existing.id]);
+        markDirty();
+      }
+      return;
+    }
     setKeywordBusy(true);
     setKeywordErrorMsg('');
     try {
       const res = await fetch('/api/keywords', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name }),
+        body: JSON.stringify({ name: trimmed }),
       });
       const data = await res.json();
       if (!res.ok) {
         setKeywordErrorMsg(data.error ?? '키워드 추가에 실패했습니다.');
         return;
       }
-      setKeywords((prev) => [...prev, data].sort((a, b) => a.name.localeCompare(b.name)));
-      setNewKeywordName('');
-    } finally {
-      setKeywordBusy(false);
-    }
-  }
-
-  async function deleteKeywordInline(id: string) {
-    if (!window.confirm('키워드를 정말로 삭제하시겠습니까?')) return;
-    setKeywordBusy(true);
-    try {
-      await fetch(`/api/keywords/${id}`, { method: 'DELETE' });
-      setKeywords((prev) => prev.filter((k) => k.id !== id));
-      setKeywordIds((prev) => prev.filter((k) => k !== id));
+      setKeywords((prev) => (prev.some((k) => k.id === data.id) ? prev : [...prev, data].sort((a, b) => a.name.localeCompare(b.name, 'ko'))));
+      setKeywordIds((prev) => (prev.includes(data.id) ? prev : [...prev, data.id]));
       markDirty();
     } finally {
       setKeywordBusy(false);
     }
   }
 
-  // 테마 — 기존에 쓰인 테마는 목록에서 클릭해 선택/해제(toggleTheme), 새 테마는 입력창으로 추가 (2026-09-12: 선택 기능 신설)
   function toggleTheme(name: string) {
     setThemeTags((prev) => (prev.includes(name) ? prev.filter((t) => t !== name) : [...prev, name]));
     markDirty();
   }
-  function addThemeInline() {
-    const name = newThemeName.trim();
-    if (!name) return;
-    if (!themeTags.includes(name)) setThemeTags((prev) => [...prev, name]);
-    if (!allThemes.includes(name)) setAllThemes((prev) => [...prev, name].sort((a, b) => a.localeCompare(b, 'ko')));
-    setNewThemeName('');
-    markDirty();
-  }
 
-  // 테마 삭제 — Keyword와 달리 별도 테이블/ID가 없고 각 기사의 themeTags(콤마 구분 문자열)에만 값이 있으므로,
-  // 서버에서 그 이름을 모든 기사에서 통째로 제거하는 방식으로 "전역 삭제"를 구현 (2026-09-12 신설, 편집장 전용)
-  async function deleteThemeInline(name: string) {
-    if (!window.confirm(`"${name}" 테마를 정말로 삭제하시겠습니까? 이 테마가 붙은 모든 기사에서 제거됩니다.`)) return;
-    setThemeBusy(true);
-    try {
-      await fetch(`/api/themes?name=${encodeURIComponent(name)}`, { method: 'DELETE' });
-      setAllThemes((prev) => prev.filter((t) => t !== name));
-      setThemeTags((prev) => prev.filter((t) => t !== name));
-      markDirty();
-    } finally {
-      setThemeBusy(false);
-    }
+  function addThemeInline(name: string) {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    setThemeTags((prev) => (prev.includes(trimmed) ? prev : [...prev, trimmed]));
+    setAllThemes((prev) => (prev.includes(trimmed) ? prev : [...prev, trimmed].sort((a, b) => a.localeCompare(b, 'ko'))));
+    markDirty();
   }
 
   // 관련기사 선택 — 별도 레이어(RelatedArticlePickerModal)에서 검색+페이지네이션으로 골라 반환됨 (기능정의서 8.2)
@@ -861,105 +837,26 @@ export default function WritePage() {
         />
       </div>
 
-      <div className="composer-tags">
-        <span className="composer-tags-label">키워드</span>
-        {keywords.map((k) => (
-          <span key={k.id} className="inline-flex items-stretch h-7">
-            <button
-              type="button"
-              onClick={() => toggleKeyword(k.id)}
-              className={`inline-flex items-center text-xs font-bold rounded-full px-3 border ${
-                keywordIds.includes(k.id)
-                  ? 'bg-brand text-white border-brand'
-                  : 'bg-white text-gray-500 border-gray-200'
-              } ${me.role === 'CHIEF_EDITOR' ? 'rounded-r-none border-r-0' : ''}`}
-            >
-              {k.name}
-            </button>
-            {me.role === 'CHIEF_EDITOR' && (
-              <button
-                type="button"
-                disabled={keywordBusy}
-                onClick={() => deleteKeywordInline(k.id)}
-                title="키워드 삭제"
-                className={`inline-flex items-center text-xs leading-none rounded-r-full border border-l-0 px-2 ${
-                  keywordIds.includes(k.id)
-                    ? 'bg-brand text-white border-brand'
-                    : 'bg-white text-gray-400 border-gray-200'
-                }`}
-              >
-                x
-              </button>
-            )}
-          </span>
-        ))}
-        {me.role === 'CHIEF_EDITOR' && (
-          <span className="inline-flex items-center gap-1">
-            <input
-              value={newKeywordName}
-              onChange={(e) => setNewKeywordName(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && addKeywordInline()}
-              placeholder="새 키워드"
-              className="w-24 text-xs border border-gray-200 rounded-full px-3 py-1.5 outline-none focus:border-brand"
-            />
-            <button
-              type="button"
-              disabled={keywordBusy}
-              onClick={addKeywordInline}
-              className="text-xs font-bold text-brand border border-brand/30 rounded-full px-2.5 py-1.5 hover:bg-brand/5 disabled:opacity-50"
-            >
-              추가
-            </button>
-          </span>
-        )}
+      <div className="composer-picks">
+        <TagMultiSelect
+          label="키워드"
+          options={keywords}
+          selectedIds={keywordIds}
+          onToggle={toggleKeyword}
+          onCreate={addKeywordInline}
+          creating={keywordBusy}
+          placeholder="키워드 선택"
+        />
+        <TagMultiSelect
+          label="테마"
+          options={Array.from(new Set([...allThemes, ...themeTags])).map((t) => ({ id: t, name: t }))}
+          selectedIds={themeTags}
+          onToggle={toggleTheme}
+          onCreate={addThemeInline}
+          placeholder="테마 선택"
+        />
       </div>
       {keywordErrorMsg && <p className="text-red-600 text-xs mt-1">{keywordErrorMsg}</p>}
-
-      <div className="composer-tags">
-        <span className="composer-tags-label">테마</span>
-        {Array.from(new Set([...allThemes, ...themeTags])).map((t) => (
-          <span key={t} className="inline-flex items-stretch h-7">
-            <button
-              type="button"
-              onClick={() => toggleTheme(t)}
-              className={`inline-flex items-center text-xs font-bold px-3 border ${
-                themeTags.includes(t) ? 'bg-brand text-white border-brand' : 'bg-white text-gray-500 border-gray-200'
-              } ${me.role === 'CHIEF_EDITOR' ? 'rounded-l-full border-r-0' : 'rounded-full'}`}
-            >
-              {t}
-            </button>
-            {me.role === 'CHIEF_EDITOR' && (
-              <button
-                type="button"
-                disabled={themeBusy}
-                onClick={() => deleteThemeInline(t)}
-                title="테마 삭제"
-                className={`inline-flex items-center text-xs leading-none rounded-r-full border border-l-0 px-2 ${
-                  themeTags.includes(t) ? 'bg-brand text-white border-brand' : 'bg-white text-gray-400 border-gray-200'
-                }`}
-              >
-                x
-              </button>
-            )}
-          </span>
-        ))}
-        <span className="inline-flex items-center gap-1">
-          <input
-            value={newThemeName}
-            onChange={(e) => setNewThemeName(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && addThemeInline()}
-            placeholder="새 테마"
-            className="w-24 text-xs border border-gray-200 rounded-full px-3 py-1.5 outline-none focus:border-brand"
-          />
-          <button
-            type="button"
-            onClick={addThemeInline}
-            className="text-xs font-bold text-brand border border-brand/30 rounded-full px-2.5 py-1.5 hover:bg-brand/5"
-          >
-            추가
-          </button>
-        </span>
-      </div>
 
       <div className="composer-panel">
         <p className="composer-panel-title">커버 이미지</p>
