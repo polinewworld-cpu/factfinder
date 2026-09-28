@@ -1178,11 +1178,13 @@ export default function WritePage() {
   );
 
   // 편집장은 좌측 관리자 메뉴와 함께, 그 외(기자/논설위원)는 기존처럼 단독 화면으로 노출 (2026-09-11 신설)
-  // 작성 폼은 페이지 셸 전체 기준으로 가운데 두고, 메뉴는 로고와 같은 왼쪽 가장자리에 둔다
+  // 작성 폼은 메뉴 오른쪽의 남는 폭 한가운데 — 승인 대기함 등과 같은 패턴
   return me.role === 'CHIEF_EDITOR' ? (
     <WriteShell>
       <AdminSidebar />
-      <div className="write-shell-main">{formBody}</div>
+      <div className="min-w-0 flex-1">
+        <div className="mx-auto max-w-3xl">{formBody}</div>
+      </div>
     </WriteShell>
   ) : (
     <main className="max-w-3xl mx-auto px-4 py-8">{formBody}</main>

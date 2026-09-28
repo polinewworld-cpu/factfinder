@@ -55,6 +55,5 @@ export function AdminSidebarToggle() {
 }
 
 export function WriteShell({ children }: { children: React.ReactNode }) {
-  const { open } = useAdminNav();
-  return <div className={`page-shell write-shell py-8${open ? '' : ' is-nav-hidden'}`}>{children}</div>;
+  return <div className="page-shell flex items-start gap-6 py-8">{children}</div>;
 }
