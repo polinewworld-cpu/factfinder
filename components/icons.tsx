@@ -183,6 +183,20 @@ export function BookmarkIcon({ filled = false }: { filled?: boolean }) {
   );
 }
 
+export function EditIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M14.2 5.2 18.8 9.8 8.9 19.7H4.3v-4.6L14.2 5.2Z"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinejoin="miter"
+      />
+      <path d="M12.6 6.8 17.2 11.4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="square" />
+    </svg>
+  );
+}
+
 // 텔레그램 공유 버튼용 — 종이비행기 (2026-09-12 신설, 공유 레이어)
 export function TelegramIcon() {
   return (
