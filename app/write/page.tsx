@@ -16,11 +16,10 @@ type ArticleSearchResult = { id: string; title: string; author: { name: string }
 
 const WRITER_ROLES = ['REPORTER', 'COLUMNIST', 'CHIEF_EDITOR'];
 
-// 형광펜 색상 3종 — swatch는 툴바의 동그라미 버튼 색, mark는 실제 본문에 칠해지는 반투명 하이라이트 색 (2026-09-11 신설)
+// 형광펜 2종 — swatch는 툴바의 동그라미 버튼 색, mark는 본문에 칠해지는 반투명 하이라이트 색
 const HL_COLORS = [
-  { key: 'yellow', swatch: '#fbbf24', mark: 'rgba(250,204,21,0.45)' },
-  { key: 'green', swatch: '#4ade80', mark: 'rgba(74,222,128,0.45)' },
-  { key: 'pink', swatch: '#f472b6', mark: 'rgba(244,114,182,0.45)' },
+  { key: 'yellow', swatch: '#f5ff3d', mark: 'rgba(245,255,61,0.55)' },
+  { key: 'cyan', swatch: '#6ef4ff', mark: 'rgba(110,244,255,0.5)' },
 ];
 
 // 기사 수정 — /write?id=... 로 들어오면 해당 기사를 불러와 채워넣음 (2026-09-11 신설, 관리자 "전체 기사"에서 진입)
@@ -788,6 +787,80 @@ export default function WritePage() {
         />
       </div>
 
+      <div className="composer-editor">
+        <div className="composer-toolbar" onMouseDown={(e) => e.preventDefault()}>
+          <button type="button" onClick={() => exec('bold')} className="toolbar-btn font-bold" title="굵게">
+            B
+          </button>
+          <button type="button" onClick={() => exec('italic')} className="toolbar-btn italic" title="기울임">
+            I
+          </button>
+          <button type="button" onClick={() => exec('underline')} className="toolbar-btn underline" title="밑줄">
+            U
+          </button>
+          <span className="inline-flex items-center gap-1 px-0.5">
+            {HL_COLORS.map((c) => (
+              <button
+                key={c.key}
+                type="button"
+                onClick={() => applyHighlight(c.mark)}
+                className="w-5 h-5 rounded-full border border-black/10 shrink-0"
+                style={{ background: c.swatch, boxShadow: `0 0 8px ${c.swatch}` }}
+                title={c.key === 'yellow' ? '형광펜 노랑' : '형광펜 시안'}
+              />
+            ))}
+          </span>
+          <button
+            type="button"
+            onClick={insertLinkForSelection}
+            className="toolbar-btn"
+            title="선택한 문장을 드래그한 뒤 누르면 URL 링크로 연결됩니다"
+          >
+            링크
+          </button>
+          <span className="composer-rule" />
+          <label className="toolbar-btn cursor-pointer" title="사진을 업로드해서 커서 위치에 삽입">
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onClick={captureEditorSelection}
+              onChange={handleBodyImageUpload}
+            />
+            {bodyImageUploading ? '업로드 중…' : '사진'}
+          </label>
+          <button
+            type="button"
+            onClick={openBodyGallery}
+            className="toolbar-btn"
+            title="사진 라이브러리(갤러리)에서 골라 커서 위치에 삽입"
+          >
+            갤러리
+          </button>
+          <span className="composer-rule" />
+          <button
+            type="button"
+            onClick={openSpecialCharModal}
+            className="toolbar-btn"
+            title="특수문자 삽입 (누르면 문자 레이어가 열립니다)"
+          >
+            @
+          </button>
+        </div>
+        <div
+          ref={editorRef}
+          contentEditable
+          suppressContentEditableWarning
+          onInput={handleEditorInput}
+          onPaste={handleEditorPaste}
+          onClick={handleEditorClick}
+          onKeyDown={handleEditorKeyDown}
+          onBlur={clearImageSelection}
+          className="composer-body"
+          data-placeholder="본문을 입력하세요"
+        />
+      </div>
+
       <div className="composer-tags">
         <span className="composer-tags-label">키워드</span>
         {keywords.map((k) => (
@@ -886,80 +959,6 @@ export default function WritePage() {
             추가
           </button>
         </span>
-      </div>
-
-      <div className="composer-editor">
-        <div className="composer-toolbar" onMouseDown={(e) => e.preventDefault()}>
-          <button type="button" onClick={() => exec('bold')} className="toolbar-btn font-bold" title="굵게">
-            B
-          </button>
-          <button type="button" onClick={() => exec('italic')} className="toolbar-btn italic" title="기울임">
-            I
-          </button>
-          <button type="button" onClick={() => exec('underline')} className="toolbar-btn underline" title="밑줄">
-            U
-          </button>
-          <span className="inline-flex items-center gap-1 px-0.5">
-            {HL_COLORS.map((c) => (
-              <button
-                key={c.key}
-                type="button"
-                onClick={() => applyHighlight(c.mark)}
-                className="w-5 h-5 rounded-full border border-black/10 shrink-0"
-                style={{ background: c.swatch }}
-                title="형광펜 마킹 (문장을 드래그로 선택 후 클릭)"
-              />
-            ))}
-          </span>
-          <button
-            type="button"
-            onClick={insertLinkForSelection}
-            className="toolbar-btn"
-            title="선택한 문장을 드래그한 뒤 누르면 URL 링크로 연결됩니다"
-          >
-            링크
-          </button>
-          <span className="composer-rule" />
-          <label className="toolbar-btn cursor-pointer" title="사진을 업로드해서 커서 위치에 삽입">
-            <input
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onClick={captureEditorSelection}
-              onChange={handleBodyImageUpload}
-            />
-            {bodyImageUploading ? '업로드 중…' : '사진'}
-          </label>
-          <button
-            type="button"
-            onClick={openBodyGallery}
-            className="toolbar-btn"
-            title="사진 라이브러리(갤러리)에서 골라 커서 위치에 삽입"
-          >
-            갤러리
-          </button>
-          <span className="composer-rule" />
-          <button
-            type="button"
-            onClick={openSpecialCharModal}
-            className="toolbar-btn"
-            title="특수문자 삽입 (누르면 문자 레이어가 열립니다)"
-          >
-            @
-          </button>
-        </div>
-        <div
-          ref={editorRef}
-          contentEditable
-          suppressContentEditableWarning
-          onInput={handleEditorInput}
-          onPaste={handleEditorPaste}
-          onClick={handleEditorClick}
-          onKeyDown={handleEditorKeyDown}
-          onBlur={clearImageSelection}
-          className="composer-body"
-          data-placeholder="본문을 입력하세요"
-        />
       </div>
 
       <div className="composer-panel">

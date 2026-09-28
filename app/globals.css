@@ -437,7 +437,7 @@ img {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 28px;
+  margin-bottom: 10px;
 }
 
 .composer-bar-left {
@@ -448,7 +448,7 @@ img {
 }
 
 .composer-select {
-  height: 36px;
+  height: 30px;
   padding: 0 12px;
   border: 1px solid var(--hairline);
   border-radius: 999px;
@@ -466,9 +466,9 @@ img {
 .composer-chip {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  height: 36px;
-  padding: 0 14px;
+  gap: 6px;
+  height: 30px;
+  padding: 0 12px;
   border: 1px solid var(--hairline);
   border-radius: 999px;
   background: var(--surface);
@@ -497,17 +497,17 @@ img {
 
 .composer-title {
   width: 100%;
-  margin: 0 0 8px;
+  margin: 0 0 2px;
   padding: 0;
   border: 0;
   background: transparent;
   outline: none;
   color: var(--ink);
   font-family: var(--title);
-  font-size: 34px;
+  font-size: 26px;
   font-weight: 700;
   letter-spacing: -0.03em;
-  line-height: 1.25;
+  line-height: 1.2;
 }
 
 .composer-title::placeholder {
@@ -522,14 +522,14 @@ img {
 .composer-line {
   width: 100%;
   margin: 0;
-  padding: 8px 0;
+  padding: 3px 0;
   border: 0;
   border-bottom: 1px solid transparent;
   background: transparent;
   outline: none;
   color: var(--body);
-  font-size: 15px;
-  line-height: 1.5;
+  font-size: 14px;
+  line-height: 1.4;
 }
 
 .composer-line:focus {
@@ -544,7 +544,7 @@ img {
   display: flex;
   flex-direction: column;
   gap: 0;
-  margin: 4px 0 8px;
+  margin: 0 0 14px;
 }
 
 .composer-tags {
@@ -552,7 +552,7 @@ img {
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
-  margin: 18px 0 0;
+  margin: 22px 0 0;
 }
 
 .composer-tags-label {
@@ -566,7 +566,7 @@ img {
 }
 
 .composer-editor {
-  margin-top: 28px;
+  margin-top: 0;
   overflow: hidden;
   border: 1px solid var(--hairline);
   border-radius: 18px;
@@ -1658,7 +1658,7 @@ img {
 }
 
 .hl-mark {
-  /* 색상은 항상 인라인 style(background)로 지정됨 — 형광펜 3색 중 선택된 색 (2026-09-11, 기존 고정 노란색에서 변경) */
+  /* 색상은 인라인 style(background) — 형광펜 노란/시안 */
   padding: 0 1px;
   border-radius: 2px;
 }
