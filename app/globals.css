@@ -17,7 +17,7 @@
   --accent-pressed: #e01874;
   --overlay: rgba(0, 0, 0, 0.42);
   --shadow: 0 12px 32px rgba(0, 0, 0, 0.16);
-  --header-h: 80px;
+  --header-h: 91px;
   --radius: 16px;
   --radius-lg: 24px;
   --gap: 16px;
@@ -81,8 +81,7 @@ img {
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 18px;
-  /* Full-bleed sticky bar, but logo/search/account sit on the same edges as .content */
-  padding: 0 max(var(--page-gutter), calc((100% - var(--max)) / 2));
+  padding: 21px max(var(--page-gutter), calc((100% - var(--max)) / 2)) 11px;
   background: color-mix(in srgb, var(--canvas) 88%, transparent);
   backdrop-filter: blur(16px);
 }
