@@ -45,7 +45,7 @@ export default function PollCard({ pollId }: { pollId: string }) {
 
   return (
     <section className="my-8 border border-gray-200 rounded-xl p-5 bg-gray-50">
-      <p className="text-[11px] font-bold text-brand mb-1">📊 설문조사</p>
+      <p className="text-[11px] font-bold text-brand mb-1">설문조사</p>
       <h3 className="font-bold text-gray-900 mb-4">{poll.question}</h3>
 
       <div className="space-y-2">
