@@ -120,7 +120,7 @@ export default function ReadAloudButton({
   }
 
   return (
-    <div className="flex items-center">
+    <div className="contents">
       <button
         type="button"
         onClick={toggleVoiceGender}
