@@ -16,6 +16,8 @@ import RecommendButton from '@/components/RecommendButton';
 import DonateButtonLarge from '@/components/DonateButtonLarge';
 import { stripHtml } from '@/lib/stripHtml';
 import { getCurrentUser } from '@/lib/session';
+import { EditIcon } from '@/components/icons';
+import { ROLES } from '@/lib/roles';
 
 export default async function ArticlePage({ params }: { params: { id: string } }) {
   const [article, currentUser, siteConfig, articleBanners, lineAds] = await Promise.all([
@@ -69,6 +71,10 @@ export default async function ArticlePage({ params }: { params: { id: string } }
       }))
     : false;
 
+  const canEdit =
+    !!currentUser &&
+    (currentUser.role === ROLES.CHIEF_EDITOR || currentUser.id === article.authorId);
+
   // 조회수 증가 (데모 단순화를 위해 상세 페이지 렌더링 시 직접 처리)
   // updatedAt은 @updatedAt이라 update() 호출만으로 자동 갱신됨 — 조회는 "수정"이 아니므로 기존 값을
   // 그대로 돌려줘서 관리자 "최종편집일"이 조회수만 올라도 오늘로 밀리던 문제를 막음 (2026-09-22)
@@ -112,6 +118,16 @@ export default async function ArticlePage({ params }: { params: { id: string } }
               {article.author.name} 기자
             </span>
             <span className="icon-action-group">
+              {canEdit && (
+                <a
+                  href={`/write?id=${article.id}`}
+                  className="icon-action"
+                  title="기사 수정"
+                  aria-label="기사 수정"
+                >
+                  <EditIcon />
+                </a>
+              )}
               <SaveButton articleId={article.id} initialSaved={alreadySaved} loggedIn={!!currentUser} />
               <TextSizeControl />
               <ReadAloudButton
