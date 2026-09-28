@@ -303,6 +303,18 @@ img {
   border: 0;
 }
 
+.initial-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  color: #fff;
+  font-weight: 700;
+  flex: none;
+  user-select: none;
+  line-height: 1;
+}
+
 /* 계정 메뉴 아바타에 구글 프로필 사진이 있으면 이니셜 대신 사진을 채워 보여줌 (2026-09-12) */
 .avatar img {
   width: 100%;
@@ -1678,13 +1690,7 @@ img {
 }
 
 .reporter-card-avatar--fallback {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--accent);
-  color: #fff;
   font-size: 13px;
-  font-weight: 700;
 }
 
 .reporter-card-info {

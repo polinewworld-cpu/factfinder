@@ -21,6 +21,7 @@ export default async function Header() {
             <AccountMenu
               name={user.name ?? '내 정보'}
               image={user.image}
+              userId={user.id}
               isWriter={WRITER_ROLES.includes(user.role as any)}
               isChiefEditor={user.role === ROLES.CHIEF_EDITOR}
             />

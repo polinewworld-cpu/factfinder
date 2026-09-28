@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { detectSnsPlatform, SNS_PLATFORM_LABELS } from '@/lib/sns';
+import InitialAvatar from '@/components/InitialAvatar';
 
 type SavedArticleItem = { id: string; title: string; author: { name: string } };
 
@@ -129,8 +130,16 @@ export default function ProfilePage() {
       <h1 className="text-xl font-bold text-gray-900 mb-6">내 프로필</h1>
 
       <div className="flex items-center gap-4 mb-6">
-        <div className="w-16 h-16 rounded-full bg-gray-100 overflow-hidden flex items-center justify-center text-gray-300 text-xs shrink-0">
-          {image ? <img src={image} alt="" className="w-full h-full object-cover" /> : '사진'}
+        <div className="w-16 h-16 rounded-full overflow-hidden flex items-center justify-center shrink-0">
+          {image ? (
+            <img src={image} alt="" className="w-full h-full object-cover" />
+          ) : (
+            <InitialAvatar
+              seed={me.id || me.email || me.name}
+              name={nickname || me.nickname || me.name}
+              className="w-16 h-16 text-xl"
+            />
+          )}
         </div>
         <label className="text-sm text-gray-600 cursor-pointer">
           <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />

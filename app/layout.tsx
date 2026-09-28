@@ -38,7 +38,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <AdminNavProvider>
             <Header />
             <SavedArticlesProvider loggedIn={!!user} isChiefEditor={user?.role === ROLES.CHIEF_EDITOR}>
-              {needsSetup ? <WelcomeSetup defaultImage={user?.image} /> : children}
+              {needsSetup ? (
+                <WelcomeSetup defaultImage={user?.image} name={user?.name} userId={user?.id} />
+              ) : (
+                children
+              )}
             </SavedArticlesProvider>
             <Footer />
           </AdminNavProvider>

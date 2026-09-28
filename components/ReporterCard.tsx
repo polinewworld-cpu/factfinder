@@ -1,5 +1,6 @@
 import SnsLinks from './SnsLinks';
 import { timeAgo } from '@/lib/time';
+import InitialAvatar from './InitialAvatar';
 
 type ReporterCardAuthor = {
   name: string;
@@ -26,9 +27,11 @@ export default function ReporterCard({
         {author.image ? (
           <img src={author.image} alt="" className="reporter-card-avatar" />
         ) : (
-          <div className="reporter-card-avatar reporter-card-avatar--fallback" aria-hidden="true">
-            {author.name.slice(0, 1)}
-          </div>
+          <InitialAvatar
+            seed={author.email || author.name}
+            name={author.name}
+            className="reporter-card-avatar reporter-card-avatar--fallback"
+          />
         )}
         <div className="reporter-card-info">
           <p className="reporter-card-name">{author.name} 기자</p>
