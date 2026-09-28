@@ -123,6 +123,7 @@ export default function VideoCardGrid({
                   </>
                 )}
               </div>
+              <p className="text-sm font-semibold text-gray-900 p-2 line-clamp-2">{card.title}</p>
             </a>
           ))}
         </div>
