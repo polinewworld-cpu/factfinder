@@ -694,9 +694,6 @@ export default function WritePage() {
           placeholder="제목"
           className="composer-title"
         />
-        <span className="composer-save">
-          {saving ? '저장 중…' : lastSavedAt ? `저장됨 ${lastSavedAt.toLocaleTimeString('ko-KR')}` : ''}
-        </span>
       </div>
 
       <div className="composer-subs">
@@ -786,6 +783,9 @@ export default function WritePage() {
           >
             특수문자
           </button>
+          <span className="composer-save">
+            {saving ? '저장 중…' : lastSavedAt ? `저장됨 ${lastSavedAt.toLocaleTimeString('ko-KR')}` : ''}
+          </span>
         </div>
         <div
           ref={editorRef}
