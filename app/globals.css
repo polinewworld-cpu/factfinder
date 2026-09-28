@@ -414,6 +414,12 @@ img {
 
 .admin-nav-toggle {
   color: var(--mute);
+  flex-shrink: 0;
+}
+
+.admin-sidebar .admin-nav-toggle {
+  width: 32px;
+  height: 32px;
 }
 
 .admin-nav-toggle.is-on {
@@ -488,18 +494,28 @@ img {
   accent-color: var(--accent);
 }
 
-.composer-toggle {
+.composer-toggle,
+.composer-submit {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 8px 16px;
+  height: 40px;
+  padding: 0 16px;
   border: 1px solid var(--hairline);
   border-radius: 999px;
   background: var(--surface);
   color: var(--mute);
   font-size: 14px;
   font-weight: 400;
-  line-height: 1.25;
+  line-height: 1;
+}
+
+.composer-submit {
+  padding: 0 24px;
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #fff;
+  font-weight: 700;
 }
 
 .composer-toggle:hover {
@@ -513,9 +529,14 @@ img {
   font-weight: 700;
 }
 
-.composer-toggle.is-on:hover {
+.composer-toggle.is-on:hover,
+.composer-submit:hover {
   background: var(--accent-pressed);
   border-color: var(--accent-pressed);
+}
+
+.composer-submit:disabled {
+  opacity: 0.5;
 }
 
 .composer-save {
