@@ -12,6 +12,8 @@ export default function TagMultiSelect({
   onCreate,
   creating = false,
   canCreate = true,
+  multiple = true,
+  searchable,
   placeholder = '선택',
 }: {
   label: string;
@@ -21,6 +23,8 @@ export default function TagMultiSelect({
   onCreate?: (name: string) => void | Promise<void>;
   creating?: boolean;
   canCreate?: boolean;
+  multiple?: boolean;
+  searchable?: boolean;
   placeholder?: string;
 }) {
   const [open, setOpen] = useState(false);
@@ -28,6 +32,7 @@ export default function TagMultiSelect({
   const rootRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  const showSearch = searchable ?? (multiple || canCreate);
   const selected = useMemo(
     () => options.filter((o) => selectedIds.includes(o.id)),
     [options, selectedIds]
@@ -50,7 +55,7 @@ export default function TagMultiSelect({
   useEffect(() => {
     if (!open) return;
     setQuery('');
-    const t = window.setTimeout(() => inputRef.current?.focus(), 0);
+    const t = showSearch ? window.setTimeout(() => inputRef.current?.focus(), 0) : 0;
     function onDoc(e: MouseEvent) {
       if (!rootRef.current?.contains(e.target as Node)) setOpen(false);
     }
@@ -64,13 +69,18 @@ export default function TagMultiSelect({
       document.removeEventListener('mousedown', onDoc);
       document.removeEventListener('keydown', onKey);
     };
-  }, [open]);
+  }, [open, showSearch]);
 
   async function createFromQuery() {
     const name = query.trim();
     if (!name || !canCreate || !onCreate || exactMatch || creating) return;
     await onCreate(name);
     setQuery('');
+  }
+
+  function pick(id: string) {
+    onToggle(id);
+    if (!multiple) setOpen(false);
   }
 
   return (
@@ -88,24 +98,26 @@ export default function TagMultiSelect({
           <span className="tag-select-caret" aria-hidden="true" />
         </button>
         {open ? (
-          <div className="tag-select-menu" role="listbox" aria-multiselectable="true">
-            <input
-              ref={inputRef}
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  if (canCreate && query.trim() && !exactMatch) {
-                    void createFromQuery();
-                    return;
+          <div className="tag-select-menu" role="listbox" aria-multiselectable={multiple}>
+            {showSearch ? (
+              <input
+                ref={inputRef}
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (canCreate && query.trim() && !exactMatch) {
+                      void createFromQuery();
+                      return;
+                    }
+                    if (filtered[0]) pick(filtered[0].id);
                   }
-                  if (filtered[0]) onToggle(filtered[0].id);
-                }
-              }}
-              placeholder="검색 또는 새로 만들기"
-              className="tag-select-search"
-            />
+                }}
+                placeholder={canCreate ? '검색 또는 새로 만들기' : '검색'}
+                className="tag-select-search"
+              />
+            ) : null}
             <div className="tag-select-list">
               {filtered.length === 0 && (exactMatch || !canCreate) ? (
                 <p className="tag-select-empty">항목이 없습니다.</p>
@@ -119,7 +131,7 @@ export default function TagMultiSelect({
                     role="option"
                     aria-selected={on}
                     className={`tag-select-option${on ? ' is-on' : ''}`}
-                    onClick={() => onToggle(o.id)}
+                    onClick={() => pick(o.id)}
                   >
                     <span className="tag-select-check" aria-hidden="true" />
                     {o.name}
