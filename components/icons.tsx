@@ -173,10 +173,10 @@ export function BookmarkIcon({ filled = false }: { filled?: boolean }) {
   return (
     <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <path
-        d="M7 4.75h10A1.25 1.25 0 0 1 18.25 6v13.15a.7.7 0 0 1-1.07.6l-4.81-2.85a.7.7 0 0 0-.74 0l-4.81 2.85a.7.7 0 0 1-1.07-.6V6A1.25 1.25 0 0 1 7 4.75Z"
+        d="M6.5 3.75h11v17.1L12 16.4 6.5 20.85V3.75Z"
         stroke="currentColor"
         strokeWidth="1.5"
-        strokeLinejoin="round"
+        strokeLinejoin="miter"
         fill={filled ? 'currentColor' : 'none'}
       />
     </svg>
@@ -224,10 +224,10 @@ export function CommentIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <path
-        d="M5.5 5.75h13A1.75 1.75 0 0 1 20.25 7.5v8A1.75 1.75 0 0 1 18.5 17.25h-5.05L8.15 20.5a.65.65 0 0 1-1.02-.53v-2.72H5.5A1.75 1.75 0 0 1 3.75 15.5v-8A1.75 1.75 0 0 1 5.5 5.75Z"
+        d="M4.5 5.5h15v11H10.2L6.5 20.2V16.5H4.5V5.5Z"
         stroke="currentColor"
         strokeWidth="1.5"
-        strokeLinejoin="round"
+        strokeLinejoin="miter"
       />
     </svg>
   );
@@ -248,8 +248,8 @@ export function CreditCardIcon() {
 export function TextDownIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="M9.4 16.6 12 9.5l2.6 7.1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M10.25 13.9h3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M9.4 16.6 12 9.5l2.6 7.1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="square" strokeLinejoin="miter" />
+      <path d="M10.25 13.9h3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="square" />
     </svg>
   );
 }
@@ -257,8 +257,8 @@ export function TextDownIcon() {
 export function TextUpIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="M7.2 18 12 6.4 16.8 18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M8.7 14h6.6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M7.2 18 12 6.4 16.8 18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="square" strokeLinejoin="miter" />
+      <path d="M8.7 14h6.6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="square" />
     </svg>
   );
 }
@@ -268,7 +268,7 @@ export function MarsIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <circle cx="10" cy="14" r="5.25" stroke="currentColor" strokeWidth="1.5" />
-      <path d="M14.15 9.85 19 5.05M19 5.05h-4.55M19 5.05v4.55" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M14.15 9.85 19 5.05M19 5.05h-4.55M19 5.05v4.55" stroke="currentColor" strokeWidth="1.5" strokeLinecap="square" strokeLinejoin="miter" />
     </svg>
   );
 }
@@ -277,7 +277,7 @@ export function VenusIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <circle cx="12" cy="9" r="5.25" stroke="currentColor" strokeWidth="1.5" />
-      <path d="M12 14.25v6.5M9.1 18.25h5.8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M12 14.25v6.5M9.1 18.25h5.8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="square" />
     </svg>
   );
 }
@@ -287,12 +287,12 @@ export function VolumeIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <path
-        d="M4.75 9.6h2.55l4.95-3.75v12.3L7.3 14.4H4.75A1.25 1.25 0 0 1 3.5 13.15v-2.3A1.25 1.25 0 0 1 4.75 9.6Z"
+        d="M3.75 9.5h3.1L12.2 5.4v13.2L6.85 14.5H3.75V9.5Z"
         stroke="currentColor"
         strokeWidth="1.5"
-        strokeLinejoin="round"
+        strokeLinejoin="miter"
       />
-      <path d="M15.55 9.7a3.5 3.5 0 0 1 0 4.6M17.85 7.5a6.2 6.2 0 0 1 0 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M15.55 9.7a3.5 3.5 0 0 1 0 4.6M17.85 7.5a6.2 6.2 0 0 1 0 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="square" />
     </svg>
   );
 }
@@ -301,12 +301,12 @@ export function VolumeOffIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <path
-        d="M4.75 9.6h2.55l4.95-3.75v12.3L7.3 14.4H4.75A1.25 1.25 0 0 1 3.5 13.15v-2.3A1.25 1.25 0 0 1 4.75 9.6Z"
+        d="M3.75 9.5h3.1L12.2 5.4v13.2L6.85 14.5H3.75V9.5Z"
         stroke="currentColor"
         strokeWidth="1.5"
-        strokeLinejoin="round"
+        strokeLinejoin="miter"
       />
-      <path d="m15.5 10.2 5 5M20.5 10.2l-5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="m15.5 10.2 5 5M20.5 10.2l-5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="square" />
     </svg>
   );
 }
