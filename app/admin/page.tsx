@@ -54,7 +54,7 @@ export default function AdminHome() {
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
           {/* 발행기사 — 오늘/전체. 전체 숫자를 누르면 전체기사 탭으로 */}
           <RippleDotCard className="h-[250px]">
-            <p className="text-xs text-white/70 mb-1">발행기사</p>
+            <p className="text-xs text-gray-900/60 mb-1">발행기사</p>
             <p className="text-5xl font-bold">
               {stats.publishedToday}/
               <a href="/admin/articles" className="hover:underline">
@@ -65,13 +65,13 @@ export default function AdminHome() {
 
           {/* 승인대기 — 단일 지표, 누르면 승인대기함으로 */}
           <RippleDotCard href="/admin/pending" className="h-[250px] hover:opacity-90">
-            <p className="text-xs text-white/70 mb-1">승인대기</p>
+            <p className="text-xs text-gray-900/60 mb-1">승인대기</p>
             <p className="text-5xl font-bold">{stats.pendingCount}</p>
           </RippleDotCard>
 
           {/* 회원 — 뭘 눌러도 회원 관리탭으로 */}
           <RippleDotCard href="/admin/members" className="h-[250px] hover:opacity-90">
-            <p className="text-xs text-white/70 mb-1">회원</p>
+            <p className="text-xs text-gray-900/60 mb-1">회원</p>
             <p className="text-5xl font-bold">
               {stats.newMembersToday}/{stats.totalMembers}
             </p>
@@ -79,7 +79,7 @@ export default function AdminHome() {
 
           {/* 기자 — 대기중 숫자는 기자신청 대기함으로, 현재 숫자는 기자관리 메뉴로 */}
           <RippleDotCard className="h-[250px]">
-            <p className="text-xs text-white/70 mb-1">기자</p>
+            <p className="text-xs text-gray-900/60 mb-1">기자</p>
             <p className="text-5xl font-bold">
               <a href="/admin/reporter-applications" className="hover:underline">
                 {stats.pendingReporterCount}
@@ -93,7 +93,7 @@ export default function AdminHome() {
 
           {/* 후원 — 오늘 금액/이번달 금액, 누르면 전체 후원리스트로 */}
           <RippleDotCard href="/admin/donations" className="h-[250px] hover:opacity-90">
-            <p className="text-xs text-white/70 mb-1">후원</p>
+            <p className="text-xs text-gray-900/60 mb-1">후원</p>
             <p className="text-5xl font-bold">
               {stats.donationAmountToday.toLocaleString()}/{stats.donationAmountMonth.toLocaleString()}
             </p>

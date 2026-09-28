@@ -1020,6 +1020,6 @@ export default function WritePage() {
       </div>
     </WriteShell>
   ) : (
-    <main className="max-w-3xl mx-auto px-4 py-8">{formBody}</main>
+    <main className="backstage max-w-3xl mx-auto px-4 py-8">{formBody}</main>
   );
 }
