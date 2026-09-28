@@ -407,6 +407,11 @@ img {
 
 /* ---------- Layout shell ---------- */
 
+.page-shell {
+  width: var(--page-width);
+  margin-inline: auto;
+}
+
 .content {
   width: var(--page-width);
   margin: 0 auto;

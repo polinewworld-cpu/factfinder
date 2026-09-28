@@ -1178,7 +1178,7 @@ export default function WritePage() {
 
   // 편집장은 좌측 관리자 메뉴와 함께, 그 외(기자/논설위원)는 기존처럼 단독 화면으로 노출 (2026-09-11 신설)
   return me.role === 'CHIEF_EDITOR' ? (
-    <div className="mx-auto flex max-w-6xl items-start gap-6 px-4 py-8">
+    <div className="page-shell flex items-start gap-6 py-8">
       <AdminSidebar />
       <div className="min-w-0 flex-1 max-w-3xl">{formBody}</div>
     </div>

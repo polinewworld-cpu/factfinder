@@ -45,7 +45,7 @@ export default function AdminHome() {
   }
 
   return (
-    <main className="px-4 py-8">
+    <main className="py-8">
       <h1 className="text-xl font-bold text-gray-900 mb-6">관리자 대시보드</h1>
 
       {!stats ? (
