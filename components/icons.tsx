@@ -248,8 +248,7 @@ export function CreditCardIcon() {
 export function TextDownIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="M9.4 16.6 12 9.5l2.6 7.1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="square" strokeLinejoin="miter" />
-      <path d="M10.25 13.9h3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="square" />
+      <path d="M6.5 12h11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="square" />
     </svg>
   );
 }
@@ -257,8 +256,7 @@ export function TextDownIcon() {
 export function TextUpIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="M7.2 18 12 6.4 16.8 18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="square" strokeLinejoin="miter" />
-      <path d="M8.7 14h6.6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="square" />
+      <path d="M6.5 12h11M12 6.5v11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="square" />
     </svg>
   );
 }
