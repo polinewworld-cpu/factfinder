@@ -788,9 +788,6 @@ img {
 }
 
 .composer-toolbar {
-  position: sticky;
-  top: var(--header-h);
-  z-index: 10;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
