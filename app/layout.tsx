@@ -4,6 +4,8 @@ import Footer from '@/components/Footer';
 import SavedArticlesProvider from '@/components/SavedArticlesProvider';
 import { getCurrentUser } from '@/lib/session';
 import { ROLES } from '@/lib/roles';
+import { prisma } from '@/lib/prisma';
+import WelcomeSetup from '@/components/WelcomeSetup';
 
 export const metadata = {
   title: '팩트파인더',
@@ -12,6 +14,10 @@ export const metadata = {
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const user = await getCurrentUser();
+  // 닉네임을 아직 안 정한 신규 가입자는 어느 페이지든 본문 대신 환영(닉네임·사진 설정) 화면을 보여줌
+  const needsSetup = user
+    ? !(await prisma.user.findUnique({ where: { id: user.id }, select: { nickname: true } }))?.nickname
+    : false;
   return (
     <html lang="ko">
       <head>
@@ -30,7 +36,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <div className="page">
           <Header />
           <SavedArticlesProvider loggedIn={!!user} isChiefEditor={user?.role === ROLES.CHIEF_EDITOR}>
-            {children}
+            {needsSetup ? <WelcomeSetup defaultImage={user?.image} /> : children}
           </SavedArticlesProvider>
           <Footer />
         </div>

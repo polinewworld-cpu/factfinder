@@ -37,13 +37,8 @@ export default function SaveButton({
       disabled={busy}
       title={saved ? '저장 취소' : '기사 저장'}
       aria-pressed={saved}
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: 4,
-        color: saved ? 'var(--accent, #d0342c)' : 'inherit',
-        opacity: busy ? 0.6 : 1,
-      }}
+      className="icon-action"
+      style={{ opacity: busy ? 0.6 : 1 }}
     >
       <BookmarkIcon filled={saved} />
     </button>

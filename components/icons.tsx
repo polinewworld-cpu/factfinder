@@ -56,11 +56,12 @@ export function BellIcon() {
 
 export function ShareIcon() {
   return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <circle cx="18" cy="5.5" r="2.2" fill="none" stroke="currentColor" strokeWidth="1.7" />
-      <circle cx="6" cy="12" r="2.2" fill="none" stroke="currentColor" strokeWidth="1.7" />
-      <circle cx="18" cy="18.5" r="2.2" fill="none" stroke="currentColor" strokeWidth="1.7" />
-      <path d="m8 11 8-4.4M8 13l8 4.4" fill="none" stroke="currentColor" strokeWidth="1.7" />
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="18" cy="5" r="3" />
+      <circle cx="6" cy="12" r="3" />
+      <circle cx="18" cy="19" r="3" />
+      <line x1="8.59" x2="15.42" y1="13.51" y2="17.49" />
+      <line x1="15.41" x2="8.59" y1="6.51" y2="10.49" />
     </svg>
   );
 }
@@ -161,13 +162,10 @@ export function LinkIcon() {
 
 export function BookmarkIcon({ filled = false }: { filled?: boolean }) {
   return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <path
-        d="M6.5 4.5h11a1 1 0 0 1 1 1V20l-6.5-3.6L5.5 20V5.5a1 1 0 0 1 1-1Z"
+        d="M17 3a2 2 0 0 1 2 2v15a1 1 0 0 1-1.496.868l-4.512-2.578a2 2 0 0 0-1.984 0l-4.512 2.578A1 1 0 0 1 5 20V5a2 2 0 0 1 2-2z"
         fill={filled ? 'currentColor' : 'none'}
-        stroke="currentColor"
-        strokeWidth="1.7"
-        strokeLinejoin="round"
       />
     </svg>
   );
@@ -192,15 +190,9 @@ export function TelegramIcon() {
 // 기사 "추천" 버튼용 (2026-09-12 신설)
 export function ThumbsUpIcon() {
   return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path
-        d="M7 11v9H4.5A1.5 1.5 0 0 1 3 18.5v-6A1.5 1.5 0 0 1 4.5 11H7Zm0 0 3.6-6.6a1.6 1.6 0 0 1 3 .8v3.6H17a2 2 0 0 1 2 2.4l-1.3 6a2 2 0 0 1-2 1.8H10a3 3 0 0 1-3-3"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinejoin="round"
-        strokeLinecap="round"
-      />
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z" />
+      <path d="M7 10v12" />
     </svg>
   );
 }
@@ -208,30 +200,91 @@ export function ThumbsUpIcon() {
 // 댓글 수 아이콘 (2026-09-12 신설)
 export function CommentIcon() {
   return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path
-        d="M4 5.5h16v10H9.5L5 19v-3.5H4Z"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinejoin="round"
-      />
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M2.992 16.342a2 2 0 0 1 .094 1.167l-1.065 3.29a1 1 0 0 0 1.236 1.168l3.413-.998a2 2 0 0 1 1.099.092 10 10 0 1 0-4.777-4.719" />
+      <path d="M8 12h.01" />
+      <path d="M12 12h.01" />
+      <path d="M16 12h.01" />
     </svg>
   );
 }
 
-// "원고료로 응원하기" 버튼용 동전 아이콘 (2026-09-12 신설)
-export function CoinIcon() {
+// "원고료로 응원하기" 버튼용 아이콘 (2026-09-17: 동전 → 카드+ 아이콘으로 교체)
+export function CreditCardIcon() {
   return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" strokeWidth="1.6" />
-      <path
-        d="M13.6 9.3c-.3-.5-.9-.8-1.6-.8-1.1 0-2 .8-2 1.8s.9 1.4 2 1.7c1.1.3 2 .7 2 1.7s-.9 1.8-2 1.8c-.7 0-1.3-.3-1.6-.8M12 7.6v1M12 15.4v1"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.4"
-        strokeLinecap="round"
-      />
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M22 11.354V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h8.536" />
+      <path d="M22 10H2" />
+      <path d="M6 14h2" />
+      <path d="M16 17h6" />
+      <path d="M19 14v6" />
+    </svg>
+  );
+}
+
+// 본문 글자 작게/크게 버튼용 (2026-09-17: "가"/"가" 텍스트 → 아이콘으로 교체, TextSizeControl)
+export function TextDownIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="m14 12 4 4 4-4" />
+      <path d="M18 16V7" />
+      <path d="m2 16 4.039-9.69a.5.5 0 0 1 .923 0L11 16" />
+      <path d="M3.304 13h6.392" />
+    </svg>
+  );
+}
+
+export function TextUpIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="m14 11 4-4 4 4" />
+      <path d="M18 16V7" />
+      <path d="m2 16 4.039-9.69a.5.5 0 0 1 .923 0L11 16" />
+      <path d="M3.304 13h6.392" />
+    </svg>
+  );
+}
+
+// 읽어주기 목소리 성별 토글용 (2026-09-17: 이모지 👨/👩 → 아이콘으로 교체, ReadAloudButton)
+export function MarsIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M16 3h5v5" />
+      <path d="m21 3-6.75 6.75" />
+      <circle cx="10" cy="14" r="6" />
+    </svg>
+  );
+}
+
+export function VenusIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M12 15v7" />
+      <path d="M9 19h6" />
+      <circle cx="12" cy="9" r="6" />
+    </svg>
+  );
+}
+
+// 읽어주기 재생/정지 버튼용 (2026-09-17: 이모지 🔊/■ → 아이콘으로 교체, ReadAloudButton)
+export function VolumeIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z" />
+      <path d="M16 9a5 5 0 0 1 0 6" />
+      <path d="M19.364 18.364a9 9 0 0 0 0-12.728" />
+    </svg>
+  );
+}
+
+export function VolumeOffIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M16 9a5 5 0 0 1 .95 2.293" />
+      <path d="M19.364 5.636a9 9 0 0 1 1.889 9.96" />
+      <path d="m2 2 20 20" />
+      <path d="m7 7-.587.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298V11" />
+      <path d="M9.828 4.172A.686.686 0 0 1 11 4.657v.686" />
     </svg>
   );
 }

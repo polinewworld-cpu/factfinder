@@ -4,7 +4,16 @@ import { useEffect, useState } from 'react';
 import { ThumbsUpIcon } from './icons';
 
 // 기사 "추천" 버튼 — 로그인 불필요. 같은 브라우저에서 중복 추천 방지는 localStorage로만 처리(best-effort) (2026-09-12 신설)
-export default function RecommendButton({ articleId, initialCount }: { articleId: string; initialCount: number }) {
+// variant="large": 기사 하단 큰 버튼 (원고료로 응원하기와 같은 스타일). 문구 대신 숫자만 — 모바일/PC 공통 (2026-09-18)
+export default function RecommendButton({
+  articleId,
+  initialCount,
+  variant = 'icon',
+}: {
+  articleId: string;
+  initialCount: number;
+  variant?: 'icon' | 'large';
+}) {
   const [count, setCount] = useState(initialCount);
   const [recommended, setRecommended] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -37,6 +46,22 @@ export default function RecommendButton({ articleId, initialCount }: { articleId
     }
   }
 
+  if (variant === 'large') {
+    return (
+      <button
+        type="button"
+        onClick={recommend}
+        disabled={recommended || busy}
+        aria-pressed={recommended}
+        className="donate-cta"
+        style={{ opacity: busy ? 0.6 : 1 }}
+      >
+        <ThumbsUpIcon />
+        {count}
+      </button>
+    );
+  }
+
   return (
     <button
       type="button"
@@ -44,12 +69,8 @@ export default function RecommendButton({ articleId, initialCount }: { articleId
       disabled={recommended || busy}
       title={recommended ? '추천 완료' : '추천'}
       aria-pressed={recommended}
-      className="flex items-center gap-1.5 text-xs font-semibold rounded-full px-3 py-1.5 border border-gray-200 hover:border-brand"
-      style={{
-        color: recommended ? 'var(--accent, #ff2d8a)' : '#4b5563',
-        borderColor: recommended ? 'var(--accent, #ff2d8a)' : undefined,
-        opacity: busy ? 0.6 : 1,
-      }}
+      className="icon-action"
+      style={{ opacity: busy ? 0.6 : 1 }}
     >
       <ThumbsUpIcon />
       {count}

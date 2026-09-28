@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getCurrentUser } from '@/lib/session';
-import { ROLES, WRITER_ROLES } from '@/lib/roles';
+import { WRITER_ROLES } from '@/lib/roles';
 
 // 정기후원 신청 — PG 계약정보 미확정 상태라 실제 카드결제는 없음(결제 없이 구독 상태만 생성).
 // 카드 등록/결제 연동은 KG이니시스 등 계약 확정 시 이 라우트 안에서만 교체하면 되도록 분리해둠.
@@ -44,15 +44,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: '이미 진행중인 정기후원이 있습니다' }, { status: 400 });
   }
 
+  // 후원 여부는 isDonor 플래그로만 표시 — 회원 등급(role)에는 영향 없음 (2026-09-22: 회원/후원회원 구별 폐지)
   const [donation] = await prisma.$transaction([
     prisma.donation.create({ data: { userId: user.id, amount: amt, phone: cleanPhone, reporterId: reporterId || null } }),
-    prisma.user.update({
-      where: { id: user.id },
-      data: {
-        isDonor: true,
-        role: user.role === ROLES.READER ? ROLES.DONOR_READER : undefined,
-      },
-    }),
+    prisma.user.update({ where: { id: user.id }, data: { isDonor: true } }),
   ]);
 
   return NextResponse.json(donation, { status: 201 });

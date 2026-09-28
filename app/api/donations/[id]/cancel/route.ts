@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getCurrentUser } from '@/lib/session';
-import { ROLES } from '@/lib/roles';
 
 export async function POST(_req: NextRequest, { params }: { params: { id: string } }) {
   const user = await getCurrentUser();
@@ -16,17 +15,10 @@ export async function POST(_req: NextRequest, { params }: { params: { id: string
     return NextResponse.json({ error: '이미 해지된 후원입니다' }, { status: 400 });
   }
 
-  const currentUser = await prisma.user.findUnique({ where: { id: user.id } });
-
+  // 후원 여부는 isDonor 플래그로만 표시 — 회원 등급(role)에는 영향 없음 (2026-09-22: 회원/후원회원 구별 폐지)
   const [cancelled] = await prisma.$transaction([
     prisma.donation.update({ where: { id: params.id }, data: { status: 'CANCELLED', cancelledAt: new Date() } }),
-    prisma.user.update({
-      where: { id: user.id },
-      data: {
-        isDonor: false,
-        role: currentUser?.role === ROLES.DONOR_READER ? ROLES.READER : undefined,
-      },
-    }),
+    prisma.user.update({ where: { id: user.id }, data: { isDonor: false } }),
   ]);
 
   return NextResponse.json(cancelled);

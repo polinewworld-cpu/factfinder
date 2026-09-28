@@ -94,7 +94,7 @@ export default function VideoCardGrid({
               rel="noopener noreferrer"
               className="block rounded-xl overflow-hidden border border-gray-200 hover:border-brand"
             >
-              <div className="relative aspect-video bg-gray-100">
+              <div className={`relative bg-gray-100 ${card.kind === 'SHORT' ? 'aspect-[9/16]' : 'aspect-video'}`}>
                 <img src={card.thumbnailUrl} alt="" className="w-full h-full object-cover" />
                 <span className="absolute top-2 left-2 text-[11px] font-bold text-white bg-black/60 rounded-full px-2 py-0.5">
                   {KIND_LABEL[card.kind]}

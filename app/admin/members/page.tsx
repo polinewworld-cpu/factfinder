@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 
+// 2026-09-22: 회원/후원회원 구별 폐지(후원 여부는 role이 아니라 isDonor로만 표시) — DONOR_READER는
+// 더 이상 새로 부여하지 않지만, 과거 데이터에 남아있을 경우 라벨은 표시할 수 있게 유지
 const ROLE_LABELS: Record<string, string> = {
   READER: '독자',
   DONOR_READER: '후원독자',
@@ -10,6 +12,9 @@ const ROLE_LABELS: Record<string, string> = {
   COLUMNIST: '논설위원',
   CHIEF_EDITOR: '편집장',
 };
+
+// 관리자가 직접 지정 가능한 등급 — DONOR_READER는 제외
+const ASSIGNABLE_ROLES = ['READER', 'REPORTER', 'COLUMNIST', 'CHIEF_EDITOR'];
 
 export default function MembersAdminPage() {
   const searchParams = useSearchParams();
@@ -91,9 +96,9 @@ export default function MembersAdminPage() {
                     onChange={(e) => changeRole(u.id, e.target.value)}
                     className="border border-gray-200 rounded-lg px-2 py-1 text-xs"
                   >
-                    {Object.entries(ROLE_LABELS).map(([value, label]) => (
+                    {ASSIGNABLE_ROLES.map((value) => (
                       <option key={value} value={value}>
-                        {label}
+                        {ROLE_LABELS[value]}
                       </option>
                     ))}
                   </select>

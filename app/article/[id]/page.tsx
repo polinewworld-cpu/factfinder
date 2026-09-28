@@ -13,7 +13,7 @@ import ArticleBodyBanner from '@/components/ArticleBodyBanner';
 import ReporterCard from '@/components/ReporterCard';
 import TextSizeControl from '@/components/TextSizeControl';
 import RecommendButton from '@/components/RecommendButton';
-import DonateButton from '@/components/DonateButton';
+import DonateButtonLarge from '@/components/DonateButtonLarge';
 import { CommentIcon } from '@/components/icons';
 import { stripHtml } from '@/lib/stripHtml';
 import { getCurrentUser } from '@/lib/session';
@@ -72,7 +72,12 @@ export default async function ArticlePage({ params }: { params: { id: string } }
     : false;
 
   // 조회수 증가 (데모 단순화를 위해 상세 페이지 렌더링 시 직접 처리)
-  await prisma.article.update({ where: { id: article.id }, data: { viewCount: { increment: 1 } } });
+  // updatedAt은 @updatedAt이라 update() 호출만으로 자동 갱신됨 — 조회는 "수정"이 아니므로 기존 값을
+  // 그대로 돌려줘서 관리자 "최종편집일"이 조회수만 올라도 오늘로 밀리던 문제를 막음 (2026-09-22)
+  await prisma.article.update({
+    where: { id: article.id },
+    data: { viewCount: { increment: 1 }, updatedAt: article.updatedAt },
+  });
 
   const subtitles = [article.subtitle1, article.subtitle2, article.subtitle3].filter(Boolean) as string[];
   const activeArticleBanners = articleBanners.slice(0, siteConfig?.articleBannerCount ?? 0);
@@ -111,7 +116,7 @@ export default async function ArticlePage({ params }: { params: { id: string } }
             <span style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
               {article.author.name} 기자
             </span>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            <span className="icon-action-group">
               <SaveButton articleId={article.id} initialSaved={alreadySaved} loggedIn={!!currentUser} />
               <TextSizeControl />
               <ReadAloudButton
@@ -119,19 +124,24 @@ export default async function ArticlePage({ params }: { params: { id: string } }
                 text={`${article.title}. ${stripHtml(article.content)}`}
                 gender={article.author.gender}
               />
-              <DonateButton reporterId={article.authorId} />
-              <RecommendButton articleId={article.id} initialCount={article.recommendCount} />
-              <a
-                href="#comments"
-                className="flex items-center gap-1.5 text-xs font-semibold text-gray-600 border border-gray-200 rounded-full px-3 py-1.5 hover:border-brand hover:text-brand"
-              >
+              <a href="#comments" className="icon-action">
                 <CommentIcon />
-                댓글 {article._count.comments}
+                {article._count.comments}
               </a>
-              <ShareButtons title={article.title} coverImageUrl={article.coverImageUrl} />
             </span>
           </div>
           <div className="article-content" dangerouslySetInnerHTML={{ __html: article.content }} />
+          <div className="donate-cta-row">
+            <div className="donate-cta-row-item" style={{ flex: 1 }}>
+              <RecommendButton articleId={article.id} initialCount={article.recommendCount} variant="large" />
+            </div>
+            <div className="donate-cta-row-item" style={{ flex: 1 }}>
+              <ShareButtons title={article.title} coverImageUrl={article.coverImageUrl} variant="large" />
+            </div>
+            <div className="donate-cta-row-item" style={{ flex: 2 }}>
+              <DonateButtonLarge reporterId={article.authorId} />
+            </div>
+          </div>
           {activeArticleBanners[0] && (
             <ArticleBodyBanner imageUrl={activeArticleBanners[0].imageUrl} linkUrl={activeArticleBanners[0].linkUrl} />
           )}

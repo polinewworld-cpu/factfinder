@@ -1,3 +1,5 @@
+import GlobeStudy from '@/components/GlobeStudy';
+
 // 회사소개 — factfinder.tv 실사이트(company/introduce.php) 문구 그대로 이식 (2026-09-12 신설)
 export const metadata = { title: '회사소개 - 팩트파인더' };
 
@@ -29,6 +31,9 @@ export default function CompanyIntroducePage() {
             철학은 &lsquo;덜 간섭하자&rsquo;가 아니라 &lsquo;더 공정하게 설계하자&rsquo;여야 합니다. 강한 시장은
             강한 공동체 위에서만 가능합니다.
           </p>
+          <div className="my-8 -mx-4 sm:mx-0 rounded-2xl overflow-hidden" style={{ height: 360 }}>
+            <GlobeStudy style={{ minWidth: 0, minHeight: 0, width: '100%', height: '100%' }} />
+          </div>
           <p>
             평화는 선언이 아니라 결과입니다. 한반도를 둘러싼 복잡한 지정학 속에서 자주국방 없는 평화는 존재하지
             않습니다. 우리는 힘을 바탕으로 한 현실주의 외교와, 동맹국과의 신뢰 회복을 병행할 때만 지속 가능한
