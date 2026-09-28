@@ -35,7 +35,7 @@ export default function TextSizeControl() {
   }
 
   return (
-    <span className="flex items-center">
+    <span className="contents">
       <button
         type="button"
         onClick={() => apply(index - 1)}
