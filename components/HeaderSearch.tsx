@@ -34,7 +34,6 @@ export default function HeaderSearch() {
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="기사제목, 본문, 기자이름으로 검색해주세요"
           aria-label="기사 검색"
         />
         {query.length > 0 && (
