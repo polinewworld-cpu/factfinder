@@ -542,10 +542,11 @@ img {
 
 .composer-save {
   margin-left: auto;
-  padding-top: 10px;
+  padding: 0 6px 0 12px;
   font-size: 12px;
   color: var(--ash);
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .composer-title-row {
@@ -794,6 +795,7 @@ img {
   gap: 2px;
   padding: 8px 10px;
   border-bottom: 1px solid var(--hairline);
+  border-radius: 17px 17px 0 0;
   background: color-mix(in srgb, var(--surface) 92%, var(--canvas));
 }
 
