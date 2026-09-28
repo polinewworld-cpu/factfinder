@@ -671,11 +671,16 @@ export default function WritePage() {
     return (
       <main className="max-w-3xl mx-auto px-4 py-10 text-center">
         <p className="text-lg font-bold mb-3">{resultMsg.text}</p>
-        {resultMsg.href && (
-          <a href={resultMsg.href} className="text-brand font-semibold">
-            기사 보러가기 →
+        <div className="flex flex-col items-center gap-2">
+          {resultMsg.href && (
+            <a href={resultMsg.href} className="text-brand font-semibold">
+              기사 보러가기 →
+            </a>
+          )}
+          <a href="/admin/articles" className="text-brand font-semibold">
+            전체 기사 →
           </a>
-        )}
+        </div>
       </main>
     );
   }
