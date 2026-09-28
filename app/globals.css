@@ -1607,7 +1607,7 @@ img {
   margin: 0 0 1em;
 }
 
-/* 기사 본문 맨 마지막 줄광고 — 핫핑크 화살표 + 기사제목처럼 굵은 한 줄 (2026-09-12 신설) */
+/* 기사 본문 맨 마지막 줄광고 — 핫핑크 얇은 화살표 + 기사제목처럼 굵은 한 줄 */
 .line-ads {
   list-style: none;
   margin: 24px 0;
@@ -1621,7 +1621,7 @@ img {
 
 .line-ad-link {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 8px;
   padding: 10px 0;
   text-decoration: none;
@@ -1629,8 +1629,15 @@ img {
 
 .line-ad-arrow {
   color: #ec1561;
-  font-weight: 700;
   flex-shrink: 0;
+  display: inline-flex;
+  width: 0.95em;
+  height: 0.95em;
+}
+
+.line-ad-arrow svg {
+  width: 100%;
+  height: 100%;
 }
 
 .line-ad-text {
