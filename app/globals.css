@@ -1710,13 +1710,6 @@ img {
   gap: 24px;
 }
 
-.reporter-card-column-title {
-  margin: 0 0 8px;
-  color: var(--ink);
-  font-size: 15px;
-  font-weight: 700;
-}
-
 .reporter-card-list {
   list-style: none;
   margin: 0;
@@ -1832,6 +1825,12 @@ img {
 .reporter-card-list a:hover {
   color: var(--accent);
   text-decoration: underline;
+}
+
+.reporter-card-when {
+  color: var(--mute);
+  font-size: 13px;
+  font-weight: 500;
 }
 
 /* "공유하기" 레이어 — 기사 상단 공유 버튼 클릭 시 노출 (2026-09-12 신설) */
