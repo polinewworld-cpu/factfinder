@@ -1050,7 +1050,7 @@ img {
   width: 100%;
   padding: 0;
   border: 0;
-  border-radius: var(--radius);
+  border-radius: 16px;
   overflow: hidden;
   background: var(--chip);
   display: block;
