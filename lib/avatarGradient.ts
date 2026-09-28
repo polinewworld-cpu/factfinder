@@ -20,31 +20,29 @@ function hsl(hue: number, sat: number, light: number) {
   return `hsl(${Math.round(hue)} ${Math.round(sat)}% ${Math.round(light)}%)`;
 }
 
-/** Neighbouring vivid hues only — no complementary pairs, no yellow-green / olive in-betweens. */
-const WARM: [number, number, number][] = [
-  [322, 86, 54],
-  [340, 90, 54],
-  [6, 92, 52],
-  [24, 94, 52],
-];
+function wrapHue(hue: number) {
+  return ((hue % 360) + 360) % 360;
+}
 
-const COOL: [number, number, number][] = [
-  [152, 82, 44],
-  [186, 86, 46],
-  [214, 90, 52],
-  [252, 78, 56],
-  [292, 76, 54],
-];
+function isMuddyHue(hue: number) {
+  const h = wrapHue(hue);
+  return h > 46 && h < 118;
+}
 
-function pickVividTrio(rng: () => number): [number, number, number][] {
-  const family = rng() < 0.5 ? WARM : COOL;
-  const start = Math.floor(rng() * (family.length - 2));
-  const trio = family.slice(start, start + 3);
-  for (let i = trio.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(rng() * (i + 1));
-    [trio[i], trio[j]] = [trio[j], trio[i]];
+/** Three neighbouring vivid hues (~30deg apart). Retry if the set walks into olive/yellow-green. */
+function pickAnalogousTrio(rng: () => number): [number, number, number][] {
+  for (let attempt = 0; attempt < 12; attempt += 1) {
+    const base = rng() * 360;
+    const step = 26 + rng() * 10;
+    const hues = [base, base + step, base + step * 2].map(wrapHue);
+    if (hues.some(isMuddyHue)) continue;
+    return hues.map((h) => [h, 92 + rng() * 6, 48 + rng() * 8] as [number, number, number]);
   }
-  return trio;
+  return [
+    [200, 94, 50],
+    [228, 92, 52],
+    [256, 88, 54],
+  ];
 }
 
 /**
@@ -71,7 +69,7 @@ export function usableAvatarUrl(url?: string | null): string | null {
 /** Seeded 3-colour gradient so the same person keeps the same avatar. */
 export function avatarGradientStyle(seed: string): { background: string } {
   const rng = mulberry32(hashString(seed || 'factfinder'));
-  const [a, b, c] = pickVividTrio(rng);
+  const [a, b, c] = pickAnalogousTrio(rng);
   const angle = Math.floor(rng() * 360);
   return {
     background: `linear-gradient(${angle}deg, ${hsl(...a)} 0%, ${hsl(...b)} 48%, ${hsl(...c)} 100%)`,
