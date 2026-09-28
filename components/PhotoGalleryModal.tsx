@@ -321,7 +321,7 @@ export default function PhotoGalleryModal({
             <button
               type="button"
               onClick={() => setUploadOpen((v) => !v)}
-              className={`text-xs font-bold rounded-full px-3 py-1.5 border ${
+              className={`text-xs font-bold rounded-lg px-3 py-1.5 border ${
                 uploadOpen ? 'bg-brand text-white border-brand' : 'bg-white text-gray-600 border-gray-200 hover:border-brand'
               }`}
             >
@@ -350,7 +350,7 @@ export default function PhotoGalleryModal({
                     key={t.id}
                     type="button"
                     onClick={() => toggleUploadTag(t.name)}
-                    className={`text-xs font-bold rounded-full px-2.5 py-1 border ${
+                    className={`text-xs font-bold rounded-lg px-2.5 py-1 border ${
                       active ? 'bg-brand text-white border-brand' : 'bg-white text-gray-500 border-gray-200'
                     }`}
                   >
@@ -368,7 +368,7 @@ export default function PhotoGalleryModal({
                   }
                 }}
                 placeholder="+ 새 태그 입력 후 Enter"
-                className="w-32 text-xs border border-dashed border-gray-300 rounded-full px-2.5 py-1 outline-none focus:border-brand"
+                className="w-32 text-xs border border-dashed border-gray-300 rounded-lg px-2.5 py-1 outline-none focus:border-brand"
               />
             </div>
             {uploadSelectedTags.length > 0 && (
@@ -417,7 +417,7 @@ export default function PhotoGalleryModal({
             <button
               type="button"
               onClick={() => setActiveTag(null)}
-              className={`text-xs font-bold rounded-full px-3 py-1 border ${
+              className={`text-xs font-bold rounded-lg px-3 py-1 border ${
                 !activeTag ? 'bg-brand text-white border-brand' : 'bg-white text-gray-500 border-gray-200'
               }`}
             >
@@ -437,7 +437,7 @@ export default function PhotoGalleryModal({
                   if (dragPayloadRef.current.length > 0) applyTagToIds(dragPayloadRef.current, t.name);
                 }}
                 title="사진을 이 태그 위로 드래그하면 일괄로 태그가 붙습니다"
-                className={`inline-flex items-center gap-0.5 text-xs font-bold rounded-full pl-3 pr-1 py-1 border transition-shadow ${
+                className={`inline-flex items-center gap-0.5 text-xs font-bold rounded-lg pl-3 pr-1 py-1 border transition-shadow ${
                   activeTag === t.name ? 'bg-brand text-white border-brand' : 'bg-white text-gray-500 border-gray-200'
                 } ${dragOverTagId === t.id ? 'ring-2 ring-brand ring-offset-1' : ''}`}
               >
@@ -451,7 +451,7 @@ export default function PhotoGalleryModal({
                       title="이름 수정"
                       disabled={tagBusy}
                       onClick={() => renameTag(t)}
-                      className="w-4 h-4 rounded-full hover:bg-black/10 text-[10px] leading-4"
+                      className="w-4 h-4 rounded-lg hover:bg-black/10 text-[10px] leading-4"
                     >
                       ✎
                     </button>
@@ -460,7 +460,7 @@ export default function PhotoGalleryModal({
                       title="삭제"
                       disabled={tagBusy}
                       onClick={() => deleteTag(t)}
-                      className="w-4 h-4 rounded-full hover:bg-black/10 text-[10px] leading-4"
+                      className="w-4 h-4 rounded-lg hover:bg-black/10 text-[10px] leading-4"
                     >
                       ✕
                     </button>
@@ -474,7 +474,7 @@ export default function PhotoGalleryModal({
                 onChange={(e) => setNewTagName(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && addTag()}
                 placeholder="+ 새 태그"
-                className="w-24 text-xs border border-dashed border-gray-300 rounded-full px-2.5 py-1 outline-none focus:border-brand"
+                className="w-24 text-xs border border-dashed border-gray-300 rounded-lg px-2.5 py-1 outline-none focus:border-brand"
               />
             )}
           </div>
@@ -504,7 +504,7 @@ export default function PhotoGalleryModal({
                         key={t.id}
                         type="button"
                         onClick={() => toggleEditTag(t.name)}
-                        className={`text-xs font-bold rounded-full px-2.5 py-1 border ${
+                        className={`text-xs font-bold rounded-lg px-2.5 py-1 border ${
                           active ? 'bg-brand text-white border-brand' : 'bg-white text-gray-500 border-gray-200'
                         }`}
                       >
@@ -522,7 +522,7 @@ export default function PhotoGalleryModal({
                       }
                     }}
                     placeholder="+ 새 태그 입력 후 Enter"
-                    className="w-32 text-xs border border-dashed border-gray-300 rounded-full px-2.5 py-1 outline-none focus:border-brand"
+                    className="w-32 text-xs border border-dashed border-gray-300 rounded-lg px-2.5 py-1 outline-none focus:border-brand"
                   />
                 </div>
                 <p className="text-[11px] text-gray-400">
@@ -534,7 +534,7 @@ export default function PhotoGalleryModal({
               <button
                 type="button"
                 onClick={closeEdit}
-                className="text-xs font-bold text-gray-500 rounded-full px-3 py-1.5 border border-gray-200"
+                className="text-xs font-bold text-gray-500 rounded-lg px-3 py-1.5 border border-gray-200"
               >
                 취소
               </button>
@@ -542,7 +542,7 @@ export default function PhotoGalleryModal({
                 type="button"
                 disabled={editBusy}
                 onClick={saveEdit}
-                className="text-xs font-bold text-white bg-brand rounded-full px-4 py-1.5 disabled:opacity-50"
+                className="text-xs font-bold text-white bg-brand rounded-lg px-4 py-1.5 disabled:opacity-50"
               >
                 저장
               </button>
@@ -563,7 +563,7 @@ export default function PhotoGalleryModal({
               type="button"
               disabled={bulkBusy || !bulkCaption.trim()}
               onClick={applyBulkCaption}
-              className="text-xs font-bold text-white bg-brand rounded-full px-3 py-1.5 disabled:opacity-50 shrink-0"
+              className="text-xs font-bold text-white bg-brand rounded-lg px-3 py-1.5 disabled:opacity-50 shrink-0"
             >
               캡션 일괄 적용
             </button>
@@ -612,7 +612,7 @@ export default function PhotoGalleryModal({
                       e.stopPropagation();
                       openEdit(p);
                     }}
-                    className="absolute top-1 left-1 w-5 h-5 rounded-full bg-black/50 text-white text-[10px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="absolute top-1 left-1 w-5 h-5 rounded-lg bg-black/50 text-white text-[10px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                   >
                     ✎
                   </button>
@@ -623,7 +623,7 @@ export default function PhotoGalleryModal({
                       e.stopPropagation();
                       setWatermarkPhoto(p);
                     }}
-                    className="absolute top-1 left-7 w-5 h-5 rounded-full bg-black/50 text-white text-[10px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="absolute top-1 left-7 w-5 h-5 rounded-lg bg-black/50 text-white text-[10px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                   >
                     🩹
                   </button>
@@ -634,12 +634,12 @@ export default function PhotoGalleryModal({
                       e.stopPropagation();
                       deletePhoto(p);
                     }}
-                    className="absolute bottom-1 right-1 w-5 h-5 rounded-full bg-black/50 text-white text-[10px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="absolute bottom-1 right-1 w-5 h-5 rounded-lg bg-black/50 text-white text-[10px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                   >
                     🗑
                   </button>
                   {isChecked && (
-                    <span className="absolute top-1 right-1 w-5 h-5 rounded-full bg-brand text-white text-xs flex items-center justify-center">
+                    <span className="absolute top-1 right-1 w-5 h-5 rounded-lg bg-brand text-white text-xs flex items-center justify-center">
                       ✓
                     </span>
                   )}
@@ -659,7 +659,7 @@ export default function PhotoGalleryModal({
                 onSelect(items);
                 onClose();
               }}
-              className="text-sm font-bold text-white bg-brand rounded-full px-5 py-2 disabled:opacity-50"
+              className="text-sm font-bold text-white bg-brand rounded-lg px-5 py-2 disabled:opacity-50"
             >
               선택 완료 ({checked.length})
             </button>

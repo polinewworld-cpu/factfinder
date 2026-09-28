@@ -42,7 +42,7 @@ export default function CardNewsCarousel({ articleId, images }: { articleId: str
         <h3 className="font-bold text-gray-900 text-sm">카드뉴스</h3>
         <a
           href={`/api/articles/${articleId}/cardnews`}
-          className="text-xs font-semibold text-brand border border-brand/30 rounded-full px-3 py-1 hover:bg-brand/5"
+          className="text-xs font-semibold text-brand border border-brand/30 rounded-lg px-3 py-1 hover:bg-brand/5"
         >
           전체 다운로드
         </a>
@@ -55,7 +55,7 @@ export default function CardNewsCarousel({ articleId, images }: { articleId: str
       >
         {/* 우상단 N/M 카운터 배지 — 인스타그램 스타일 */}
         {images.length > 1 && (
-          <span className="absolute top-3 right-3 z-10 text-[11px] font-semibold text-white bg-black/50 rounded-full px-2 py-0.5 backdrop-blur-sm">
+          <span className="absolute top-3 right-3 z-10 text-[11px] font-semibold text-white bg-black/50 rounded-lg px-2 py-0.5 backdrop-blur-sm">
             {index + 1}/{images.length}
           </span>
         )}
@@ -85,7 +85,7 @@ export default function CardNewsCarousel({ articleId, images }: { articleId: str
                 type="button"
                 aria-label="이전 카드"
                 onClick={() => scrollToIndex(index - 1)}
-                className={`hidden sm:flex absolute left-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-white shadow items-center justify-center text-gray-700 text-sm transition-opacity ${
+                className={`hidden sm:flex absolute left-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-lg bg-white shadow items-center justify-center text-gray-700 text-sm transition-opacity ${
                   hover ? 'opacity-90' : 'opacity-0'
                 }`}
               >
@@ -97,7 +97,7 @@ export default function CardNewsCarousel({ articleId, images }: { articleId: str
                 type="button"
                 aria-label="다음 카드"
                 onClick={() => scrollToIndex(index + 1)}
-                className={`hidden sm:flex absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-white shadow items-center justify-center text-gray-700 text-sm transition-opacity ${
+                className={`hidden sm:flex absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-lg bg-white shadow items-center justify-center text-gray-700 text-sm transition-opacity ${
                   hover ? 'opacity-90' : 'opacity-0'
                 }`}
               >

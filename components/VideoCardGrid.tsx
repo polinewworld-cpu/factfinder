@@ -72,7 +72,7 @@ export default function VideoCardGrid({
             type="button"
             onClick={refresh}
             disabled={refreshing}
-            className="text-xs font-bold text-white bg-brand rounded-full px-4 py-1.5 disabled:opacity-50"
+            className="text-xs font-bold text-white bg-brand rounded-lg px-4 py-1.5 disabled:opacity-50"
           >
             {refreshing ? '새로고침 중…' : '정치신세계 새로고침'}
           </button>
@@ -107,13 +107,13 @@ export default function VideoCardGrid({
                   alt={card.title}
                   className="absolute inset-0 h-full w-full object-cover"
                 />
-                <span className="absolute top-2 left-2 text-[11px] font-bold text-white bg-black/60 rounded-full px-2 py-0.5">
+                <span className="absolute top-2 left-2 text-[11px] font-bold text-white bg-black/60 rounded-lg px-2 py-0.5">
                   {KIND_LABEL[card.kind]}
                 </span>
                 {/* '메인에서 제외'는 이제 메인(전체) 피드의 영상 카드에서 하도록 옮겨감 — 여기서는 상태 표시 + 되돌리기(복구)만 가능 (2026-09-12) */}
                 {!card.showOnMain && (
                   <>
-                    <span className="absolute top-2 right-2 text-[11px] font-bold text-white bg-red-600/90 rounded-full px-2 py-0.5">
+                    <span className="absolute top-2 right-2 text-[11px] font-bold text-white bg-red-600/90 rounded-lg px-2 py-0.5">
                       메인제외
                     </span>
                     {canRefresh && (
@@ -125,7 +125,7 @@ export default function VideoCardGrid({
                           e.stopPropagation();
                           restoreToMain(card);
                         }}
-                        className="absolute bottom-2 right-2 text-[11px] font-bold text-white bg-black/60 hover:bg-black/80 rounded-full px-2 py-0.5 disabled:opacity-50"
+                        className="absolute bottom-2 right-2 text-[11px] font-bold text-white bg-black/60 hover:bg-black/80 rounded-lg px-2 py-0.5 disabled:opacity-50"
                       >
                         메인노출 켜기
                       </button>

@@ -64,14 +64,14 @@ export default function PendingQueuePage() {
               <button
                 disabled={busyId === a.id}
                 onClick={() => act(a.id, 'reject')}
-                className="text-sm text-gray-500 border border-gray-200 rounded-full px-4 py-1.5 hover:border-gray-400"
+                className="text-sm text-gray-500 border border-gray-200 rounded-lg px-4 py-1.5 hover:border-gray-400"
               >
                 반려
               </button>
               <button
                 disabled={busyId === a.id}
                 onClick={() => act(a.id, 'approve')}
-                className="text-sm font-bold text-white bg-brand rounded-full px-4 py-1.5 hover:bg-brand-dark"
+                className="text-sm font-bold text-white bg-brand rounded-lg px-4 py-1.5 hover:bg-brand-dark"
               >
                 승인
               </button>

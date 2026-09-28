@@ -115,7 +115,7 @@ export default function LineAdsAdminPage() {
               type="button"
               disabled={busy}
               onClick={() => updateField(ad.id, { active: !ad.active })}
-              className="text-xs text-gray-500 border border-gray-200 rounded-full px-3 py-1 hover:border-gray-400 shrink-0"
+              className="text-xs text-gray-500 border border-gray-200 rounded-lg px-3 py-1 hover:border-gray-400 shrink-0"
             >
               {ad.active ? '끄기' : '켜기'}
             </button>
@@ -123,7 +123,7 @@ export default function LineAdsAdminPage() {
               type="button"
               disabled={busy}
               onClick={() => removeLineAd(ad.id)}
-              className="text-xs text-red-500 border border-red-200 rounded-full px-3 py-1 hover:bg-red-50 shrink-0"
+              className="text-xs text-red-500 border border-red-200 rounded-lg px-3 py-1 hover:bg-red-50 shrink-0"
             >
               삭제
             </button>
@@ -152,7 +152,7 @@ export default function LineAdsAdminPage() {
               type="button"
               disabled={busy}
               onClick={addLineAd}
-              className="text-sm font-bold text-white bg-brand rounded-full px-5 py-2 disabled:opacity-50 shrink-0"
+              className="text-sm font-bold text-white bg-brand rounded-lg px-5 py-2 disabled:opacity-50 shrink-0"
             >
               추가
             </button>

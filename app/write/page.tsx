@@ -887,7 +887,7 @@ export default function WritePage() {
           <button
             type="button"
             onClick={() => setRelatedModalOpen(true)}
-            className="text-xs font-bold text-brand border border-brand/30 rounded-full px-3 py-1.5 hover:bg-brand/5"
+            className="text-xs font-bold text-brand border border-brand/30 rounded-lg px-3 py-1.5 hover:bg-brand/5"
           >
             추가
           </button>
@@ -897,13 +897,13 @@ export default function WritePage() {
             {relatedSelected.map((a) => (
               <span
                 key={a.id}
-                className="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-700 bg-gray-50 border border-gray-200 rounded-full pl-3 pr-1.5 py-1"
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-700 bg-gray-50 border border-gray-200 rounded-lg pl-3 pr-1.5 py-1"
               >
                 {a.title}
                 <button
                   type="button"
                   onClick={() => removeRelatedArticle(a.id)}
-                  className="w-4 h-4 rounded-full text-gray-400 hover:text-red-500"
+                  className="w-4 h-4 rounded-lg text-gray-400 hover:text-red-500"
                 >
                   x
                 </button>
@@ -945,7 +945,7 @@ export default function WritePage() {
                   <button
                     type="button"
                     onClick={() => removePollOption(i)}
-                    className="w-7 h-7 shrink-0 rounded-full text-gray-400 hover:text-red-500 hover:bg-red-50"
+                    className="w-7 h-7 shrink-0 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50"
                   >
                     x
                   </button>
@@ -956,7 +956,7 @@ export default function WritePage() {
               <button
                 type="button"
                 onClick={addPollOption}
-                className="text-xs font-semibold text-brand border border-brand/30 rounded-full px-3 py-1 hover:bg-brand/5"
+                className="text-xs font-semibold text-brand border border-brand/30 rounded-lg px-3 py-1 hover:bg-brand/5"
               >
                 항목 추가
               </button>

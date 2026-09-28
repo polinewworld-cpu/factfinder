@@ -169,7 +169,7 @@ export default function BannersAdminPage() {
                     type="button"
                     disabled={busy}
                     onClick={() => toggleActive(current)}
-                    className="text-xs text-gray-500 border border-gray-200 rounded-full px-3 py-1 hover:border-gray-400"
+                    className="text-xs text-gray-500 border border-gray-200 rounded-lg px-3 py-1 hover:border-gray-400"
                   >
                     끄기
                   </button>
@@ -177,7 +177,7 @@ export default function BannersAdminPage() {
                     type="button"
                     disabled={busy}
                     onClick={() => deleteBanner(current.id)}
-                    className="text-xs text-red-500 border border-red-200 rounded-full px-3 py-1 hover:bg-red-50"
+                    className="text-xs text-red-500 border border-red-200 rounded-lg px-3 py-1 hover:bg-red-50"
                   >
                     삭제
                   </button>
@@ -203,7 +203,7 @@ export default function BannersAdminPage() {
                   type="button"
                   disabled={busy}
                   onClick={() => saveSlot(slot.placement)}
-                  className="text-xs font-bold text-white bg-brand rounded-full px-4 py-1.5 disabled:opacity-50"
+                  className="text-xs font-bold text-white bg-brand rounded-lg px-4 py-1.5 disabled:opacity-50"
                 >
                   등록
                 </button>
@@ -246,7 +246,7 @@ export default function BannersAdminPage() {
                 type="button"
                 disabled={busy}
                 onClick={() => toggleActive(b)}
-                className="text-xs text-gray-500 border border-gray-200 rounded-full px-3 py-1 hover:border-gray-400"
+                className="text-xs text-gray-500 border border-gray-200 rounded-lg px-3 py-1 hover:border-gray-400"
               >
                 {b.active ? '끄기' : '켜기'}
               </button>
@@ -254,7 +254,7 @@ export default function BannersAdminPage() {
                 type="button"
                 disabled={busy}
                 onClick={() => deleteBanner(b.id)}
-                className="text-xs text-red-500 border border-red-200 rounded-full px-3 py-1 hover:bg-red-50"
+                className="text-xs text-red-500 border border-red-200 rounded-lg px-3 py-1 hover:bg-red-50"
               >
                 삭제
               </button>
@@ -290,7 +290,7 @@ export default function BannersAdminPage() {
             type="button"
             disabled={busy}
             onClick={addArticleBanner}
-            className="text-xs font-bold text-white bg-brand rounded-full px-4 py-1.5 disabled:opacity-50"
+            className="text-xs font-bold text-white bg-brand rounded-lg px-4 py-1.5 disabled:opacity-50"
           >
             추가
           </button>

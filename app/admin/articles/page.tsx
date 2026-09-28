@@ -218,7 +218,7 @@ export default function AdminArticlesPage() {
                   </td>
                   <td className="py-2 pr-4 text-gray-500 whitespace-nowrap">{r.author?.name ?? '-'}</td>
                   <td className="py-2 pr-4 whitespace-nowrap">
-                    <span className={`text-xs font-semibold border rounded-full px-2 py-0.5 whitespace-nowrap ${STATUS_STYLE[r.status]}`}>
+                    <span className={`text-xs font-semibold border rounded-lg px-2 py-0.5 whitespace-nowrap ${STATUS_STYLE[r.status]}`}>
                       {STATUS_LABEL[r.status]}
                     </span>
                   </td>
@@ -231,7 +231,7 @@ export default function AdminArticlesPage() {
                       <button
                         type="button"
                         onClick={() => toggleShowOnMain(r)}
-                        className={`text-xs font-semibold border rounded-full px-2 py-0.5 whitespace-nowrap ${
+                        className={`text-xs font-semibold border rounded-lg px-2 py-0.5 whitespace-nowrap ${
                           r.showOnMain
                             ? 'bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100'
                             : 'bg-brand/10 text-brand border-brand/30 hover:bg-brand/20'
@@ -266,7 +266,7 @@ export default function AdminArticlesPage() {
               key={p}
               type="button"
               onClick={() => setPage(p)}
-              className={`w-7 h-7 rounded-full ${p === page ? 'bg-brand text-white font-bold' : 'text-gray-600 hover:bg-gray-100'}`}
+              className={`w-7 h-7 rounded-lg ${p === page ? 'bg-brand text-white font-bold' : 'text-gray-600 hover:bg-gray-100'}`}
             >
               {p}
             </button>
