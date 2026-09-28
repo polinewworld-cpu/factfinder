@@ -1,4 +1,5 @@
 import SnsLinks from './SnsLinks';
+import { timeAgo } from '@/lib/time';
 
 type ReporterCardAuthor = {
   name: string;
@@ -7,10 +8,9 @@ type ReporterCardAuthor = {
   snsLinks: { url: string }[];
 };
 
-type ArticleLink = { id: string; title: string };
+type ArticleLink = { id: string; title: string; publishedAt: Date | string | null };
 
-// 기사 말미 "기자 프로필" 카드 — 프로필사진/이름/이메일/SNS 로고+링크 + 그 기자의 기사 2종(최신/BEST) (2026-09-12 신설)
-// 기존엔 이 정보(SNS 로고 등)가 상단 byline에 있었으나, byline은 기자명만 남기고 여기로 옮김.
+// 기사 말미 기자 프로필 — 최신 3건 / BEST 3건. 제목 옆에 발행 경과 시간 (2026-09-12 신설)
 export default function ReporterCard({
   author,
   recentArticles,
@@ -40,11 +40,11 @@ export default function ReporterCard({
         <div className="reporter-card-columns">
           {recentArticles.length > 0 && (
             <div className="reporter-card-column">
-              <p className="reporter-card-column-title">{author.name} 기자가 쓴 최신기사</p>
               <ul className="reporter-card-list">
                 {recentArticles.map((a) => (
                   <li key={a.id}>
                     <a href={`/article/${a.id}`}>{a.title}</a>
+                    {a.publishedAt ? <span className="reporter-card-when"> {timeAgo(a.publishedAt)}</span> : null}
                   </li>
                 ))}
               </ul>
@@ -52,11 +52,11 @@ export default function ReporterCard({
           )}
           {bestArticles.length > 0 && (
             <div className="reporter-card-column">
-              <p className="reporter-card-column-title">{author.name} 기자의 BEST 기사</p>
               <ul className="reporter-card-list">
                 {bestArticles.map((a) => (
                   <li key={a.id}>
                     <a href={`/article/${a.id}`}>{a.title}</a>
+                    {a.publishedAt ? <span className="reporter-card-when"> {timeAgo(a.publishedAt)}</span> : null}
                   </li>
                 ))}
               </ul>

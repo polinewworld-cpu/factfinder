@@ -41,7 +41,7 @@ export default async function ArticlePage({ params }: { params: { id: string } }
 
   if (!article || article.status !== 'PUBLISHED') notFound();
 
-  // 기사 말미 "기자 프로필" 카드용 — 같은 기자가 쓴 다른 발행 기사 중 최신 5건 + BEST 5건(1년 누적 조회수 기준) (2026-09-12 신설)
+  // 기사 말미 기자 프로필 — 같은 기자가 쓴 다른 발행 기사 중 최신 3건 + BEST 3건 (1년 누적 조회수)
   const oneYearAgo = new Date();
   oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
 
@@ -49,8 +49,8 @@ export default async function ArticlePage({ params }: { params: { id: string } }
     prisma.article.findMany({
       where: { authorId: article.authorId, status: 'PUBLISHED', NOT: { id: article.id } },
       orderBy: { publishedAt: 'desc' },
-      take: 5,
-      select: { id: true, title: true },
+      take: 3,
+      select: { id: true, title: true, publishedAt: true },
     }),
     prisma.article.findMany({
       where: {
@@ -60,8 +60,8 @@ export default async function ArticlePage({ params }: { params: { id: string } }
         publishedAt: { gte: oneYearAgo },
       },
       orderBy: { viewCount: 'desc' },
-      take: 5,
-      select: { id: true, title: true },
+      take: 3,
+      select: { id: true, title: true, publishedAt: true },
     }),
   ]);
 
