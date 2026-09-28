@@ -21,8 +21,8 @@
   --radius: 16px;
   --radius-lg: 24px;
   --gap: 16px;
-  --page-gutter: 56px;
-  --max: 1760px;
+  --page-gutter: 0px;
+  --max: 1280px;
   /* Shared column measure for header, feed, article, and footer so chrome lines up with the main box */
   --page-width: min(var(--max), calc(100% - (var(--page-gutter) * 2)));
   --title: 'Gowun Batang', '고운바탕', serif;
