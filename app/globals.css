@@ -1025,8 +1025,8 @@ img {
 
 .pin-badges {
   position: absolute;
-  top: 12px;
-  left: 12px;
+  top: 9.6px;
+  left: 9.6px;
   z-index: 3;
   display: flex;
   flex-wrap: wrap;
