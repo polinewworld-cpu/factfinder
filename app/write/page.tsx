@@ -764,7 +764,7 @@ export default function WritePage() {
           <label className="toolbar-btn cursor-pointer" title="사진을 업로드해서 커서 위치에 삽입">
             <input
               type="file"
-              accept="image/*"
+              accept="image/jpeg,image/png,image/webp,image/gif,image/avif,.avif"
               className="hidden"
               onClick={captureEditorSelection}
               onChange={handleBodyImageUpload}
