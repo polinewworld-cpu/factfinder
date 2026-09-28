@@ -87,6 +87,10 @@ img {
   backdrop-filter: blur(16px);
 }
 
+.page:has(.composer) .site-header {
+  position: static;
+}
+
 .brand {
   display: flex;
   align-items: center;
