@@ -1473,6 +1473,7 @@ img {
   color: var(--accent);
   font-size: 12px;
   font-weight: 800;
+  line-height: 1.2;
 }
 
 .article-kicker a {
@@ -1900,7 +1901,38 @@ img {
 
 .article-rail {
   min-width: 0;
-  padding: 20px 0 40px 24px;
+  padding: 0 0 40px 24px;
+}
+
+.article-rail-tabs {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin: 0 0 16px;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.article-rail-tabs button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ash);
+  font: inherit;
+  line-height: inherit;
+}
+
+.article-rail-tabs button.is-on {
+  color: var(--accent);
+}
+
+.article-rail-tabs-label {
+  margin: 0 0 16px;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.2;
+  color: var(--mute);
 }
 
 .rail-list {
