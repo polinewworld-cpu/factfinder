@@ -85,22 +85,28 @@ export default function VideoCardGrid({
           <p>아직 수집된 영상이 없습니다.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-x-4 gap-y-5 items-start">
-          {cards.map((card) => (
+        <div className="video-card-grid">
+          {cards.map((card) => {
+            const isShort = card.kind === 'SHORT';
+            return (
             <a
               key={card.id}
               href={videoUrl(card)}
               target="_blank"
               rel="noopener noreferrer"
               title={card.title}
-              className="group block"
+              className={`group flex h-full min-h-0 flex-col${isShort ? ' video-card--short' : ''}`}
             >
               <div
-                className={`relative overflow-hidden rounded-xl border border-gray-200 bg-gray-100 group-hover:border-brand ${
-                  card.kind === 'SHORT' ? 'aspect-[9/16]' : 'aspect-video'
+                className={`relative min-h-0 overflow-hidden rounded-xl border border-gray-200 bg-gray-100 group-hover:border-brand ${
+                  isShort ? 'flex-1' : 'aspect-video'
                 }`}
               >
-                <img src={card.thumbnailUrl} alt={card.title} className="w-full h-full object-cover" />
+                <img
+                  src={card.thumbnailUrl}
+                  alt={card.title}
+                  className="absolute inset-0 h-full w-full object-cover"
+                />
                 <span className="absolute top-2 left-2 text-[11px] font-bold text-white bg-black/60 rounded-full px-2 py-0.5">
                   {KIND_LABEL[card.kind]}
                 </span>
@@ -129,7 +135,8 @@ export default function VideoCardGrid({
               </div>
               <p className="text-sm font-semibold text-gray-900 pt-2 line-clamp-2">{card.title}</p>
             </a>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
