@@ -1,7 +1,6 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState } from 'react';
-import { usePathname } from 'next/navigation';
 import { SidebarPanelIcon } from './icons';
 
 const STORAGE_KEY = 'factfinder-admin-nav';
@@ -38,11 +37,8 @@ export function AdminNavProvider({ children }: { children: React.ReactNode }) {
   return <AdminNavContext.Provider value={{ open, toggle }}>{children}</AdminNavContext.Provider>;
 }
 
-export function AdminSidebarToggle({ enabled }: { enabled: boolean }) {
-  const pathname = usePathname();
+export function AdminSidebarToggle() {
   const { open, toggle } = useAdminNav();
-  const onAdminSurface = pathname === '/write' || pathname?.startsWith('/admin');
-  if (!enabled || !onAdminSurface) return null;
 
   return (
     <button

@@ -1,7 +1,7 @@
 'use client';
 
 import { usePathname, useSearchParams } from 'next/navigation';
-import { useAdminNav } from './AdminNav';
+import { AdminSidebarToggle, useAdminNav } from './AdminNav';
 
 type NavItem = { href: string; label: string };
 
@@ -34,27 +34,31 @@ export default function AdminSidebar() {
   const pathname = usePathname();
   const role = useSearchParams().get('role');
   const { open } = useAdminNav();
-  if (!open) return null;
 
   return (
-    <nav className="w-40 shrink-0 py-8" aria-label="관리자 메뉴">
-      <p className="mb-4 px-3 text-xs font-bold uppercase tracking-wide text-gray-400">관리자</p>
-      <div className="space-y-1">
-        {NAV.map((item) => {
-          const active = isActive(item.href, pathname, role);
-          return (
-            <a
-              key={item.href}
-              href={item.href}
-              className={`block rounded-lg px-3 py-2 text-sm font-semibold ${
-                active ? 'bg-brand text-white' : 'text-gray-700 hover:bg-brand/10 hover:text-brand'
-              }`}
-            >
-              {item.label}
-            </a>
-          );
-        })}
-      </div>
+    <nav className={`admin-sidebar shrink-0 py-8 ${open ? 'w-40' : 'w-10'}`} aria-label="관리자 메뉴">
+      <AdminSidebarToggle />
+      {open ? (
+        <>
+          <p className="mb-4 mt-1 px-3 text-xs font-bold uppercase tracking-wide text-gray-400">관리자</p>
+          <div className="space-y-1">
+            {NAV.map((item) => {
+              const active = isActive(item.href, pathname, role);
+              return (
+                <a
+                  key={item.href}
+                  href={item.href}
+                  className={`block rounded-lg px-3 py-2 text-sm font-semibold ${
+                    active ? 'bg-brand text-white' : 'text-gray-700 hover:bg-brand/10 hover:text-brand'
+                  }`}
+                >
+                  {item.label}
+                </a>
+              );
+            })}
+          </div>
+        </>
+      ) : null}
     </nav>
   );
 }
