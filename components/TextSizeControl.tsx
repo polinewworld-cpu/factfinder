@@ -38,16 +38,6 @@ export default function TextSizeControl() {
     <span className="contents">
       <button
         type="button"
-        onClick={() => apply(index - 1)}
-        disabled={index === 0}
-        aria-label="본문 글자 작게"
-        title="본문 글자 작게"
-        className="icon-action"
-      >
-        <TextDownIcon />
-      </button>
-      <button
-        type="button"
         onClick={() => apply(index + 1)}
         disabled={index === SCALES.length - 1}
         aria-label="본문 글자 크게"
@@ -55,6 +45,16 @@ export default function TextSizeControl() {
         className="icon-action"
       >
         <TextUpIcon />
+      </button>
+      <button
+        type="button"
+        onClick={() => apply(index - 1)}
+        disabled={index === 0}
+        aria-label="본문 글자 작게"
+        title="본문 글자 작게"
+        className="icon-action"
+      >
+        <TextDownIcon />
       </button>
     </span>
   );
