@@ -511,7 +511,8 @@ export default function WritePage() {
   }
 
   function exec(cmd: string) {
-    document.execCommand(cmd);
+    editorRef.current?.focus();
+    document.execCommand(cmd, false);
     markDirty();
   }
 

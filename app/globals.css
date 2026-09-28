@@ -45,7 +45,8 @@ body {
     BlinkMacSystemFont,
     'Segoe UI',
     sans-serif;
-  font-synthesis: none;
+  /* Pretendard has no italic face — keep fake bold off, but allow italic so <i>/<em> can slant */
+  font-synthesis: style;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
 }
@@ -825,6 +826,10 @@ img {
   background: var(--hairline);
 }
 
+.composer-toolbar .toolbar-btn.italic {
+  font-style: italic;
+}
+
 .composer-body {
   min-height: 360px;
   padding: 28px 28px 40px;
@@ -835,6 +840,13 @@ img {
   cursor: text;
   -webkit-user-select: text;
   user-select: text;
+}
+
+.composer-body i,
+.composer-body em,
+.article-content i,
+.article-content em {
+  font-style: italic;
 }
 
 .composer-body[data-placeholder]:empty:before {
