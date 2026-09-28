@@ -1354,8 +1354,8 @@ img {
 .site-footer {
   width: var(--page-width);
   margin: 0 auto;
-  padding: 28px 0 48px;
-  border-top: 1px solid var(--hairline);
+  padding: 0 0 48px;
+  border-top: 1px solid #000;
   color: var(--mute);
   font-size: 13px;
   line-height: 1.6;
@@ -1372,6 +1372,7 @@ img {
   display: flex;
   flex-wrap: wrap;
   gap: 4px 14px;
+  padding-top: 8px;
   padding-bottom: 14px;
   border-bottom: 1px solid var(--hairline);
 }
