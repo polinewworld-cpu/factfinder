@@ -80,23 +80,25 @@ export default function RelatedArticles({
   return (
     <aside className="article-rail" aria-label="다른 기사">
       {mode !== 'related' && (
-        <div style={{ display: 'flex', gap: 12, fontSize: 13, fontWeight: 700, marginBottom: 16 }}>
+        <div className="article-rail-tabs">
           <button
+            type="button"
             onClick={() => switchMode('latest')}
-            style={{ color: mode === 'latest' ? 'var(--accent)' : 'var(--ash)' }}
+            className={mode === 'latest' ? 'is-on' : undefined}
           >
             최신기사
           </button>
           <button
+            type="button"
             onClick={() => switchMode('popular')}
-            style={{ color: mode === 'popular' ? 'var(--accent)' : 'var(--ash)' }}
+            className={mode === 'popular' ? 'is-on' : undefined}
           >
             많이 본 기사
           </button>
         </div>
       )}
       {mode === 'related' && (
-        <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--mute)', margin: '0 0 16px' }}>관련기사</p>
+        <p className="article-rail-tabs-label">관련기사</p>
       )}
       {!loaded && <p style={{ fontSize: 12, color: 'var(--ash)' }}>불러오는 중…</p>}
       <div className="rail-list">
