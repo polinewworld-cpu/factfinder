@@ -125,9 +125,7 @@ img {
   margin: 0 auto;
   width: 100%;
   padding: 0 16px;
-  border-radius: var(--radius);
-  background: var(--chip);
-  color: var(--mute);
+  border-radius: 16px;
 }
 
 .search svg {
@@ -160,7 +158,7 @@ img {
   align-items: center;
   width: 100%;
   height: 40px;
-  border-radius: var(--radius);
+  border-radius: 16px;
   background: #f8f8f8;
   border: 1px solid #eeeeee;
   color: var(--ink);
