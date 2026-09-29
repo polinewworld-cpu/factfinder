@@ -372,7 +372,7 @@ export default function PhotoGalleryModal({
               />
             </div>
             {uploadSelectedTags.length > 0 && (
-              <p className="text-[11px] text-gray-400">
+              <p className="text-xs text-gray-400">
                 이번 업로드에 적용될 태그: {uploadSelectedTags.map((n) => `#${n}`).join(' ')}
               </p>
             )}
@@ -451,7 +451,7 @@ export default function PhotoGalleryModal({
                       title="이름 수정"
                       disabled={tagBusy}
                       onClick={() => renameTag(t)}
-                      className="w-4 h-4 rounded-lg hover:bg-black/10 text-[10px] leading-4"
+                      className="w-4 h-4 rounded-lg hover:bg-black/10 text-xs leading-4"
                     >
                       ✎
                     </button>
@@ -460,7 +460,7 @@ export default function PhotoGalleryModal({
                       title="삭제"
                       disabled={tagBusy}
                       onClick={() => deleteTag(t)}
-                      className="w-4 h-4 rounded-lg hover:bg-black/10 text-[10px] leading-4"
+                      className="w-4 h-4 rounded-lg hover:bg-black/10 text-xs leading-4"
                     >
                       ✕
                     </button>
@@ -525,7 +525,7 @@ export default function PhotoGalleryModal({
                     className="w-32 text-xs border border-dashed border-gray-300 rounded-lg px-2.5 py-1 outline-none focus:border-brand"
                   />
                 </div>
-                <p className="text-[11px] text-gray-400">
+                <p className="text-xs text-gray-400">
                   체크를 해제하면 그 사진에서만 태그가 빠집니다(태그 자체는 삭제되지 않음).
                 </p>
               </div>
@@ -567,7 +567,7 @@ export default function PhotoGalleryModal({
             >
               캡션 일괄 적용
             </button>
-            <span className="text-[11px] text-gray-400 shrink-0">태그는 위 해시태그 위로 드래그하면 일괄로 붙습니다</span>
+            <span className="text-xs text-gray-400 shrink-0">태그는 위 해시태그 위로 드래그하면 일괄로 붙습니다</span>
           </div>
         )}
 
@@ -601,7 +601,7 @@ export default function PhotoGalleryModal({
                 >
                   <img src={p.url} alt={p.title ?? p.filename ?? ''} className="w-full h-full object-cover" draggable={false} />
                   {category && (
-                    <span className="absolute bottom-0 left-0 right-0 bg-black/55 text-white text-[10px] font-bold px-1.5 py-0.5 truncate text-left">
+                    <span className="absolute bottom-0 left-0 right-0 bg-black/55 text-white text-xs font-bold px-1.5 py-0.5 truncate text-left">
                       #{category}
                     </span>
                   )}
@@ -612,7 +612,7 @@ export default function PhotoGalleryModal({
                       e.stopPropagation();
                       openEdit(p);
                     }}
-                    className="absolute top-1 left-1 w-5 h-5 rounded-lg bg-black/50 text-white text-[10px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="absolute top-1 left-1 w-5 h-5 rounded-lg bg-black/50 text-white text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                   >
                     ✎
                   </button>
@@ -623,7 +623,7 @@ export default function PhotoGalleryModal({
                       e.stopPropagation();
                       setWatermarkPhoto(p);
                     }}
-                    className="absolute top-1 left-7 w-5 h-5 rounded-lg bg-black/50 text-white text-[10px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="absolute top-1 left-7 w-5 h-5 rounded-lg bg-black/50 text-white text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                   >
                     🩹
                   </button>
@@ -634,7 +634,7 @@ export default function PhotoGalleryModal({
                       e.stopPropagation();
                       deletePhoto(p);
                     }}
-                    className="absolute bottom-1 right-1 w-5 h-5 rounded-lg bg-black/50 text-white text-[10px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="absolute bottom-1 right-1 w-5 h-5 rounded-lg bg-black/50 text-white text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                   >
                     🗑
                   </button>

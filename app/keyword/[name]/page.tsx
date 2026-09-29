@@ -12,7 +12,7 @@ export default async function KeywordPage({ params }: { params: { name: string }
   return (
     <>
       <div className="content" style={{ paddingBottom: 0 }}>
-        <h1 style={{ fontFamily: 'var(--title)', fontSize: 22, fontWeight: 700, margin: '4px 0 20px' }}>
+        <h1 style={{ fontFamily: 'var(--title)', fontSize: 20, fontWeight: 700, margin: '4px 0 20px' }}>
           <span className="keyword-badge" style={{ fontSize: 14, verticalAlign: 'middle', marginRight: 8 }}>
             {name}
           </span>

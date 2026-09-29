@@ -100,12 +100,12 @@ export default function RelatedArticles({
       {mode === 'related' && (
         <p className="article-rail-tabs-label">관련기사</p>
       )}
-      {!loaded && <p style={{ fontSize: 12, color: 'var(--ash)' }}>불러오는 중…</p>}
+      {!loaded && <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--ash)' }}>불러오는 중…</p>}
       <div className="rail-list">
         {items.map((a) => (
           <RailCard key={a.id} article={a} />
         ))}
-        {loaded && items.length === 0 && <p style={{ fontSize: 12, color: 'var(--ash)' }}>표시할 기사가 없습니다.</p>}
+        {loaded && items.length === 0 && <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--ash)' }}>표시할 기사가 없습니다.</p>}
       </div>
     </aside>
   );

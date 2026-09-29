@@ -24,6 +24,15 @@ module.exports = {
           950: '#0d0d0d',
         },
       },
+      fontWeight: {
+        medium: '400',
+        extrabold: '700',
+      },
+      fontSize: {
+        lg: ['16px', { lineHeight: '1.4' }],
+        '2xl': ['20px', { lineHeight: '1.3' }],
+        '5xl': ['26px', { lineHeight: '1.15' }],
+      },
       borderRadius: {
         md: 'var(--radius)',
         lg: 'var(--radius)',

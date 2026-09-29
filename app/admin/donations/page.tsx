@@ -66,7 +66,7 @@ export default function DonationsAdminPage() {
                         image={d.user?.image}
                         seed={d.user?.id || d.user?.email || d.user?.name || 'user'}
                         name={d.user?.nickname ?? d.user?.name}
-                        className="w-7 h-7 text-[11px] rounded-full object-cover shrink-0"
+                        className="w-7 h-7 text-xs rounded-full object-cover shrink-0"
                       />
                       <span>
                         {d.user?.nickname ?? d.user?.name ?? '-'}

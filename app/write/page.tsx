@@ -874,7 +874,7 @@ export default function WritePage() {
                     }`}
                   />
                 </span>
-                <span className="flex items-center gap-1 text-[11px] text-gray-500">
+                <span className="flex items-center gap-1 text-xs text-gray-500">
                   <input
                     type="radio"
                     name="coverImage"
