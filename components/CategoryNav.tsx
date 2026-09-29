@@ -21,6 +21,7 @@ export default function CategoryNav({ account = null }: { account?: CategoryAcco
   if (pathname?.startsWith('/admin') || pathname === '/write') return null;
 
   const currentCategory = pathname === '/' ? searchParams.get('category') ?? '전체' : null;
+  const savedActive = pathname === '/saved';
 
   return (
     <div className="category-bar">
@@ -40,8 +41,12 @@ export default function CategoryNav({ account = null }: { account?: CategoryAcco
           );
         })}
       </div>
-      {!account && (
-        <a className="chip category-login" href="/api/auth/signin">
+      {account ? (
+        <a className={`chip category-aux${savedActive ? ' is-active' : ''}`} href="/saved">
+          저장한 기사
+        </a>
+      ) : (
+        <a className="chip category-aux" href="/api/auth/signin">
           로그인
         </a>
       )}

@@ -1071,7 +1071,7 @@ img {
   background: var(--accent);
 }
 
-.category-login {
+.category-aux {
   flex: 0 0 auto;
   display: flex;
   align-items: center;
@@ -1082,6 +1082,27 @@ img {
   flex: 0 0 auto;
   display: flex;
   align-items: center;
+}
+
+.saved-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 4px 0 20px;
+}
+
+.saved-title {
+  margin: 0;
+  font-family: var(--title);
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.saved-count {
+  color: var(--ash);
+  font-size: 12px;
+  font-weight: 400;
 }
 
 /* ---------- Masonry grid ---------- */
