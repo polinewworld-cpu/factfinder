@@ -890,12 +890,8 @@ export default function WritePage() {
           <div className="cover-pick-row">
             {bodyImageUrls.map((url, i) => {
               const selected = coverImageUrl === url;
-              const outlined = selected && bodyImageUrls.length > 1;
               return (
-                <div
-                  key={`${url}-${i}`}
-                  className={`cover-pick${selected ? ' is-on' : ''}${outlined ? ' is-outlined' : ''}`}
-                >
+                <div key={`${url}-${i}`} className="cover-pick">
                   {selected ? (
                     <CoverFocalEditor
                       imageUrl={url}
