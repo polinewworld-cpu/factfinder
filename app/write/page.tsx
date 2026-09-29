@@ -193,6 +193,11 @@ export default function WritePage() {
     })();
   }, [editId]);
 
+  // Enter가 <p>를 만들게 해서 Google Docs처럼 단락 뒤 4pt가 줄바꿈마다 적용됨
+  useEffect(() => {
+    document.execCommand('defaultParagraphSeparator', false, 'p');
+  }, []);
+
   // 본문 에디터는 contentEditable(비제어)이라 불러온 기사 내용을 직접 DOM에 한 번만 주입함
   // (me 로딩이 끝나 폼이 실제로 렌더링된 뒤에야 editorRef가 잡히므로 me도 의존성에 둠)
   useEffect(() => {

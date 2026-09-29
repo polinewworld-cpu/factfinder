@@ -23,6 +23,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang="ko">
       <head>
         <link
+          rel="preload"
+          href="/fonts/ibm-plex-sans/ibm-plex-sans-latin.woff2"
+          as="font"
+          type="font/woff2"
+          crossOrigin="anonymous"
+        />
+        <link
           rel="stylesheet"
           href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"
         />
