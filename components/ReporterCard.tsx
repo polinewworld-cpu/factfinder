@@ -44,7 +44,7 @@ export default function ReporterCard({
                 {recentArticles.map((a) => (
                   <li key={a.id}>
                     <a href={`/article/${a.id}`}>{a.title}</a>
-                    {a.publishedAt ? <span className="reporter-card-when"> {timeAgo(a.publishedAt)}</span> : null}
+                    {a.publishedAt ? <span className="reporter-card-when">{timeAgo(a.publishedAt)}</span> : null}
                   </li>
                 ))}
               </ul>
@@ -56,7 +56,7 @@ export default function ReporterCard({
                 {bestArticles.map((a) => (
                   <li key={a.id}>
                     <a href={`/article/${a.id}`}>{a.title}</a>
-                    {a.publishedAt ? <span className="reporter-card-when"> {timeAgo(a.publishedAt)}</span> : null}
+                    {a.publishedAt ? <span className="reporter-card-when">{timeAgo(a.publishedAt)}</span> : null}
                   </li>
                 ))}
               </ul>

@@ -1746,8 +1746,16 @@ img {
   }
 }
 
+.reporter-card-list li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 0.35em;
+}
+
 .reporter-card-list li::before {
-  content: '· ';
+  content: '·';
+  flex: 0 0 auto;
   color: var(--ash);
 }
 
@@ -1837,9 +1845,13 @@ img {
 }
 
 .reporter-card-list a {
+  flex: 0 1 auto;
+  max-width: calc(100% - 1.2em);
   color: var(--body);
   font-size: 14px;
   font-weight: 600;
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
 .reporter-card-list a:hover {
@@ -1848,6 +1860,7 @@ img {
 }
 
 .reporter-card-when {
+  flex: 0 0 auto;
   color: var(--mute);
   font-size: 13px;
   font-weight: 500;
