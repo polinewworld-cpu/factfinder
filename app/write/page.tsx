@@ -10,6 +10,7 @@ import AdminSidebar from '@/components/AdminSidebar';
 import { WriteShell } from '@/components/AdminNav';
 import TagMultiSelect from '@/components/TagMultiSelect';
 import CoverFocalEditor from '@/components/CoverFocalEditor';
+import { cardImageRatio } from '@/lib/cardImage';
 
 type Me = { id: string; role: string; name?: string; email?: string };
 type Category = { id: string; name: string; slug: string };
@@ -867,56 +868,83 @@ export default function WritePage() {
       {keywordErrorMsg && <p className="text-red-600 text-xs mt-1">{keywordErrorMsg}</p>}
 
       <div className="composer-panel">
-        <p className="composer-panel-title">커버 이미지</p>
+        <div className="cover-focal-heading">
+          <p className="composer-panel-title">커버 이미지</p>
+          {coverImageUrl ? (
+            <button
+              type="button"
+              className="cover-focal-reset"
+              onClick={() => {
+                setCoverFocalX(50);
+                setCoverFocalY(50);
+                markDirty();
+              }}
+            >
+              가운데로
+            </button>
+          ) : null}
+        </div>
         {bodyImageUrls.length === 0 ? (
           <p className="composer-hint">본문에 사진을 넣으면 여기서 커버를 고를 수 있습니다.</p>
         ) : (
-          <div className="flex flex-wrap gap-3 mt-3">
-            {bodyImageUrls.map((url, i) => (
-              <label key={`${url}-${i}`} className="flex flex-col items-center gap-1 cursor-pointer">
-                <span className="relative">
-                  <img
-                    src={url}
-                    alt=""
-                    className={`h-16 w-24 object-cover rounded border-2 ${
-                      coverImageUrl === url ? 'border-brand' : 'border-gray-200'
-                    }`}
-                  />
-                </span>
-                <span className="flex items-center gap-1 text-xs text-gray-500">
-                  <input
-                    type="radio"
-                    name="coverImage"
-                    checked={coverImageUrl === url}
-                    onChange={() => {
-                      setCoverImageUrl(url);
-                      setCoverFocalX(50);
-                      setCoverFocalY(50);
-                      markDirty();
-                    }}
-                  />
-                  {i === 0 ? '기본' : `${i + 1}번째`}
-                </span>
-              </label>
-            ))}
+          <div className="cover-pick-row">
+            {bodyImageUrls.map((url, i) => {
+              const selected = coverImageUrl === url;
+              return (
+                <div key={`${url}-${i}`} className={`cover-pick${selected ? ' is-on' : ''}`}>
+                  {selected ? (
+                    <CoverFocalEditor
+                      imageUrl={url}
+                      articleId={articleId}
+                      x={coverFocalX}
+                      y={coverFocalY}
+                      onChangeX={(value) => {
+                        setCoverFocalX(value);
+                        markDirty();
+                      }}
+                      onChangeY={(value) => {
+                        setCoverFocalY(value);
+                        markDirty();
+                      }}
+                    />
+                  ) : (
+                    <button
+                      type="button"
+                      className="cover-pick-thumb"
+                      onClick={() => {
+                        setCoverImageUrl(url);
+                        setCoverFocalX(50);
+                        setCoverFocalY(50);
+                        markDirty();
+                      }}
+                    >
+                      <img
+                        src={url}
+                        alt=""
+                        style={{ aspectRatio: `1 / ${cardImageRatio(articleId)}` }}
+                      />
+                    </button>
+                  )}
+                  <label className="cover-pick-label">
+                    <input
+                      type="radio"
+                      name="coverImage"
+                      checked={selected}
+                      onChange={() => {
+                        if (selected) return;
+                        setCoverImageUrl(url);
+                        setCoverFocalX(50);
+                        setCoverFocalY(50);
+                        markDirty();
+                      }}
+                    />
+                    {i === 0 ? '기본' : `${i + 1}번째`}
+                  </label>
+                </div>
+              );
+            })}
           </div>
         )}
-        {coverImageUrl ? (
-          <CoverFocalEditor
-            imageUrl={coverImageUrl}
-            articleId={articleId}
-            x={coverFocalX}
-            y={coverFocalY}
-            onChangeX={(value) => {
-              setCoverFocalX(value);
-              markDirty();
-            }}
-            onChangeY={(value) => {
-              setCoverFocalY(value);
-              markDirty();
-            }}
-          />
-        ) : null}
       </div>
 
       <div className="composer-panel">
