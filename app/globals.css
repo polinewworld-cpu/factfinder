@@ -2387,8 +2387,6 @@ img {
 
 .article-rail.is-collapsed {
   padding: 0;
-  position: sticky;
-  top: calc(var(--header-h) + 24px);
 }
 
 .article-rail.is-collapsed .article-rail-head {
