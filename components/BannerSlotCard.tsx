@@ -5,7 +5,7 @@ export default function BannerSlotCard({ imageUrl, linkUrl }: { imageUrl: string
   return (
     <article className="pin">
       <a className="pin-media" href={linkUrl} target="_blank" rel="noopener noreferrer sponsored">
-        <img src={imageUrl} alt="광고" style={{ aspectRatio: '1 / 0.9' }} />
+        <img src={imageUrl} alt="광고" style={{ aspectRatio: '1 / 1' }} />
         <div className="pin-overlay">
           <span className="ghost-chip">광고</span>
         </div>
