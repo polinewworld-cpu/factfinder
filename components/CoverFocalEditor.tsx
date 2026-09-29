@@ -1,5 +1,6 @@
 'use client';
 
+import type { CSSProperties } from 'react';
 import { cardImageRatio, coverObjectPosition } from '@/lib/cardImage';
 
 export default function CoverFocalEditor({
@@ -40,6 +41,7 @@ export default function CoverFocalEditor({
             min={0}
             max={100}
             value={x}
+            style={{ '--cover-focal': `${x}%` } as CSSProperties}
             onChange={(e) => onChangeX(Number(e.target.value))}
           />
         </label>
@@ -50,6 +52,7 @@ export default function CoverFocalEditor({
             min={0}
             max={100}
             value={y}
+            style={{ '--cover-focal': `${y}%` } as CSSProperties}
             onChange={(e) => onChangeY(Number(e.target.value))}
           />
         </label>
