@@ -1028,12 +1028,6 @@ img {
   background: var(--chip);
 }
 
-.cover-pick.is-outlined .cover-pick-thumb,
-.cover-pick.is-outlined .cover-focal-preview {
-  outline: 2px solid var(--ink);
-  outline-offset: 0;
-}
-
 .cover-pick-chip {
   position: absolute;
   top: 9.6px;
