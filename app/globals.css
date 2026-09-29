@@ -1591,6 +1591,18 @@ img {
   text-underline-offset: 3px;
 }
 
+.video-headline {
+  display: block;
+  width: 100%;
+  white-space: pre-line;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+.video-headline.is-editable {
+  cursor: text;
+}
+
 .pin-excerpt {
   display: -webkit-box;
   -webkit-line-clamp: 2;
