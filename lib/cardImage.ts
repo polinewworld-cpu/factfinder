@@ -1,4 +1,4 @@
-export const CARD_RATIOS = [0.72, 0.96, 16 / 9];
+export const CARD_RATIOS = [3 / 4, 1, 16 / 9];
 
 export function hashString(value: string) {
   let hash = 0;
@@ -11,7 +11,7 @@ export function hashString(value: string) {
 export function cardImageRatio(articleId?: string | null, featured = false, wide = false) {
   if (featured) return 1.12;
   if (wide) return 0.46;
-  if (!articleId) return 0.96;
+  if (!articleId) return 1;
   return CARD_RATIOS[hashString(articleId) % CARD_RATIOS.length];
 }
 
