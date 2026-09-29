@@ -1665,7 +1665,7 @@ img {
 .article-content {
   color: var(--body);
   font-size: calc((16.5px + 2pt) * var(--article-font-scale, 1));
-  line-height: 1.85;
+  line-height: 1.15;
 }
 
 .article-content img {
@@ -1717,8 +1717,8 @@ img {
 }
 
 .article-content p,
-.article-content div {
-  margin: 0 0 1em;
+.article-content > div:not(.article-figure) {
+  margin: 0 0 4pt;
 }
 
 /* 기사 본문 맨 마지막 줄광고 — 핫핑크 얇은 화살표 + 기사제목처럼 굵은 한 줄 */
