@@ -908,17 +908,24 @@ img {
 .composer-actions {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: space-between;
   gap: 8px;
   margin-top: 28px;
   padding: 0;
 }
 
+.composer-actions-left,
 .composer-actions-btns {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-left: auto;
+}
+
+.composer-poll {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 16px;
 }
 
 .sr-only {
