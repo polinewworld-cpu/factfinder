@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { detectSnsPlatform, SNS_PLATFORM_LABELS } from '@/lib/sns';
 import { UserAvatar } from '@/components/InitialAvatar';
 import { usableAvatarUrl } from '@/lib/avatarGradient';
+import { toFrenchBrackets } from '@/lib/frenchBrackets';
 
 type SavedArticleItem = { id: string; title: string; author: { name: string } };
 
@@ -284,7 +285,7 @@ export default function ProfilePage() {
             {savedArticles.map((a) => (
               <li key={a.id}>
                 <a href={`/article/${a.id}`} className="text-sm text-gray-700 hover:text-brand">
-                  {a.title} <span className="text-gray-400 text-xs">· {a.author.name}</span>
+                  {toFrenchBrackets(a.title)} <span className="text-gray-400 text-xs">· {a.author.name}</span>
                 </a>
               </li>
             ))}

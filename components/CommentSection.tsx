@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { timeAgo } from '@/lib/time';
 import { CloseIcon } from './icons';
+import { toFrenchBrackets } from '@/lib/frenchBrackets';
 
 type CommentItem = {
   id: string;
@@ -64,7 +65,7 @@ export default function CommentSection({ articleId }: { articleId: string }) {
       <div className="mb-6">
         <textarea
           value={text}
-          onChange={(e) => setText(e.target.value)}
+          onChange={(e) => setText(toFrenchBrackets(e.target.value))}
           placeholder="댓글을 입력하세요"
           rows={3}
           className="w-full border border-gray-200 rounded-lg p-3 text-sm outline-none focus:border-brand"
@@ -114,7 +115,7 @@ export default function CommentSection({ articleId }: { articleId: string }) {
                 {c.user.nickname || c.user.name}
                 <span className="text-gray-400 font-normal ml-2">{timeAgo(c.createdAt)}</span>
               </p>
-              <p className="text-sm text-gray-700 mt-1 whitespace-pre-wrap">{c.content}</p>
+              <p className="text-sm text-gray-700 mt-1 whitespace-pre-wrap">{toFrenchBrackets(c.content)}</p>
             </div>
             {me && (me.id === c.user.id || me.role === 'CHIEF_EDITOR') && (
               <button onClick={() => remove(c.id)} className="text-xs text-gray-300 hover:text-red-500 shrink-0">

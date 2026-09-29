@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import { toFrenchBrackets } from '@/lib/frenchBrackets';
 
 // 정치신세계 자동 영상 카드 — 유튜브 채널 @polinewworld에서 쇼츠/영상/라이브를 가져와 VideoCard로 저장 (기능정의서 4.2.1)
 // 민트데스크 프로젝트에서 검증된 방식 재사용: forHandle -> 실패 시 search 폴백, 업로드 재생목록(UC->UU)으로 목록 조회.
@@ -85,14 +86,14 @@ export async function syncVideoCards(): Promise<SyncResult> {
         await prisma.videoCard.upsert({
           where: { youtubeId: video.id },
           update: {
-            title: video.snippet.title,
+            title: toFrenchBrackets(video.snippet.title),
             thumbnailUrl: video.snippet.thumbnails?.high?.url ?? video.snippet.thumbnails?.default?.url ?? '',
             kind,
             publishedAt: new Date(video.snippet.publishedAt),
           },
           create: {
             youtubeId: video.id,
-            title: video.snippet.title,
+            title: toFrenchBrackets(video.snippet.title),
             thumbnailUrl: video.snippet.thumbnails?.high?.url ?? video.snippet.thumbnails?.default?.url ?? '',
             kind,
             publishedAt: new Date(video.snippet.publishedAt),
@@ -120,14 +121,14 @@ export async function syncVideoCards(): Promise<SyncResult> {
       await prisma.videoCard.upsert({
         where: { youtubeId: videoId },
         update: {
-          title: item.snippet.title,
+          title: toFrenchBrackets(item.snippet.title),
           thumbnailUrl: item.snippet.thumbnails?.high?.url ?? item.snippet.thumbnails?.default?.url ?? '',
           kind: 'LIVE',
           publishedAt: new Date(item.snippet.publishedAt),
         },
         create: {
           youtubeId: videoId,
-          title: item.snippet.title,
+          title: toFrenchBrackets(item.snippet.title),
           thumbnailUrl: item.snippet.thumbnails?.high?.url ?? item.snippet.thumbnails?.default?.url ?? '',
           kind: 'LIVE',
           publishedAt: new Date(item.snippet.publishedAt),

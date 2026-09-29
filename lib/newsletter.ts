@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import { toFrenchBrackets } from '@/lib/frenchBrackets';
 
 // 이번 주(월~일) 범위 계산 — 별도 지정 없으면 이 범위로 자동 발행 (기능정의서 6)
 export function currentWeekRange(reference = new Date()) {
@@ -34,9 +35,9 @@ export async function buildWeeklyDigest(start: Date, end: Date) {
       (a) => `
       <tr>
         <td style="padding:16px 0;border-bottom:1px solid #eee;">
-          <a href="${base}/article/${a.id}" style="font-size:16px;font-weight:700;color:#111;text-decoration:none;">${a.title}</a>
+          <a href="${base}/article/${a.id}" style="font-size:16px;font-weight:700;color:#111;text-decoration:none;">${toFrenchBrackets(a.title)}</a>
           <p style="margin:6px 0 0;color:#666;font-size:13px;">${a.author.name}${a.category ? ` · ${a.category.name}` : ''}</p>
-          ${a.excerpt ? `<p style="margin:8px 0 0;color:#444;font-size:14px;line-height:1.5;">${a.excerpt}</p>` : ''}
+          ${a.excerpt ? `<p style="margin:8px 0 0;color:#444;font-size:14px;line-height:1.5;">${toFrenchBrackets(a.excerpt)}</p>` : ''}
         </td>
       </tr>`
     )

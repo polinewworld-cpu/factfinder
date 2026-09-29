@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { timeAgo } from '@/lib/time';
 import { useSavedArticles } from './SavedArticlesProvider';
+import { toFrenchBrackets } from '@/lib/frenchBrackets';
 
 export type MasonryVideo = {
   id: string;
@@ -85,7 +86,7 @@ export default function VideoMasonryCard({ video, wide = false }: { video: Mason
       <div className="pin-copy">
         <h2>
           <a href={href} target="_blank" rel="noopener noreferrer">
-            {video.title}
+            {toFrenchBrackets(video.title)}
           </a>
         </h2>
         <div className="pin-meta">

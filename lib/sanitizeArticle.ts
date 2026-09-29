@@ -1,4 +1,5 @@
 import sanitizeHtml from 'sanitize-html';
+import { toFrenchBrackets } from '@/lib/frenchBrackets';
 
 // 기사 본문(article.content)은 저장 시 무조건 이 필터를 거친다.
 // 렌더링 쪽(app/article/[id]/page.tsx)은 dangerouslySetInnerHTML로 그대로 뿌리기 때문에,
@@ -6,7 +7,7 @@ import sanitizeHtml from 'sanitize-html';
 // 에디터(app/write/page.tsx)가 실제로 만들어내는 태그만 화이트리스트로 허용:
 //   굵게/기울임/밑줄, 링크, 이미지, 형광펜(mark), 유튜브 임베드(iframe), X/인스타 임베드(blockquote)
 export function sanitizeArticleContent(html: string): string {
-  return sanitizeHtml(html ?? '', {
+  return toFrenchBrackets(sanitizeHtml(html ?? '', {
     allowedTags: [
       'p', 'br', 'div', 'span',
       'b', 'strong', 'i', 'em', 'u', 'mark',
@@ -32,5 +33,5 @@ export function sanitizeArticleContent(html: string): string {
     transformTags: {
       a: sanitizeHtml.simpleTransform('a', { target: '_blank', rel: 'noopener noreferrer' }),
     },
-  });
+  }));
 }

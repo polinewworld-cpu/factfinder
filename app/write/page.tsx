@@ -11,6 +11,7 @@ import { WriteShell } from '@/components/AdminNav';
 import TagMultiSelect from '@/components/TagMultiSelect';
 import CoverFocalEditor from '@/components/CoverFocalEditor';
 import { cardImageRatio } from '@/lib/cardImage';
+import { toFrenchBrackets, replaceFrenchBracketsInTree } from '@/lib/frenchBrackets';
 
 type Me = { id: string; role: string; name?: string; email?: string };
 type Category = { id: string; name: string; slug: string };
@@ -119,7 +120,7 @@ export default function WritePage() {
     markDirty();
   }
   function updatePollOption(i: number, val: string) {
-    setPollOptions((prev) => prev.map((o, idx) => (idx === i ? val : o)));
+    setPollOptions((prev) => prev.map((o, idx) => (idx === i ? toFrenchBrackets(val) : o)));
     markDirty();
   }
   function addPollOption() {
@@ -166,11 +167,11 @@ export default function WritePage() {
         articleIdRef.current = data.id;
         submittedRef.current = false;
         setArticleId(data.id);
-        setTitle(data.title ?? '');
-        setSubtitle1(data.subtitle1 ?? '');
-        setSubtitle2(data.subtitle2 ?? '');
-        setSubtitle3(data.subtitle3 ?? '');
-        setHoverText(data.hoverText ?? '');
+        setTitle(toFrenchBrackets(data.title ?? ''));
+        setSubtitle1(toFrenchBrackets(data.subtitle1 ?? ''));
+        setSubtitle2(toFrenchBrackets(data.subtitle2 ?? ''));
+        setSubtitle3(toFrenchBrackets(data.subtitle3 ?? ''));
+        setHoverText(toFrenchBrackets(data.hoverText ?? ''));
         setThemeTags((data.themeTags ?? '').split(',').map((t: string) => t.trim()).filter(Boolean));
         setCategoryId(data.categoryId ?? '');
         setKeywordIds((data.keywords ?? []).map((k: { id: string }) => k.id));
@@ -178,21 +179,24 @@ export default function WritePage() {
         setCoverFocalX(typeof data.coverFocalX === 'number' ? data.coverFocalX : 50);
         setCoverFocalY(typeof data.coverFocalY === 'number' ? data.coverFocalY : 50);
         setIsFrontpageTop(!!data.isFrontpageTop);
-        setCardImages((data.images ?? []).map((img: { url: string; caption?: string | null }) => ({ url: img.url, caption: img.caption ?? undefined })));
+        setCardImages((data.images ?? []).map((img: { url: string; caption?: string | null }) => ({
+          url: img.url,
+          caption: img.caption ? toFrenchBrackets(img.caption) : undefined,
+        })));
         setRelatedSelected(
           (data.relatedArticles ?? []).map((a: ArticleSearchResult) => ({
             id: a.id,
-            title: a.title,
+            title: toFrenchBrackets(a.title),
             author: a.author,
             updatedAt: a.updatedAt,
           }))
         );
         if (data.poll) {
           setPollEnabled(true);
-          setPollQuestion(data.poll.question ?? '');
-          setPollOptions((data.poll.options ?? []).map((o: { text: string }) => o.text));
+          setPollQuestion(toFrenchBrackets(data.poll.question ?? ''));
+          setPollOptions((data.poll.options ?? []).map((o: { text: string }) => toFrenchBrackets(o.text)));
         }
-        setLoadedContent(data.content ?? '');
+        setLoadedContent(toFrenchBrackets(data.content ?? ''));
       } finally {
         setLoadingArticle(false);
       }
@@ -307,7 +311,10 @@ export default function WritePage() {
   function handleGallerySelect(items: GalleryPickedPhoto[]) {
     if (galleryTarget === 'card') {
       // 갤러리에 저장된 캡션(제목)을 카드뉴스 캡션으로 그대로 이어받음 (2026-09-12 수정)
-      setCardImages((prev) => [...prev, ...items.map((it) => ({ url: it.url, caption: it.title || undefined }))]);
+      setCardImages((prev) => [
+        ...prev,
+        ...items.map((it) => ({ url: it.url, caption: it.title ? toFrenchBrackets(it.title) : undefined })),
+      ]);
       markDirty();
     } else if (galleryTarget === 'body') {
       if (items[0]) insertBodyImage(items[0].url, items[0].title);
@@ -346,7 +353,7 @@ export default function WritePage() {
   function insertBodyImage(url: string, caption?: string | null) {
     restoreEditorSelection();
     const safeUrl = url.replace(/"/g, '&quot;');
-    const safeCaption = (caption ?? '')
+    const safeCaption = toFrenchBrackets(caption ?? '')
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;');
@@ -373,6 +380,7 @@ export default function WritePage() {
   }
 
   function handleEditorInput() {
+    replaceFrenchBracketsInTree(editorRef.current);
     markDirty();
     syncBodyImagesFromDom();
   }
@@ -546,7 +554,7 @@ export default function WritePage() {
 
   function insertSpecialChar(char: string) {
     restoreEditorSelection();
-    document.execCommand('insertText', false, char);
+    document.execCommand('insertText', false, toFrenchBrackets(char));
     captureEditorSelection();
     markDirty();
   }
@@ -718,7 +726,7 @@ export default function WritePage() {
           value={title}
           rows={1}
           onChange={(e) => {
-            setTitle(e.target.value);
+            setTitle(toFrenchBrackets(e.target.value));
             markDirty();
           }}
           placeholder="제목"
@@ -737,7 +745,7 @@ export default function WritePage() {
             key={i}
             value={sub.value}
             onChange={(e) => {
-              sub.set(e.target.value);
+              sub.set(toFrenchBrackets(e.target.value));
               markDirty();
             }}
             placeholder={sub.ph}
@@ -747,7 +755,7 @@ export default function WritePage() {
         <input
           value={hoverText}
           onChange={(e) => {
-            setHoverText(e.target.value);
+            setHoverText(toFrenchBrackets(e.target.value));
             markDirty();
           }}
           placeholder="카드 마우스 오버 문안"
@@ -956,7 +964,7 @@ export default function WritePage() {
                 key={a.id}
                 className="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-700 bg-gray-50 border border-gray-200 rounded-lg pl-3 pr-1.5 py-1"
               >
-                {a.title}
+                {toFrenchBrackets(a.title)}
                 <button
                   type="button"
                   onClick={() => removeRelatedArticle(a.id)}
@@ -1013,7 +1021,7 @@ export default function WritePage() {
           <input
             value={pollQuestion}
             onChange={(e) => {
-              setPollQuestion(e.target.value);
+              setPollQuestion(toFrenchBrackets(e.target.value));
               markDirty();
             }}
             placeholder="질문"

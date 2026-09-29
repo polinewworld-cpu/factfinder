@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { ROLES } from '@/lib/roles';
 import { getCurrentUser } from '@/lib/session';
+import { toFrenchBrackets } from '@/lib/frenchBrackets';
 
 // 줄광고 수정(문안/링크/순서/노출여부) — 편집장 전용 (2026-09-12 신설)
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
@@ -18,7 +19,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   const updated = await prisma.lineAd.update({
     where: { id: params.id },
     data: {
-      ...(typeof text === 'string' ? { text: text.trim() } : {}),
+      ...(typeof text === 'string' ? { text: toFrenchBrackets(text.trim()) } : {}),
       ...(typeof linkUrl === 'string' ? { linkUrl: linkUrl.trim() } : {}),
       ...(order !== undefined ? { order } : {}),
       ...(active !== undefined ? { active } : {}),

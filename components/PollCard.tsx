@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { toFrenchBrackets } from '@/lib/frenchBrackets';
 
 type Option = { id: string; text: string; order: number; voteCount: number };
 type PollData = { id: string; question: string; totalVotes: number; myVoteOptionId: string | null; options: Option[] };
@@ -46,7 +47,7 @@ export default function PollCard({ pollId }: { pollId: string }) {
   return (
     <section className="article-poll">
       <p className="article-poll-kicker">설문조사</p>
-      <h3 className="article-poll-question">{poll.question}</h3>
+      <h3 className="article-poll-question">{toFrenchBrackets(poll.question)}</h3>
 
       <ul className="article-poll-options">
         {poll.options.map((opt) => {
@@ -62,7 +63,7 @@ export default function PollCard({ pollId }: { pollId: string }) {
                 className={`article-poll-option${voted ? ' is-result' : ''}${isMine ? ' is-mine' : ''}`}
               >
                 <span className="article-poll-head">
-                  <span className="article-poll-label">{opt.text}</span>
+                  <span className="article-poll-label">{toFrenchBrackets(opt.text)}</span>
                   {voted && <span className="article-poll-pct">{pct}%</span>}
                 </span>
                 <span className="article-poll-track">

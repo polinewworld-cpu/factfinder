@@ -5,6 +5,7 @@ import { ROLES, WRITER_ROLES, initialStatusForRole } from '@/lib/roles';
 import { deriveExcerpt } from '@/lib/excerpt';
 import { sanitizeArticleContent } from '@/lib/sanitizeArticle';
 import { clampFocal } from '@/lib/cardImage';
+import { toFrenchBrackets } from '@/lib/frenchBrackets';
 
 export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
   const article = await prisma.article.findUnique({
@@ -38,6 +39,10 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     rest.content = sanitizeArticleContent(rest.content);
     rest.excerpt = deriveExcerpt(rest.content);
     rest.audioUrl = null;
+  }
+
+  for (const key of ['title', 'subtitle1', 'subtitle2', 'subtitle3', 'hoverText'] as const) {
+    if (typeof rest[key] === 'string') rest[key] = toFrenchBrackets(rest[key]);
   }
 
   // 자동저장/제출은 세션 검증 + 본인 글만 — 클라이언트가 다른 사람 글을 건드리지 못하게 함
@@ -88,8 +93,8 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
         await tx.poll.create({
           data: {
             articleId: params.id,
-            question: poll.question.trim(),
-            options: { create: validPollOptions.map((text, i) => ({ text, order: i })) },
+            question: toFrenchBrackets(poll.question.trim()),
+            options: { create: validPollOptions.map((text, i) => ({ text: toFrenchBrackets(text), order: i })) },
           },
         });
       }
@@ -113,7 +118,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
                 deleteMany: {},
                 create: images.map((img: { url: string; caption?: string }, i: number) => ({
                   url: img.url,
-                  caption: img.caption,
+                  caption: img.caption ? toFrenchBrackets(img.caption) : img.caption,
                   order: i,
                 })),
               },

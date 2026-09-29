@@ -1,6 +1,7 @@
 import SnsLinks from './SnsLinks';
 import { timeAgo } from '@/lib/time';
 import { UserAvatar } from './InitialAvatar';
+import { toFrenchBrackets } from '@/lib/frenchBrackets';
 
 type ReporterCardAuthor = {
   name: string;
@@ -15,7 +16,7 @@ function ReporterArticleLink({ article }: { article: ArticleLink }) {
   return (
     <li>
       <span className="reporter-card-entry">
-        <a href={`/article/${article.id}`}>{article.title.replace(/\s+/g, ' ')}</a>
+        <a href={`/article/${article.id}`}>{toFrenchBrackets(article.title).replace(/\s+/g, ' ')}</a>
         {article.publishedAt ? <span className="reporter-card-when">{timeAgo(article.publishedAt)}</span> : null}
       </span>
     </li>
