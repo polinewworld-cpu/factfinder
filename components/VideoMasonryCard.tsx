@@ -27,7 +27,7 @@ function videoUrl(video: MasonryVideo) {
 // 정치신세계 영상을 "기사 생성"처럼 취급해 인덱스(전체) 피드의 일반 기사 카드와 같은 메이슨리 레이아웃에 섞어 보여주는 카드 (2026-09-11 신설)
 // 클릭하면 사이트 내 상세페이지가 아니라 유튜브로 바로 이동함.
 // '메인에서 제외' 기능은 정치신세계 서브페이지가 아니라 이 메인 피드 카드에서 하도록 위치를 옮김 (2026-09-12 사용자 지시)
-export default function VideoMasonryCard({ video }: { video: MasonryVideo }) {
+export default function VideoMasonryCard({ video, wide = false }: { video: MasonryVideo; wide?: boolean }) {
   const href = videoUrl(video);
   const { isChiefEditor } = useSavedArticles();
   const [hiddenFromMain, setHiddenFromMain] = useState(false);
@@ -53,12 +53,15 @@ export default function VideoMasonryCard({ video }: { video: MasonryVideo }) {
   if (hiddenFromMain) return null;
 
   return (
-    <article className="pin">
+    <article className={wide ? 'pin is-wide' : 'pin'}>
       <a className="pin-media" href={href} target="_blank" rel="noopener noreferrer">
         <img
           src={video.thumbnailUrl}
           alt=""
-          style={{ aspectRatio: video.kind === 'SHORT' ? '9 / 16' : '16 / 9', objectFit: 'cover' }}
+          style={{
+            aspectRatio: wide ? '1 / 0.46' : video.kind === 'SHORT' ? '9 / 16' : '16 / 9',
+            objectFit: 'cover',
+          }}
         />
         <div className="pin-badges">
           <span className="pin-badge-chip">정치신세계</span>
