@@ -1012,10 +1012,10 @@ img {
 }
 
 .cover-pick {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
 }
 
 .cover-pick-thumb,
@@ -1026,6 +1026,31 @@ img {
   border: 0;
   border-radius: 16px;
   background: var(--chip);
+}
+
+.cover-pick.is-outlined .cover-pick-thumb,
+.cover-pick.is-outlined .cover-focal-preview {
+  outline: 2px solid var(--ink);
+  outline-offset: 0;
+}
+
+.cover-pick-chip {
+  position: absolute;
+  top: 9.6px;
+  left: 9.6px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  padding: 3.33px 8.44px;
+  border-radius: var(--radius);
+  background: #fff;
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+  pointer-events: none;
 }
 
 .cover-focal-preview {
@@ -1044,15 +1069,6 @@ img {
   display: block;
   object-fit: cover;
   pointer-events: none;
-}
-
-.cover-pick-label {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--mute);
 }
 
 .composer-actions {
