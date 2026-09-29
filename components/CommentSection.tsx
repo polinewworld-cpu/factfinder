@@ -73,7 +73,7 @@ export default function CommentSection({ articleId }: { articleId: string }) {
           <button
             disabled={posting}
             onClick={submit}
-            className="text-sm font-bold text-white bg-brand rounded-lg px-5 py-1.5 disabled:opacity-50"
+            className="text-sm font-bold text-white bg-[var(--accent)] rounded-lg px-5 py-1.5 disabled:opacity-50"
           >
             등록
           </button>
