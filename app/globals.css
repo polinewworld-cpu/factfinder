@@ -929,17 +929,17 @@ img {
   padding: 28px 28px 40px;
   color: var(--ink);
   font-size: 17px;
-  line-height: 1.5;
+  line-height: 1.7;
   outline: none;
   cursor: text;
   -webkit-user-select: text;
   user-select: text;
 }
 
-/* 줄간격 1.5, 단락 뒤 간격 4pt */
+/* 줄간격 1.7, 단락 뒤 간격 8pt */
 .composer-body p,
 .composer-body > div:not(.article-figure) {
-  margin: 0 0 4pt;
+  margin: 0 0 8pt;
 }
 
 .composer-body i,
@@ -1665,7 +1665,7 @@ img {
 .article-content {
   color: var(--body);
   font-size: calc((16.5px + 2pt) * var(--article-font-scale, 1));
-  line-height: 1.5;
+  line-height: 1.7;
 }
 
 .article-content img {
@@ -1718,7 +1718,7 @@ img {
 
 .article-content p,
 .article-content > div:not(.article-figure) {
-  margin: 0 0 4pt;
+  margin: 0 0 8pt;
 }
 
 /* 기사 본문 맨 마지막 줄광고 — 핫핑크 얇은 화살표 + 기사제목처럼 굵은 한 줄 */
