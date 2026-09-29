@@ -620,6 +620,12 @@ img {
   border: 0;
   background: transparent;
   outline: none;
+  resize: none;
+  overflow: hidden;
+  display: block;
+  white-space: pre-wrap;
+  word-break: keep-all;
+  overflow-wrap: break-word;
   color: var(--ink);
   font-family: var(--title);
   font-size: 34px;
@@ -1571,6 +1577,9 @@ img {
   font-weight: 700;
   line-height: 1.4;
   letter-spacing: -0.02em;
+  white-space: pre-line;
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
 /* 부제목(요약) — 굵게 강조, 왼쪽 포인트 바로 요약 블록처럼 보이게 (2026-09-12) */
