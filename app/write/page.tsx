@@ -913,72 +913,30 @@ export default function WritePage() {
         )}
       </div>
 
-      <div className="composer-panel">
-        <button
-          type="button"
-          aria-pressed={pollEnabled}
-          onClick={() => togglePoll(!pollEnabled)}
-          className={`composer-toggle${pollEnabled ? ' is-on' : ''}`}
-        >
-          설문 추가
-        </button>
-        {pollEnabled && (
-          <div className="mt-3 space-y-2">
-            <input
-              value={pollQuestion}
-              onChange={(e) => {
-                setPollQuestion(e.target.value);
+      <div className="composer-actions">
+        <div className="composer-actions-left">
+          {me.role !== 'REPORTER' ? (
+            <button
+              type="button"
+              aria-pressed={isFrontpageTop}
+              onClick={() => {
+                setIsFrontpageTop((v) => !v);
                 markDirty();
               }}
-              placeholder="질문"
-              className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-brand"
-            />
-            {pollOptions.map((opt, i) => (
-              <div key={i} className="flex items-center gap-2">
-                <input
-                  value={opt}
-                  onChange={(e) => updatePollOption(i, e.target.value)}
-                  placeholder={`항목 ${i + 1}`}
-                  className="flex-1 text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-brand"
-                />
-                {pollOptions.length > 2 && (
-                  <button
-                    type="button"
-                    onClick={() => removePollOption(i)}
-                    className="w-7 h-7 shrink-0 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50"
-                  >
-                    x
-                  </button>
-                )}
-              </div>
-            ))}
-            {pollOptions.length < 6 && (
-              <button
-                type="button"
-                onClick={addPollOption}
-                className="text-xs font-semibold text-brand border border-brand/30 rounded-lg px-3 py-1 hover:bg-brand/5"
-              >
-                항목 추가
-              </button>
-            )}
-          </div>
-        )}
-      </div>
-
-      <div className="composer-actions">
-        {me.role !== 'REPORTER' ? (
+              className={`composer-toggle${isFrontpageTop ? ' is-on' : ''}`}
+            >
+              1면톱
+            </button>
+          ) : null}
           <button
             type="button"
-            aria-pressed={isFrontpageTop}
-            onClick={() => {
-              setIsFrontpageTop((v) => !v);
-              markDirty();
-            }}
-            className={`composer-toggle${isFrontpageTop ? ' is-on' : ''}`}
+            aria-pressed={pollEnabled}
+            onClick={() => togglePoll(!pollEnabled)}
+            className={`composer-toggle${pollEnabled ? ' is-on' : ''}`}
           >
-            1면톱
+            설문 추가
           </button>
-        ) : null}
+        </div>
         <div className="composer-actions-btns">
           <button type="button" onClick={doAutosave} className="composer-toggle">
             임시저장
@@ -993,6 +951,47 @@ export default function WritePage() {
           </button>
         </div>
       </div>
+      {pollEnabled && (
+        <div className="composer-poll">
+          <input
+            value={pollQuestion}
+            onChange={(e) => {
+              setPollQuestion(e.target.value);
+              markDirty();
+            }}
+            placeholder="질문"
+            className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-brand"
+          />
+          {pollOptions.map((opt, i) => (
+            <div key={i} className="flex items-center gap-2">
+              <input
+                value={opt}
+                onChange={(e) => updatePollOption(i, e.target.value)}
+                placeholder={`항목 ${i + 1}`}
+                className="flex-1 text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-brand"
+              />
+              {pollOptions.length > 2 && (
+                <button
+                  type="button"
+                  onClick={() => removePollOption(i)}
+                  className="w-7 h-7 shrink-0 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50"
+                >
+                  x
+                </button>
+              )}
+            </div>
+          ))}
+          {pollOptions.length < 6 && (
+            <button
+              type="button"
+              onClick={addPollOption}
+              className="text-xs font-semibold text-brand border border-brand/30 rounded-lg px-3 py-1 hover:bg-brand/5"
+            >
+              항목 추가
+            </button>
+          )}
+        </div>
+      )}
 
       <PhotoGalleryModal
         open={galleryTarget !== null}
