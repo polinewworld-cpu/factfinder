@@ -887,7 +887,7 @@ export default function WritePage() {
           <button
             type="button"
             onClick={() => setRelatedModalOpen(true)}
-            className="composer-toggle"
+            className="text-xs font-bold text-gray-500 border border-gray-200 rounded-lg px-3 py-1.5 hover:border-gray-400"
           >
             추가
           </button>
