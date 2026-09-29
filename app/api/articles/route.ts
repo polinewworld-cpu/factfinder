@@ -5,6 +5,7 @@ import { getCurrentUser } from '@/lib/session';
 import type { ArticleStatus } from '@prisma/client';
 import { deriveExcerpt } from '@/lib/excerpt';
 import { sanitizeArticleContent } from '@/lib/sanitizeArticle';
+import { clampFocal } from '@/lib/cardImage';
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -53,6 +54,7 @@ export async function POST(req: NextRequest) {
     title, content, hoverText, themeTags, coverImageUrl, categoryId, images,
     subtitle1, subtitle2, subtitle3, relatedArticleIds,
     keywordIds, isFrontpageTop, intent, poll, // intent: 'autosave' | 'submit' (기본값 submit) / poll: { question, options: string[] } | null
+    coverFocalX, coverFocalY,
   } = body;
   // 저장 전 항상 새니타이즈 — 렌더링(app/article/[id]/page.tsx)이 dangerouslySetInnerHTML로
   // 그대로 뿌리기 때문에 여기서 걸러지지 않으면 스크립트 태그 등이 방문자 브라우저에서 그대로 실행됨
@@ -89,6 +91,8 @@ export async function POST(req: NextRequest) {
         hoverText: hoverText || null,
         themeTags: Array.isArray(themeTags) && themeTags.length ? themeTags.join(',') : null,
         coverImageUrl,
+        coverFocalX: clampFocal(coverFocalX),
+        coverFocalY: clampFocal(coverFocalY),
         categoryId,
         authorId,
         status,

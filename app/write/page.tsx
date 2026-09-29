@@ -9,6 +9,7 @@ import SpecialCharacterModal from '@/components/SpecialCharacterModal';
 import AdminSidebar from '@/components/AdminSidebar';
 import { WriteShell } from '@/components/AdminNav';
 import TagMultiSelect from '@/components/TagMultiSelect';
+import CoverFocalEditor from '@/components/CoverFocalEditor';
 
 type Me = { id: string; role: string; name?: string; email?: string };
 type Category = { id: string; name: string; slug: string };
@@ -40,6 +41,8 @@ export default function WritePage() {
   const [keywordIds, setKeywordIds] = useState<string[]>([]);
   // 커버이미지 — 별도 업로드 없이 본문에 삽입된 이미지 중 라디오로 선택 (첫 번째 삽입 이미지가 기본값, 2026-09-11 개편)
   const [coverImageUrl, setCoverImageUrl] = useState('');
+  const [coverFocalX, setCoverFocalX] = useState(50);
+  const [coverFocalY, setCoverFocalY] = useState(50);
   const [bodyImageUrls, setBodyImageUrls] = useState<string[]>([]);
   const [isFrontpageTop, setIsFrontpageTop] = useState(false);
   const [cardImages, setCardImages] = useState<{ url: string; caption?: string }[]>([]);
@@ -89,15 +92,15 @@ export default function WritePage() {
   const selectedFigureRef = useRef<HTMLElement | null>(null); // 본문에서 클릭으로 선택된 이미지(figure) — Delete/Backspace로 삭제 가능 (2026-09-12 신설)
 
   const stateRef = useRef({
-    title, subtitle1, subtitle2, subtitle3, hoverText, themeTags, categoryId, keywordIds, coverImageUrl, isFrontpageTop, cardImages,
+    title, subtitle1, subtitle2, subtitle3, hoverText, themeTags, categoryId, keywordIds, coverImageUrl, coverFocalX, coverFocalY, isFrontpageTop, cardImages,
     pollEnabled, pollQuestion, pollOptions, relatedSelected,
   });
   useEffect(() => {
     stateRef.current = {
-      title, subtitle1, subtitle2, subtitle3, hoverText, themeTags, categoryId, keywordIds, coverImageUrl, isFrontpageTop, cardImages,
+      title, subtitle1, subtitle2, subtitle3, hoverText, themeTags, categoryId, keywordIds, coverImageUrl, coverFocalX, coverFocalY, isFrontpageTop, cardImages,
       pollEnabled, pollQuestion, pollOptions, relatedSelected,
     };
-  }, [title, subtitle1, subtitle2, subtitle3, hoverText, themeTags, categoryId, keywordIds, coverImageUrl, isFrontpageTop, cardImages, pollEnabled, pollQuestion, pollOptions, relatedSelected]);
+  }, [title, subtitle1, subtitle2, subtitle3, hoverText, themeTags, categoryId, keywordIds, coverImageUrl, coverFocalX, coverFocalY, isFrontpageTop, cardImages, pollEnabled, pollQuestion, pollOptions, relatedSelected]);
 
   useLayoutEffect(() => {
     const el = titleRef.current;
@@ -171,6 +174,8 @@ export default function WritePage() {
         setCategoryId(data.categoryId ?? '');
         setKeywordIds((data.keywords ?? []).map((k: { id: string }) => k.id));
         setCoverImageUrl(data.coverImageUrl ?? '');
+        setCoverFocalX(typeof data.coverFocalX === 'number' ? data.coverFocalX : 50);
+        setCoverFocalY(typeof data.coverFocalY === 'number' ? data.coverFocalY : 50);
         setIsFrontpageTop(!!data.isFrontpageTop);
         setCardImages((data.images ?? []).map((img: { url: string; caption?: string | null }) => ({ url: img.url, caption: img.caption ?? undefined })));
         setRelatedSelected(
@@ -233,6 +238,8 @@ export default function WritePage() {
       hoverText: s.hoverText || null,
       themeTags: s.themeTags,
       coverImageUrl: s.coverImageUrl || null,
+      coverFocalX: s.coverFocalX,
+      coverFocalY: s.coverFocalY,
       content: editorRef.current?.innerHTML ?? '',
       keywordIds: s.keywordIds,
       relatedArticleIds: s.relatedSelected.map((a) => a.id),
@@ -612,6 +619,8 @@ export default function WritePage() {
       hoverText: s.hoverText || null,
       themeTags: s.themeTags,
       coverImageUrl: s.coverImageUrl || null,
+      coverFocalX: s.coverFocalX,
+      coverFocalY: s.coverFocalY,
       categoryId: s.categoryId,
       content,
       keywordIds: s.keywordIds,
@@ -881,6 +890,8 @@ export default function WritePage() {
                     checked={coverImageUrl === url}
                     onChange={() => {
                       setCoverImageUrl(url);
+                      setCoverFocalX(50);
+                      setCoverFocalY(50);
                       markDirty();
                     }}
                   />
@@ -890,6 +901,22 @@ export default function WritePage() {
             ))}
           </div>
         )}
+        {coverImageUrl ? (
+          <CoverFocalEditor
+            imageUrl={coverImageUrl}
+            articleId={articleId}
+            x={coverFocalX}
+            y={coverFocalY}
+            onChangeX={(value) => {
+              setCoverFocalX(value);
+              markDirty();
+            }}
+            onChangeY={(value) => {
+              setCoverFocalY(value);
+              markDirty();
+            }}
+          />
+        ) : null}
       </div>
 
       <div className="composer-panel">

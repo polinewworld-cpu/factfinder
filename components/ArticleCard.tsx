@@ -7,6 +7,7 @@ import { useSavedArticles } from './SavedArticlesProvider';
 import KineticTextGrid from './AppearText';
 import { stripHtml } from '@/lib/stripHtml';
 import { deriveExcerpt } from '@/lib/excerpt';
+import { cardImageRatio, coverObjectPosition, hashString } from '@/lib/cardImage';
 
 export type CardArticle = {
   id: string;
@@ -16,27 +17,17 @@ export type CardArticle = {
   hoverText?: string | null; // 카드 이미지 마우스 오버 시 dimmed 배경 위에 흰색으로 표시되는 문구
   themeTags?: string | null; // 콤마 구분 문자열 — 마우스 오버 시 상단 중앙 핫핑크 배지로 노출 (2026-09-12 기능 구현)
   coverImageUrl?: string | null;
+  coverFocalX?: number | null;
+  coverFocalY?: number | null;
   publishedAt?: string | Date | null;
   author: { name: string };
   keywords: { name: string }[];
   category?: { name: string } | null;
 };
 
-const RATIOS = [0.72, 0.88, 1.04, 1.22, 1.38, 0.64, 0.96, 1.16];
-
-// 사진을 업로드하지 않은 기사의 카드 배경색 — 매번 랜덤이 아니라 기사 id로 해시해 고정(새로고침해도 같은 색)
-// (2026-09-12 신설: "어두운 랜덤한 컬러 + 핫핑크 타이포")
 const FALLBACK_BG_COLORS = [
   '#1f1b2d', '#241522', '#182130', '#152318', '#2a1a12', '#211a2e', '#12242a', '#2a1420',
 ];
-
-function hashString(value: string) {
-  let hash = 0;
-  for (let i = 0; i < value.length; i += 1) {
-    hash = (hash * 31 + value.charCodeAt(i)) >>> 0;
-  }
-  return hash;
-}
 
 // 본문을 문장 단위로 쪼개서 반환 — 키네틱 배경의 각 줄(row)에 서로 다른 문장을 배치하기 위함.
 // (같은 문장이 여러 번 반복되면 "복사된 것처럼" 보인다는 피드백으로 2026-09-17 도입)
@@ -60,8 +51,7 @@ export default function ArticleCard({
   featured?: boolean;
   wide?: boolean;
 }) {
-  const ratio = RATIOS[hashString(article.id) % RATIOS.length];
-  const imageRatio = featured ? 1.12 : wide ? 0.46 : ratio;
+  const imageRatio = cardImageRatio(article.id, featured, wide);
   const pinClass = featured ? 'pin is-featured' : wide ? 'pin is-wide' : 'pin';
   const badges = article.keywords.map((k) => k.name).slice(0, 2);
   const firstTheme = (article.themeTags ?? '').split(',').map((t) => t.trim()).filter(Boolean)[0];
@@ -138,7 +128,14 @@ export default function ArticleCard({
     <article className={pinClass}>
       <a className="pin-media" href={href}>
         {article.coverImageUrl ? (
-          <img src={article.coverImageUrl} alt="" style={{ aspectRatio: `1 / ${imageRatio}` }} />
+          <img
+            src={article.coverImageUrl}
+            alt=""
+            style={{
+              aspectRatio: `1 / ${imageRatio}`,
+              objectPosition: coverObjectPosition(article.coverFocalX, article.coverFocalY),
+            }}
+          />
         ) : (
           <div className="pin-fallback" style={{ aspectRatio: `1 / ${imageRatio}` }}>
             <KineticTextGrid

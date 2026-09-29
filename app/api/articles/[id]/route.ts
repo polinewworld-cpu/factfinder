@@ -4,6 +4,7 @@ import { getCurrentUser } from '@/lib/session';
 import { ROLES, WRITER_ROLES, initialStatusForRole } from '@/lib/roles';
 import { deriveExcerpt } from '@/lib/excerpt';
 import { sanitizeArticleContent } from '@/lib/sanitizeArticle';
+import { clampFocal } from '@/lib/cardImage';
 
 export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
   const article = await prisma.article.findUnique({
@@ -26,6 +27,9 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
 export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
   const body = await req.json();
   const { keywordIds, relatedArticleIds, intent, images, poll, themeTags, ...rest } = body; // intent: 'autosave' | 'submit' (글쓰기 화면 전용, 그 외 편집은 기존 방식 그대로) / poll: { question, options: string[] } | null
+
+  if (rest.coverFocalX !== undefined) rest.coverFocalX = clampFocal(rest.coverFocalX);
+  if (rest.coverFocalY !== undefined) rest.coverFocalY = clampFocal(rest.coverFocalY);
 
   // 요약문은 별도 입력을 받지 않고 본문에서 자동 추출 — 화면에는 노출하지 않고 RSS용으로만 사용 (2026-09-11)
   // 본문이 바뀌면 "읽어주기"용으로 캐싱해둔 오디오도 더 이상 최신 내용이 아니므로 초기화 — 다음 재생 요청 때 새 본문으로 재생성됨 (2026-09-12)

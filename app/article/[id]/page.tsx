@@ -196,6 +196,8 @@ export default async function ArticlePage({ params }: { params: { id: string } }
           author: { name: a.author.name },
           publishedAt: a.publishedAt as unknown as string,
           coverImageUrl: a.coverImageUrl,
+          coverFocalX: a.coverFocalX,
+          coverFocalY: a.coverFocalY,
         }))}
       />
     </div>
