@@ -1038,6 +1038,7 @@ img {
   display: flex;
   justify-content: flex-start;
   flex-wrap: nowrap;
+  align-items: center;
   gap: 4px;
   margin: 0;
   flex: 0 0 auto;
@@ -1075,6 +1076,13 @@ img {
   bottom: 0;
   height: 2px;
   background: var(--accent);
+}
+
+.category-account,
+.category-login {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
 }
 
 /* ---------- Masonry grid ---------- */
@@ -2262,8 +2270,7 @@ img {
     gap: 10px;
   }
 
-  .brand-name,
-  .header-actions .cta {
+  .brand-name {
     display: none;
   }
 
