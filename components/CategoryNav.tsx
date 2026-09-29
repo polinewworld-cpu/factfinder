@@ -40,7 +40,15 @@ export default function CategoryNav({ account = null }: { account?: CategoryAcco
           );
         })}
       </div>
-      {account ? (
+      {!account && (
+        <a className="chip category-login" href="/api/auth/signin">
+          로그인
+        </a>
+      )}
+      <div className="search-wrap">
+        <HeaderSearch />
+      </div>
+      {account && (
         <div className="category-account">
           <AccountMenu
             name={account.name}
@@ -50,14 +58,7 @@ export default function CategoryNav({ account = null }: { account?: CategoryAcco
             isChiefEditor={account.isChiefEditor}
           />
         </div>
-      ) : (
-        <a className="chip category-login" href="/api/auth/signin">
-          로그인
-        </a>
       )}
-      <div className="search-wrap">
-        <HeaderSearch />
-      </div>
     </div>
   );
 }

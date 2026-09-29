@@ -1078,12 +1078,17 @@ img {
   background: var(--accent);
 }
 
-.category-account,
 .category-login {
   flex: 0 0 auto;
   display: flex;
   align-items: center;
   margin-left: -12px;
+}
+
+.category-account {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
 }
 
 /* ---------- Masonry grid ---------- */
@@ -2286,6 +2291,11 @@ img {
 
   .search-wrap {
     flex: 1 1 100%;
+  }
+
+  .category-bar:has(.category-account) .search-wrap {
+    flex: 1 1 0;
+    min-width: 0;
   }
 
   .chips {
