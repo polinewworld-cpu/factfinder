@@ -1050,7 +1050,7 @@ img {
   border-radius: 0;
   background: transparent;
   color: var(--body);
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 600;
   text-decoration: none;
   display: inline-flex;
@@ -1636,7 +1636,7 @@ img {
   position: relative;
   margin: 0 0 12px;
   padding-left: 15px;
-  font-size: 14px;
+  font-size: 16px;
 }
 
 .article-subtitles::before {
@@ -1652,7 +1652,7 @@ img {
 .article-subtitles p {
   margin: 0;
   color: var(--ink);
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 700;
   line-height: 1.5;
 }
@@ -2285,7 +2285,7 @@ img {
   .chip {
     height: 32px;
     padding: 0 10px;
-    font-size: 14px;
+    font-size: 16px;
   }
 
   .chip.is-active::after {
