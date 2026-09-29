@@ -99,6 +99,55 @@ function packColumns(
 }
 
 const PAGE_SIZE = 12;
+const SNAP_PX = 16;
+const SNAP_PASSES = 3;
+
+type SnapNode = { el: HTMLElement; top: number };
+
+function columnCards(column: Element) {
+  return Array.from(column.querySelectorAll<HTMLElement>(':scope > .masonry-card'));
+}
+
+function snapAdjacentTops(root: HTMLElement) {
+  const columns = Array.from(root.querySelectorAll(':scope > .masonry-column')).map(columnCards);
+  columns.flat().forEach((el) => {
+    el.style.paddingTop = '';
+  });
+
+  for (let pass = 0; pass < SNAP_PASSES; pass += 1) {
+    const measured: SnapNode[][] = columns.map((col) =>
+      col.map((el) => ({ el, top: el.getBoundingClientRect().top }))
+    );
+    const pairs: { higher: SnapNode; lower: SnapNode; minTop: number; delta: number }[] = [];
+
+    for (let c = 0; c < measured.length - 1; c += 1) {
+      for (const a of measured[c]) {
+        for (const b of measured[c + 1]) {
+          const delta = Math.abs(a.top - b.top);
+          if (delta <= 0.5 || delta > SNAP_PX) continue;
+          const higher = a.top < b.top ? a : b;
+          const lower = a.top < b.top ? b : a;
+          pairs.push({ higher, lower, minTop: Math.min(a.top, b.top), delta });
+        }
+      }
+    }
+
+    pairs.sort((left, right) => left.minTop - right.minTop || left.delta - right.delta);
+
+    const used = new Set<HTMLElement>();
+    let changed = false;
+    for (const pair of pairs) {
+      if (used.has(pair.higher.el) || used.has(pair.lower.el)) continue;
+      const current = Number.parseFloat(pair.higher.el.style.paddingTop) || 0;
+      pair.higher.el.style.paddingTop = `${current + pair.lower.top - pair.higher.top}px`;
+      used.add(pair.higher.el);
+      used.add(pair.lower.el);
+      changed = true;
+    }
+
+    if (!changed) break;
+  }
+}
 
 function useInfiniteReveal(total: number, onLoadMore: () => void, enabled: boolean) {
   const sentinelRef = useRef<HTMLDivElement | null>(null);
@@ -198,6 +247,29 @@ export default function Masonry({
   }, [hasMore, rest.length]);
   const sentinelRef = useInfiniteReveal(rest.length, loadMore, hasMore);
 
+  useEffect(() => {
+    const root = containerRef.current;
+    if (!root) return undefined;
+
+    let frame = 0;
+    const run = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        frame = requestAnimationFrame(() => snapAdjacentTops(root));
+      });
+    };
+
+    run();
+    const images = Array.from(root.querySelectorAll<HTMLImageElement>('.masonry-card img'));
+    images.forEach((img) => {
+      if (!img.complete) img.addEventListener('load', run);
+    });
+    return () => {
+      cancelAnimationFrame(frame);
+      images.forEach((img) => img.removeEventListener('load', run));
+    };
+  }, [columns, featuredHeight, secondHeight, columnCount, width]);
+
   if (!top && articles.length === 0) {
     return (
       <div className="content">
@@ -239,15 +311,17 @@ export default function Masonry({
                 aria-hidden="true"
               />
             )}
-            {column.map((item) =>
-              isBannerItem(item) ? (
-                <BannerSlotCard key={item.id} imageUrl={item.imageUrl} linkUrl={item.linkUrl} />
-              ) : isVideoItem(item) ? (
-                <VideoMasonryCard key={item.id} video={item} />
-              ) : (
-                <ArticleCard key={item.id} article={item} />
-              )
-            )}
+            {column.map((item) => (
+              <div className="masonry-card" key={item.id}>
+                {isBannerItem(item) ? (
+                  <BannerSlotCard imageUrl={item.imageUrl} linkUrl={item.linkUrl} />
+                ) : isVideoItem(item) ? (
+                  <VideoMasonryCard video={item} />
+                ) : (
+                  <ArticleCard article={item} />
+                )}
+              </div>
+            ))}
           </div>
         ))}
       </div>

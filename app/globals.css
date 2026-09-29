@@ -1196,6 +1196,10 @@ img {
   gap: 22px;
 }
 
+.masonry-card {
+  min-width: 0;
+}
+
 .featured-slot {
   position: absolute;
   top: 0;
