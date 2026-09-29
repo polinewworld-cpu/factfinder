@@ -132,7 +132,7 @@ export default async function ArticlePage({ params }: { params: { id: string } }
               <TextSizeControl />
               <ReadAloudButton
                 articleId={article.id}
-                text={`${article.title}. ${stripHtml(article.content)}`}
+                text={`${article.title.replace(/\s+/g, ' ').trim()}. ${stripHtml(article.content)}`}
               />
             </span>
           </div>
@@ -142,7 +142,7 @@ export default async function ArticlePage({ params }: { params: { id: string } }
               <RecommendButton articleId={article.id} initialCount={article.recommendCount} variant="large" />
             </div>
             <div className="donate-cta-row-item" style={{ flex: 1 }}>
-              <ShareButtons title={article.title} coverImageUrl={article.coverImageUrl} variant="large" />
+              <ShareButtons title={article.title.replace(/\s+/g, ' ').trim()} coverImageUrl={article.coverImageUrl} variant="large" />
             </div>
             <div className="donate-cta-row-item" style={{ flex: 2 }}>
               <DonateButtonLarge reporterId={article.authorId} />

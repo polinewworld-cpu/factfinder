@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { parseEmbedUrl } from '@/lib/embeds';
 import { compressImageFile } from '@/lib/imageCompress';
 import PhotoGalleryModal, { GalleryPickedPhoto } from '@/components/PhotoGalleryModal';
@@ -81,6 +81,7 @@ export default function WritePage() {
   const contentAppliedRef = useRef(false);
 
   const editorRef = useRef<HTMLDivElement>(null);
+  const titleRef = useRef<HTMLTextAreaElement>(null);
   const dirtyRef = useRef(false);
   const articleIdRef = useRef<string | null>(null);
   const submittedRef = useRef(false); // 제출 완료 후엔 자동저장 중단
@@ -97,6 +98,13 @@ export default function WritePage() {
       pollEnabled, pollQuestion, pollOptions, relatedSelected,
     };
   }, [title, subtitle1, subtitle2, subtitle3, hoverText, themeTags, categoryId, keywordIds, coverImageUrl, isFrontpageTop, cardImages, pollEnabled, pollQuestion, pollOptions, relatedSelected]);
+
+  useLayoutEffect(() => {
+    const el = titleRef.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${el.scrollHeight}px`;
+  }, [title]);
 
   function pollPayload(s: typeof stateRef.current) {
     return s.pollEnabled ? { question: s.pollQuestion, options: s.pollOptions } : null;
@@ -580,7 +588,7 @@ export default function WritePage() {
     const content = editorRef.current?.innerHTML ?? '';
     const plainText = editorRef.current?.innerText?.trim() ?? '';
 
-    if (!s.title.trim()) return setErrorMsg('제목을 입력해주세요.');
+    if (!s.title.replace(/\s+/g, '')) return setErrorMsg('제목을 입력해주세요.');
     if (!s.categoryId) return setErrorMsg('카테고리를 선택해주세요.');
     if (!plainText) return setErrorMsg('본문을 입력해주세요.');
     if (s.pollEnabled) {
@@ -690,14 +698,17 @@ export default function WritePage() {
       {errorMsg && <p className="text-red-600 text-sm mb-4">{errorMsg}</p>}
 
       <div className="composer-title-row">
-        <input
+        <textarea
+          ref={titleRef}
           value={title}
+          rows={1}
           onChange={(e) => {
             setTitle(e.target.value);
             markDirty();
           }}
           placeholder="제목"
           className="composer-title"
+          aria-label="제목"
         />
       </div>
 

@@ -31,7 +31,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     return NextResponse.json({ url: article.audioUrl, cached: true });
   }
 
-  const text = `${article.title}. ${stripHtml(article.content)}`;
+  const text = `${article.title.replace(/\s+/g, ' ').trim()}. ${stripHtml(article.content)}`;
 
   let buffer: Buffer;
   let tierUsed: string;
