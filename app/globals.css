@@ -1571,7 +1571,7 @@ img {
 }
 
 .article-body h1 {
-  margin: 0 0 12px;
+  margin: 0 0 18px;
   font-family: var(--title);
   font-size: clamp(26px, 3vw, 36px);
   font-weight: 700;
@@ -1582,14 +1582,29 @@ img {
   overflow-wrap: break-word;
 }
 
-/* 부제목(요약) — 굵게 강조, 왼쪽 포인트 바로 요약 블록처럼 보이게 (2026-09-12) */
+/* 부제목(요약) — 왼쪽 포인트 바는 글자의 시각적 높이(라인박스 여백 제외)에 맞춰 세로 중앙 */
 .article-subtitles {
+  display: grid;
+  grid-template-columns: 3px minmax(0, 1fr);
+  column-gap: 12px;
+  align-items: stretch;
   margin: 0 0 12px;
-  padding-left: 12px;
-  border-left: 3px solid var(--accent);
+  padding-left: 0;
+  border-left: 0;
+  font-size: 15.5px;
+}
+
+.article-subtitles::before {
+  content: '';
+  grid-column: 1;
+  grid-row: 1 / -1;
+  background: var(--accent);
+  align-self: stretch;
+  margin-block: 0.25em;
 }
 
 .article-subtitles p {
+  grid-column: 2;
   margin: 0;
   color: var(--ink);
   font-size: 15.5px;
