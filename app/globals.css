@@ -929,14 +929,14 @@ img {
   padding: 28px 28px 40px;
   color: var(--ink);
   font-size: 17px;
-  line-height: 1.15;
+  line-height: 1.5;
   outline: none;
   cursor: text;
   -webkit-user-select: text;
   user-select: text;
 }
 
-/* Google Docs 기본값: 줄간격 1.15, 단락 뒤 간격 4pt */
+/* 줄간격 1.5, 단락 뒤 간격 4pt */
 .composer-body p,
 .composer-body > div:not(.article-figure) {
   margin: 0 0 4pt;
@@ -1599,7 +1599,7 @@ img {
 .article-kicker {
   margin: 0 0 12px;
   color: var(--accent);
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 800;
   line-height: 1.2;
 }
@@ -1665,7 +1665,7 @@ img {
 .article-content {
   color: var(--body);
   font-size: calc((16.5px + 2pt) * var(--article-font-scale, 1));
-  line-height: 1.15;
+  line-height: 1.5;
 }
 
 .article-content img {
@@ -1765,7 +1765,7 @@ img {
   color: #ec1561;
 }
 
-/* 기사 본문 설문 — 검정 상단선에서 매달림. 선택지는 제목 아래 16px 회색 트랙 + 비율만큼 솔리드 채움 */
+/* 기사 본문 설문 — 검정 상단선에서 매달림. 선택지는 제목 아래 16px 트랙 + 핑크→레드 그라데이션 채움 */
 .article-poll {
   margin: 28px 0 8px;
   padding: 16px 0 0;
@@ -1861,13 +1861,9 @@ img {
 .article-poll-fill {
   display: block;
   height: 16px;
-  background: var(--mute);
+  background: linear-gradient(90deg, var(--accent) 0%, #e10600 100%);
   border-radius: 8px;
   transition: width 400ms ease;
-}
-
-.article-poll-option.is-mine .article-poll-fill {
-  background: var(--accent);
 }
 
 .article-poll-meta {
@@ -2191,7 +2187,7 @@ img {
   align-items: baseline;
   gap: 12px;
   margin: 0 0 16px;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 800;
   line-height: 1.2;
 }
@@ -2211,7 +2207,7 @@ img {
 
 .article-rail-tabs-label {
   margin: 0 0 16px;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 800;
   line-height: 1.2;
   color: var(--mute);
