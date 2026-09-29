@@ -134,11 +134,10 @@ export default function Masonry({
   const { containerRef, columnCount, width } = useColumnCount();
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
-  // 상단 2번째(second) 슬롯은 ArticleCard 전용이라, 맨 앞 항목이 영상이면 그 슬롯은 건너뛰고 일반 그리드로 흘려보냄
+  // 상단 2번째 슬롯: 최신 항목이 정치신세계 영상이어도 메인 피처 오른쪽 두 칸을 씀
   const showFeatured = !!top && columnCount >= 2;
-  const showSecond =
-    showFeatured && articles.length > 0 && columnCount >= 4 && !isVideoItem(articles[0]);
-  const second = showSecond ? (articles[0] as CardArticle) : null;
+  const showSecond = showFeatured && articles.length > 0 && columnCount >= 4;
+  const second = showSecond ? articles[0] : null;
   const rest = showSecond ? articles.slice(1) : articles;
 
   const visible = useMemo(() => withBanners(rest.slice(0, visibleCount), banners), [rest, visibleCount, banners]);
@@ -220,7 +219,7 @@ export default function Masonry({
 
         {second && (
           <div className="second-slot" ref={secondRef}>
-            <ArticleCard article={second} wide />
+            {isVideoItem(second) ? <VideoMasonryCard video={second} wide /> : <ArticleCard article={second} wide />}
           </div>
         )}
 
