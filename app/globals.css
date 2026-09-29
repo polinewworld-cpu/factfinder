@@ -689,7 +689,7 @@ img {
   background: transparent;
   outline: none;
   color: var(--body);
-  font-size: 14px;
+  font-size: 16px;
   line-height: 1.5;
 }
 
@@ -908,7 +908,7 @@ img {
   border-radius: var(--radius);
   background: transparent;
   color: var(--ink-soft);
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 600;
 }
 
@@ -931,7 +931,7 @@ img {
   min-height: 360px;
   padding: 28px 28px 40px;
   color: var(--ink);
-  font-size: 14px;
+  font-size: 16px;
   line-height: 1.7;
   outline: none;
   cursor: text;
