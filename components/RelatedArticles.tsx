@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { timeAgo } from '@/lib/time';
-import { coverObjectPosition } from '@/lib/cardImage';
+import { cardImageRatio, coverObjectPosition } from '@/lib/cardImage';
 import { toFrenchBrackets } from '@/lib/frenchBrackets';
 
 type Item = {
@@ -17,6 +17,7 @@ type Item = {
 
 function RailCard({ article }: { article: Item }) {
   const href = `/article/${article.id}`;
+  const imageRatio = cardImageRatio(article.id);
   return (
     <article className="pin rail-pin">
       <a className="pin-media" href={href}>
@@ -25,12 +26,12 @@ function RailCard({ article }: { article: Item }) {
             src={article.coverImageUrl}
             alt=""
             style={{
-              aspectRatio: '1 / 0.72',
+              aspectRatio: `1 / ${imageRatio}`,
               objectPosition: coverObjectPosition(article.coverFocalX, article.coverFocalY),
             }}
           />
         ) : (
-          <div className="pin-fallback" style={{ aspectRatio: '1 / 0.72' }}>
+          <div className="pin-fallback" style={{ aspectRatio: `1 / ${imageRatio}` }}>
             <p>{toFrenchBrackets(article.title)}</p>
           </div>
         )}
