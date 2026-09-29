@@ -1984,7 +1984,7 @@ img {
 .article-poll-fill {
   display: block;
   height: 16px;
-  background: linear-gradient(90deg, var(--accent) 0%, #ff3b30 50%, #e10600 100%);
+  background: linear-gradient(90deg, #ff1a3c 0%, #ff2d8a 50%, #8b2cff 100%);
   border-radius: 8px;
   transition: width 400ms ease;
 }
