@@ -61,9 +61,13 @@ export default function PollCard({ pollId }: { pollId: string }) {
                 aria-pressed={isMine}
                 className={`article-poll-option${voted ? ' is-result' : ''}${isMine ? ' is-mine' : ''}`}
               >
-                {voted && <span className="article-poll-fill" style={{ width: `${pct}%` }} />}
-                <span className="article-poll-label">{opt.text}</span>
-                {voted && <span className="article-poll-pct">{pct}%</span>}
+                <span className="article-poll-head">
+                  <span className="article-poll-label">{opt.text}</span>
+                  {voted && <span className="article-poll-pct">{pct}%</span>}
+                </span>
+                <span className="article-poll-track">
+                  {voted && <span className="article-poll-fill" style={{ width: `${pct}%` }} />}
+                </span>
               </button>
             </li>
           );
