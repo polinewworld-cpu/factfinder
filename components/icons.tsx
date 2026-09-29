@@ -83,12 +83,12 @@ export function SidebarPanelIcon() {
   );
 }
 
-// Cursor-style secondary sidebar toggle — rounded frame with a filled right pane
+// Cursor-style secondary sidebar toggle — rounded frame with a right pane
 export function RightPanelIcon() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
       <rect x="3.5" y="4.5" width="17" height="15" rx="2.5" fill="none" stroke="currentColor" strokeWidth="1.7" />
-      <path d="M14.75 4.5h3.25a2.5 2.5 0 0 1 2.5 2.5v10a2.5 2.5 0 0 1-2.5 2.5h-3.25V4.5Z" fill="currentColor" />
+      <path d="M14.5 4.5v15" fill="none" stroke="currentColor" strokeWidth="1.7" />
     </svg>
   );
 }
