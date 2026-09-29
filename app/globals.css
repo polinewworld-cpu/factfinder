@@ -479,6 +479,38 @@ img {
   grid-row: span 2;
 }
 
+.video-card--latest .video-card-thumb,
+.video-card--second .video-card-thumb {
+  aspect-ratio: 16 / 9;
+}
+
+@media (min-width: 768px) {
+  .video-card--latest {
+    grid-column: 1 / span 2;
+    grid-row: 1 / span 2;
+  }
+
+  .video-card--second {
+    grid-column: 3 / span 2;
+    grid-row: 1;
+  }
+
+  .video-card--latest .video-card-thumb {
+    flex: 1 1 auto;
+    aspect-ratio: auto;
+    min-height: 0;
+  }
+
+  .video-card--second .video-card-thumb {
+    aspect-ratio: 1 / 0.46;
+  }
+
+  .video-card--latest .video-card-title {
+    font-size: 20px;
+    line-height: 1.35;
+  }
+}
+
 /* ---------- Write / edit composer ---------- */
 
 .composer {
@@ -1101,8 +1133,8 @@ img {
 .pin-badge-chip {
   display: inline-flex;
   align-items: center;
-  height: 24px;
-  padding: 0 10px;
+  height: auto;
+  padding: 2px 7px;
   border: 0;
   border-radius: var(--radius);
   background: #fff;
@@ -1110,6 +1142,7 @@ img {
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 0.04em;
+  line-height: 1.2;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
   cursor: pointer;
   pointer-events: auto;
@@ -1668,6 +1701,120 @@ img {
 
 .line-ad-link:hover .line-ad-text {
   color: #ec1561;
+}
+
+/* 기사 본문 설문 — 박스/회색 패널 없이 검정 상단선에서 매달림. 선택 전엔 아웃라인, 선택 후엔 채움 바 */
+.article-poll {
+  margin: 28px 0 8px;
+  padding: 16px 0 0;
+  border-top: 1px solid #000;
+}
+
+.article-poll-kicker {
+  margin: 0 0 12px;
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.article-poll-question {
+  margin: 0 0 16px;
+  color: var(--ink);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.35;
+  letter-spacing: -0.02em;
+}
+
+.article-poll-options {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.article-poll-option {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 14px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  background: #fff;
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.3;
+  text-align: left;
+  overflow: hidden;
+  cursor: pointer;
+  transition: border-color 160ms ease, background 160ms ease;
+}
+
+.article-poll-option:hover:not(:disabled):not(.is-result) {
+  border-color: var(--ink);
+}
+
+.article-poll-option:disabled {
+  opacity: 0.5;
+}
+
+.article-poll-option.is-mine {
+  border-color: var(--accent);
+}
+
+.article-poll-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: var(--chip);
+  pointer-events: none;
+  transition: width 400ms ease;
+}
+
+.article-poll-option.is-mine .article-poll-fill {
+  background: rgb(255 45 138 / 0.18);
+}
+
+.article-poll-label,
+.article-poll-pct {
+  position: relative;
+  z-index: 1;
+}
+
+.article-poll-option.is-mine .article-poll-label,
+.article-poll-option.is-mine .article-poll-pct {
+  color: var(--accent);
+  font-weight: 800;
+}
+
+.article-poll-pct {
+  flex: none;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--mute);
+  font-variant-numeric: tabular-nums;
+}
+
+.article-poll-meta {
+  margin: 12px 0 0;
+  color: var(--mute);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.article-poll-error {
+  margin: 8px 0 0;
+  color: #c0392b;
+  font-size: 12px;
+  font-weight: 600;
 }
 
 /* 기사 말미 기자 프로필 — 푸터와 같이 검정 상단선에 매달리고, 회색 하단선 아래로 목록이 매달림. 박스/배경 없음 */

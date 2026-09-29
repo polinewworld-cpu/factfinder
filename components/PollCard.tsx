@@ -44,54 +44,36 @@ export default function PollCard({ pollId }: { pollId: string }) {
   const voted = !!poll.myVoteOptionId;
 
   return (
-    <section className="my-8 border border-gray-200 rounded-xl p-5 bg-gray-50">
-      <p className="text-[11px] font-bold text-brand mb-1">설문조사</p>
-      <h3 className="font-bold text-gray-900 mb-4">{poll.question}</h3>
+    <section className="article-poll">
+      <p className="article-poll-kicker">설문조사</p>
+      <h3 className="article-poll-question">{poll.question}</h3>
 
-      <div className="space-y-2">
+      <ul className="article-poll-options">
         {poll.options.map((opt) => {
           const pct = poll.totalVotes > 0 ? Math.round((opt.voteCount / poll.totalVotes) * 100) : 0;
           const isMine = poll.myVoteOptionId === opt.id;
-          if (voted) {
-            return (
-              <div key={opt.id} className="relative rounded-lg border border-gray-200 bg-white overflow-hidden">
-                <div
-                  className={`absolute inset-y-0 left-0 ${isMine ? 'bg-brand/25' : 'bg-gray-100'}`}
-                  style={{ width: `${pct}%` }}
-                />
-                <button
-                  type="button"
-                  onClick={() => vote(opt.id)}
-                  disabled={voting}
-                  className="relative w-full flex items-center justify-between px-4 py-2.5 text-sm text-left"
-                >
-                  <span className={isMine ? 'font-bold text-brand' : 'text-gray-800'}>
-                    {isMine && '✓ '}
-                    {opt.text}
-                  </span>
-                  <span className="text-xs font-semibold text-gray-500">{pct}%</span>
-                </button>
-              </div>
-            );
-          }
           return (
-            <button
-              key={opt.id}
-              type="button"
-              onClick={() => vote(opt.id)}
-              disabled={voting}
-              className="w-full text-left px-4 py-2.5 text-sm rounded-lg border border-gray-200 bg-white hover:border-brand hover:bg-brand/5 disabled:opacity-50"
-            >
-              {opt.text}
-            </button>
+            <li key={opt.id}>
+              <button
+                type="button"
+                onClick={() => vote(opt.id)}
+                disabled={voting}
+                aria-pressed={isMine}
+                className={`article-poll-option${voted ? ' is-result' : ''}${isMine ? ' is-mine' : ''}`}
+              >
+                {voted && <span className="article-poll-fill" style={{ width: `${pct}%` }} />}
+                <span className="article-poll-label">{opt.text}</span>
+                {voted && <span className="article-poll-pct">{pct}%</span>}
+              </button>
+            </li>
           );
         })}
-      </div>
+      </ul>
 
-      <p className="text-xs text-gray-400 mt-3">
+      <p className="article-poll-meta">
         {poll.totalVotes.toLocaleString()}명 참여{!voted && ' · 항목을 선택하면 결과가 공개됩니다'}
       </p>
-      {errorMsg && <p className="text-xs text-red-500 mt-1">{errorMsg}</p>}
+      {errorMsg && <p className="article-poll-error">{errorMsg}</p>}
     </section>
   );
 }
