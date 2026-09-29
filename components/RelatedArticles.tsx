@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { timeAgo } from '@/lib/time';
+import { coverObjectPosition } from '@/lib/cardImage';
 
 type Item = {
   id: string;
@@ -9,6 +10,8 @@ type Item = {
   author: { name: string };
   publishedAt: string;
   coverImageUrl?: string | null;
+  coverFocalX?: number | null;
+  coverFocalY?: number | null;
 };
 
 function RailCard({ article }: { article: Item }) {
@@ -17,7 +20,14 @@ function RailCard({ article }: { article: Item }) {
     <article className="pin rail-pin">
       <a className="pin-media" href={href}>
         {article.coverImageUrl ? (
-          <img src={article.coverImageUrl} alt="" style={{ aspectRatio: '1 / 0.72' }} />
+          <img
+            src={article.coverImageUrl}
+            alt=""
+            style={{
+              aspectRatio: '1 / 0.72',
+              objectPosition: coverObjectPosition(article.coverFocalX, article.coverFocalY),
+            }}
+          />
         ) : (
           <div className="pin-fallback" style={{ aspectRatio: '1 / 0.72' }}>
             <p>{article.title}</p>
