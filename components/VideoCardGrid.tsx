@@ -86,8 +86,10 @@ export default function VideoCardGrid({
         </div>
       ) : (
         <div className="video-card-grid">
-          {cards.map((card) => {
-            const isShort = card.kind === 'SHORT';
+          {cards.map((card, index) => {
+            const isLatest = index === 0;
+            const isSecond = index === 1;
+            const isShort = card.kind === 'SHORT' && !isLatest && !isSecond;
             return (
             <a
               key={card.id}
@@ -95,11 +97,11 @@ export default function VideoCardGrid({
               target="_blank"
               rel="noopener noreferrer"
               title={card.title}
-              className={`group flex h-full min-h-0 flex-col${isShort ? ' video-card--short' : ''}`}
+              className={`group flex h-full min-h-0 flex-col${isLatest ? ' video-card--latest' : ''}${isSecond ? ' video-card--second' : ''}${isShort ? ' video-card--short' : ''}`}
             >
               <div
-                className={`relative min-h-0 overflow-hidden rounded-xl border border-gray-200 bg-gray-100 group-hover:border-brand ${
-                  isShort ? 'flex-1' : 'aspect-video'
+                className={`video-card-thumb relative min-h-0 overflow-hidden rounded-xl border border-gray-200 bg-gray-100 group-hover:border-brand ${
+                  isLatest || isSecond ? '' : isShort ? 'flex-1' : 'aspect-video'
                 }`}
               >
                 <img
@@ -133,7 +135,7 @@ export default function VideoCardGrid({
                   </>
                 )}
               </div>
-              <p className="text-sm font-semibold text-gray-900 pt-2 line-clamp-2">{card.title}</p>
+              <p className="video-card-title text-sm font-semibold text-gray-900 pt-2 line-clamp-2">{card.title}</p>
             </a>
             );
           })}

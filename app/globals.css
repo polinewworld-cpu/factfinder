@@ -479,6 +479,38 @@ img {
   grid-row: span 2;
 }
 
+.video-card--latest .video-card-thumb,
+.video-card--second .video-card-thumb {
+  aspect-ratio: 16 / 9;
+}
+
+@media (min-width: 768px) {
+  .video-card--latest {
+    grid-column: 1 / span 2;
+    grid-row: 1 / span 2;
+  }
+
+  .video-card--second {
+    grid-column: 3 / span 2;
+    grid-row: 1;
+  }
+
+  .video-card--latest .video-card-thumb {
+    flex: 1 1 auto;
+    aspect-ratio: auto;
+    min-height: 0;
+  }
+
+  .video-card--second .video-card-thumb {
+    aspect-ratio: 1 / 0.46;
+  }
+
+  .video-card--latest .video-card-title {
+    font-size: 20px;
+    line-height: 1.35;
+  }
+}
+
 /* ---------- Write / edit composer ---------- */
 
 .composer {
