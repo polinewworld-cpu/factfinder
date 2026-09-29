@@ -240,7 +240,7 @@ export default function BannersAdminPage() {
               <img src={b.imageUrl} alt="" className="w-20 h-14 object-cover rounded-lg border border-gray-200" />
               <div className="flex-1 min-w-0">
                 <p className="text-xs text-gray-500 truncate">{b.linkUrl}</p>
-                <p className="text-[11px] text-gray-400">{b.active ? '노출중' : '꺼짐'}</p>
+                <p className="text-xs text-gray-400">{b.active ? '노출중' : '꺼짐'}</p>
               </div>
               <button
                 type="button"

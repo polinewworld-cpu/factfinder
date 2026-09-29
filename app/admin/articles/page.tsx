@@ -126,7 +126,7 @@ export default function AdminArticlesPage() {
           className={`inline-flex items-center gap-0.5 hover:text-gray-900 ${active ? 'text-gray-900' : 'text-gray-400'}`}
         >
           {label}
-          <span className="text-[10px]">{active ? (sortDir === 'asc' ? '▲' : '▼') : '▵'}</span>
+          <span className="text-xs">{active ? (sortDir === 'asc' ? '▲' : '▼') : '▵'}</span>
         </button>
       </th>
     );

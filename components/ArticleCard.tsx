@@ -71,7 +71,7 @@ export default function ArticleCard({
     const pool = splitSentences(stripHtml(article.content || ''), fallbackRowCount);
     return pool.length > 0 ? pool : [article.title || article.excerpt || ''];
   })();
-  const fallbackFontSize = featured ? 22 : wide ? 20 : 14;
+  const fallbackFontSize = featured ? 20 : wide ? 20 : 14;
   const href = `/article/${article.id}`;
   const excerpt = article.excerpt || (article.content ? deriveExcerpt(article.content) : '');
 
@@ -155,7 +155,7 @@ export default function ArticleCard({
               zoomScalePct={110}
               font={{
                 fontFamily: 'var(--title)',
-                fontWeight: 800,
+                fontWeight: 700,
                 fontSize: fallbackFontSize,
                 lineHeight: 1.3,
                 letterSpacing: '-0.02em',

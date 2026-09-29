@@ -176,9 +176,9 @@ export default function PhotosLibraryPage() {
             <div className="aspect-square rounded-lg overflow-hidden bg-gray-100">
               <img src={p.url} alt={p.title ?? p.filename ?? ''} className="w-full h-full object-cover" />
             </div>
-            {p.title && <p className="text-[11px] text-gray-700 font-semibold mt-1 truncate">{p.title}</p>}
+            {p.title && <p className="text-xs text-gray-700 font-semibold mt-1 truncate">{p.title}</p>}
             {p.tags.length > 0 && (
-              <p className="text-[11px] text-gray-400 mt-1 truncate">{p.tags.map((t) => `#${t.name}`).join(' ')}</p>
+              <p className="text-xs text-gray-400 mt-1 truncate">{p.tags.map((t) => `#${t.name}`).join(' ')}</p>
             )}
             {(p.uploaderId === me.id || me.role === 'CHIEF_EDITOR') && (
               <button

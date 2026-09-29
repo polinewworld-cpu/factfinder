@@ -157,7 +157,7 @@ export default function DonateForm({ initialReporterId = '' }: { initialReporter
           >
             매월 {(custom ? Number(custom) : amount || 0).toLocaleString()}원 정기후원 시작하기
           </button>
-          <p className="text-[11px] text-gray-300 mt-3 text-center">
+          <p className="text-xs text-gray-300 mt-3 text-center">
             ※ 결제대행사(PG) 연동 준비 중 — 지금은 결제 없이 후원 상태만 시작됩니다.
           </p>
         </div>

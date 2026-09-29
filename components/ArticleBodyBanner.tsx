@@ -7,7 +7,7 @@ export default function ArticleBodyBanner({ imageUrl, linkUrl }: { imageUrl: str
       rel="noopener noreferrer sponsored"
       style={{ display: 'block', margin: '20px 0' }}
     >
-      <span style={{ display: 'block', fontSize: 11, color: 'var(--ash)', marginBottom: 4 }}>광고</span>
+      <span style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--ash)', marginBottom: 4 }}>광고</span>
       <img src={imageUrl} alt="광고" style={{ width: '100%', borderRadius: 8 }} />
     </a>
   );

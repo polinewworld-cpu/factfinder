@@ -55,7 +55,7 @@ export default function CardNewsCarousel({ articleId, images }: { articleId: str
       >
         {/* 우상단 N/M 카운터 배지 — 인스타그램 스타일 */}
         {images.length > 1 && (
-          <span className="absolute top-3 right-3 z-10 text-[11px] font-semibold text-white bg-black/50 rounded-lg px-2 py-0.5 backdrop-blur-sm">
+          <span className="absolute top-3 right-3 z-10 text-xs font-semibold text-white bg-black/50 rounded-lg px-2 py-0.5 backdrop-blur-sm">
             {index + 1}/{images.length}
           </span>
         )}

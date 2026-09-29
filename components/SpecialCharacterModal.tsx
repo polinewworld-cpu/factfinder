@@ -162,7 +162,7 @@ export default function SpecialCharacterModal({
                       deleteChar(c.id);
                     }}
                     title="삭제"
-                    className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-lg bg-gray-400 hover:bg-red-500 text-white text-[10px] leading-4 text-center"
+                    className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-lg bg-gray-400 hover:bg-red-500 text-white text-xs leading-4 text-center"
                   >
                     ✕
                   </span>
@@ -210,7 +210,7 @@ export default function SpecialCharacterModal({
               </button>
             </div>
             {errorMsg && <p className="text-red-600 text-xs mt-1.5">{errorMsg}</p>}
-            <p className="text-[11px] text-gray-400 mt-1.5">
+            <p className="text-xs text-gray-400 mt-1.5">
               새 카테고리 이름을 입력하면 위에 새 탭이 생깁니다.
             </p>
           </div>
