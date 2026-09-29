@@ -111,7 +111,7 @@ function columnCards(column: Element) {
 function snapAdjacentTops(root: HTMLElement) {
   const columns = Array.from(root.querySelectorAll(':scope > .masonry-column')).map(columnCards);
   columns.flat().forEach((el) => {
-    el.style.paddingTop = '';
+    el.style.marginTop = '';
   });
 
   for (let pass = 0; pass < SNAP_PASSES; pass += 1) {
@@ -138,8 +138,8 @@ function snapAdjacentTops(root: HTMLElement) {
     let changed = false;
     for (const pair of pairs) {
       if (used.has(pair.higher.el) || used.has(pair.lower.el)) continue;
-      const current = Number.parseFloat(pair.higher.el.style.paddingTop) || 0;
-      pair.higher.el.style.paddingTop = `${current + pair.lower.top - pair.higher.top}px`;
+      const current = Number.parseFloat(pair.higher.el.style.marginTop) || 0;
+      pair.higher.el.style.marginTop = `${current + pair.lower.top - pair.higher.top}px`;
       used.add(pair.higher.el);
       used.add(pair.lower.el);
       changed = true;
