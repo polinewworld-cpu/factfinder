@@ -111,21 +111,14 @@ img {
 /* ---------- Header ---------- */
 
 .site-header {
-  position: sticky;
-  top: 0;
-  z-index: 20;
+  position: static;
   height: var(--header-h);
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 18px;
   padding: 32px max(var(--page-gutter), calc((100% - var(--max)) / 2)) 20px;
-  background: color-mix(in srgb, var(--canvas) 88%, transparent);
-  backdrop-filter: blur(16px);
-}
-
-.page:has(.composer) .site-header {
-  position: static;
+  background: var(--canvas);
 }
 
 .brand {
