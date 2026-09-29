@@ -1,3 +1,5 @@
+import { toFrenchBrackets } from '@/lib/frenchBrackets';
+
 // 기사 요약문(excerpt) 자동 생성 — 별도 입력 없이 본문 앞부분을 사용.
 // 카드 제목 아래 1~2줄과 RSS 등 외부 신디케이션에 쓴다.
 export function deriveExcerpt(html: string, maxLen = 140): string {
@@ -15,6 +17,7 @@ export function deriveExcerpt(html: string, maxLen = 140): string {
     .replace(/\s+/g, ' ')
     .trim();
 
-  if (text.length <= maxLen) return text;
-  return text.slice(0, maxLen).trim() + '…';
+  const copy = toFrenchBrackets(text);
+  if (copy.length <= maxLen) return copy;
+  return copy.slice(0, maxLen).trim() + '…';
 }

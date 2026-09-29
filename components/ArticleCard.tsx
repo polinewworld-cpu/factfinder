@@ -8,6 +8,7 @@ import KineticTextGrid from './AppearText';
 import { stripHtml } from '@/lib/stripHtml';
 import { deriveExcerpt } from '@/lib/excerpt';
 import { cardImageRatio, coverObjectPosition, hashString } from '@/lib/cardImage';
+import { toFrenchBrackets } from '@/lib/frenchBrackets';
 
 export type CardArticle = {
   id: string;
@@ -59,11 +60,13 @@ export default function ArticleCard({
   const fallbackRowCount = wide ? 7 : 11; // 와이드는 낮고 넓으니 줄 수를 줄임, 그 외엔 세로를 가득 채우도록 넉넉히
   const fallbackSentences = (() => {
     const pool = splitSentences(stripHtml(article.content || ''), fallbackRowCount);
-    return pool.length > 0 ? pool : [article.title || article.excerpt || ''];
+    return pool.length > 0 ? pool : [toFrenchBrackets(article.title || article.excerpt || '')];
   })();
   const fallbackFontSize = featured ? 20 : wide ? 20 : 14;
   const href = `/article/${article.id}`;
-  const excerpt = article.excerpt || (article.content ? deriveExcerpt(article.content) : '');
+  const title = toFrenchBrackets(article.title);
+  const hoverText = article.hoverText ? toFrenchBrackets(article.hoverText) : null;
+  const excerpt = article.excerpt ? toFrenchBrackets(article.excerpt) : article.content ? deriveExcerpt(article.content) : '';
 
   const { loggedIn, isChiefEditor, isSaved, setSaved } = useSavedArticles();
   const [saveBusy, setSaveBusy] = useState(false);
@@ -75,7 +78,7 @@ export default function ArticleCard({
     event.preventDefault();
     event.stopPropagation();
     const url = `${window.location.origin}${href}`;
-    const payload = { title: article.title, url };
+    const payload = { title, url };
     if (navigator.share) {
       try {
         await navigator.share(payload);
@@ -183,7 +186,7 @@ export default function ArticleCard({
 
         <div className="pin-overlay">
           {firstTheme && <span className="pin-theme-badge">{firstTheme}</span>}
-          {article.hoverText && <p className="pin-hover-text">{article.hoverText}</p>}
+          {hoverText && <p className="pin-hover-text">{hoverText}</p>}
           {isChiefEditor && (
             <button
               type="button"
@@ -216,7 +219,7 @@ export default function ArticleCard({
 
       <div className="pin-copy">
         <h2>
-          <a href={href}>{article.title}</a>
+          <a href={href}>{title}</a>
         </h2>
         {excerpt ? <p className="pin-excerpt">{excerpt}</p> : null}
         <div className="pin-meta">

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { toFrenchBrackets } from '@/lib/frenchBrackets';
 
 type Img = { id: string; url: string; caption?: string | null };
 
@@ -72,7 +73,7 @@ export default function CardNewsCarousel({ articleId, images }: { articleId: str
               className="shrink-0 w-full snap-start"
               style={{ scrollSnapAlign: 'start', scrollSnapStop: 'always' }}
             >
-              <img src={img.url} alt={img.caption ?? ''} className="w-full aspect-square object-cover" draggable={false} />
+              <img src={img.url} alt={img.caption ? toFrenchBrackets(img.caption) : ''} className="w-full aspect-square object-cover" draggable={false} />
             </div>
           ))}
         </div>

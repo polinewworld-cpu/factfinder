@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { ROLES } from '@/lib/roles';
 import { getCurrentUser } from '@/lib/session';
+import { toFrenchBrackets } from '@/lib/frenchBrackets';
 
 // 줄광고 — 기사 본문 맨 마지막에 핫핑크 화살표 + 굵은 한 줄 문안으로 노출되는 텍스트형 광고 (2026-09-12 신설)
 // GET: 공개 조회. ?active=true면 활성 항목만 order순으로, 화면에는 최대 10개까지만 노출(take 파라미터 없이도 기본 10개 캡)
@@ -29,7 +30,7 @@ export async function POST(req: NextRequest) {
   }
 
   const lineAd = await prisma.lineAd.create({
-    data: { text: text.trim(), linkUrl: linkUrl.trim(), order: order ?? 0 },
+    data: { text: toFrenchBrackets(text.trim()), linkUrl: linkUrl.trim(), order: order ?? 0 },
   });
   return NextResponse.json(lineAd, { status: 201 });
 }

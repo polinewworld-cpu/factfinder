@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { toFrenchBrackets } from '@/lib/frenchBrackets';
 
 type ArticleRow = { id: string; title: string; updatedAt: string; author: { name: string } };
 
@@ -143,7 +144,7 @@ export default function RelatedArticlePickerModal({
                         <input type="checkbox" checked={checked} onChange={() => toggleChecked(a)} onClick={(e) => e.stopPropagation()} />
                       </td>
                       <td className="py-2.5 text-gray-700 truncate max-w-[280px]">
-                        {a.title} <span className="text-gray-400 text-xs">· {a.author.name}</span>
+                        {toFrenchBrackets(a.title)} <span className="text-gray-400 text-xs">· {a.author.name}</span>
                       </td>
                       <td className="py-2.5 pr-4 text-gray-400 text-xs">
                         {new Date(a.updatedAt).toLocaleDateString('ko-KR')}

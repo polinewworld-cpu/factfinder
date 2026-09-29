@@ -6,6 +6,7 @@ import type { ArticleStatus } from '@prisma/client';
 import { deriveExcerpt } from '@/lib/excerpt';
 import { sanitizeArticleContent } from '@/lib/sanitizeArticle';
 import { clampFocal } from '@/lib/cardImage';
+import { toFrenchBrackets } from '@/lib/frenchBrackets';
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -82,13 +83,13 @@ export async function POST(req: NextRequest) {
 
     return tx.article.create({
       data: {
-        title: title ?? '',
-        subtitle1: subtitle1 || null,
-        subtitle2: subtitle2 || null,
-        subtitle3: subtitle3 || null,
+        title: toFrenchBrackets(title ?? ''),
+        subtitle1: subtitle1 ? toFrenchBrackets(subtitle1) : null,
+        subtitle2: subtitle2 ? toFrenchBrackets(subtitle2) : null,
+        subtitle3: subtitle3 ? toFrenchBrackets(subtitle3) : null,
         content: safeContent,
         excerpt,
-        hoverText: hoverText || null,
+        hoverText: hoverText ? toFrenchBrackets(hoverText) : null,
         themeTags: Array.isArray(themeTags) && themeTags.length ? themeTags.join(',') : null,
         coverImageUrl,
         coverFocalX: clampFocal(coverFocalX),
@@ -99,7 +100,13 @@ export async function POST(req: NextRequest) {
         publishedAt: status === 'PUBLISHED' ? new Date() : null,
         isFrontpageTop: wantsFrontpageTop,
         images: images?.length
-          ? { create: images.map((img: { url: string; caption?: string }, i: number) => ({ ...img, order: i })) }
+          ? {
+              create: images.map((img: { url: string; caption?: string }, i: number) => ({
+                ...img,
+                caption: img.caption ? toFrenchBrackets(img.caption) : img.caption,
+                order: i,
+              })),
+            }
           : undefined,
         keywords: keywordIds?.length
           ? { connect: keywordIds.map((id: string) => ({ id })) }
@@ -111,8 +118,8 @@ export async function POST(req: NextRequest) {
         poll: wantsPoll
           ? {
               create: {
-                question: poll.question.trim(),
-                options: { create: validPollOptions.map((text, i) => ({ text, order: i })) },
+                question: toFrenchBrackets(poll.question.trim()),
+                options: { create: validPollOptions.map((text, i) => ({ text: toFrenchBrackets(text), order: i })) },
               },
             }
           : undefined,

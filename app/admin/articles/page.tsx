@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { toFrenchBrackets } from '@/lib/frenchBrackets';
 
 type Me = { id: string; role: string };
 type Row = {
@@ -213,7 +214,7 @@ export default function AdminArticlesPage() {
                   <td className="py-2 pl-4 pr-4 max-w-[320px]">
                     <a href={`/write?id=${r.id}`} className="font-medium text-gray-900 hover:text-brand truncate block">
                       {r.isFrontpageTop && <span className="text-brand mr-1">★</span>}
-                      {r.title || '(제목 없음)'}
+                      {toFrenchBrackets(r.title) || '(제목 없음)'}
                     </a>
                   </td>
                   <td className="py-2 pr-4 text-gray-500 whitespace-nowrap">{r.author?.name ?? '-'}</td>

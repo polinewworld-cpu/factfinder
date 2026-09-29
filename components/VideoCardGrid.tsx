@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { toFrenchBrackets } from '@/lib/frenchBrackets';
 
 type VideoCardData = {
   id: string;
@@ -96,7 +97,7 @@ export default function VideoCardGrid({
               href={videoUrl(card)}
               target="_blank"
               rel="noopener noreferrer"
-              title={card.title}
+              title={toFrenchBrackets(card.title)}
               className={`group flex h-full min-h-0 flex-col${isLatest ? ' video-card--latest' : ''}${isSecond ? ' video-card--second' : ''}${isShort ? ' video-card--short' : ''}`}
             >
               <div
@@ -106,7 +107,7 @@ export default function VideoCardGrid({
               >
                 <img
                   src={card.thumbnailUrl}
-                  alt={card.title}
+                  alt={toFrenchBrackets(card.title)}
                   className="absolute inset-0 h-full w-full object-cover"
                 />
                 <span className="absolute top-2 left-2 text-xs font-bold text-white bg-black/60 rounded-lg px-2 py-0.5">
@@ -135,7 +136,7 @@ export default function VideoCardGrid({
                   </>
                 )}
               </div>
-              <p className="video-card-title text-sm font-semibold text-gray-900 pt-2 line-clamp-2">{card.title}</p>
+              <p className="video-card-title text-sm font-semibold text-gray-900 pt-2 line-clamp-2">{toFrenchBrackets(card.title)}</p>
             </a>
             );
           })}

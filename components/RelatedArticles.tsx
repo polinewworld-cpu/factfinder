@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { timeAgo } from '@/lib/time';
 import { coverObjectPosition } from '@/lib/cardImage';
+import { toFrenchBrackets } from '@/lib/frenchBrackets';
 
 type Item = {
   id: string;
@@ -30,13 +31,13 @@ function RailCard({ article }: { article: Item }) {
           />
         ) : (
           <div className="pin-fallback" style={{ aspectRatio: '1 / 0.72' }}>
-            <p>{article.title}</p>
+            <p>{toFrenchBrackets(article.title)}</p>
           </div>
         )}
       </a>
       <div className="pin-copy">
         <h2>
-          <a href={href}>{article.title}</a>
+          <a href={href}>{toFrenchBrackets(article.title)}</a>
         </h2>
         <div className="pin-meta">
           <span>{article.author.name}</span>

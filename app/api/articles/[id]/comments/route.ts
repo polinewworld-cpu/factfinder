@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getCurrentUser } from '@/lib/session';
 import { allowRequest } from '@/lib/rateLimit';
+import { toFrenchBrackets } from '@/lib/frenchBrackets';
 
 // 댓글은 로그인 회원만 작성 가능 (구글 로그인 계정 단일화 방침)
 export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
@@ -10,7 +11,9 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
     include: { user: { select: { id: true, name: true, nickname: true, image: true, isDonor: true } } },
     orderBy: { createdAt: 'asc' },
   });
-  return NextResponse.json(comments);
+  return NextResponse.json(
+    comments.map((c) => ({ ...c, content: toFrenchBrackets(c.content) }))
+  );
 }
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
@@ -30,7 +33,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   }
 
   const comment = await prisma.comment.create({
-    data: { articleId: params.id, userId: user.id, content: content.trim() },
+    data: { articleId: params.id, userId: user.id, content: toFrenchBrackets(content.trim()) },
     include: { user: { select: { id: true, name: true, nickname: true, image: true, isDonor: true } } },
   });
   return NextResponse.json(comment, { status: 201 });

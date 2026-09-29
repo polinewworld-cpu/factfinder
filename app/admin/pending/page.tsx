@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { timeAgo } from '@/lib/time';
+import { toFrenchBrackets } from '@/lib/frenchBrackets';
 
 type PendingArticle = {
   id: string;
@@ -55,7 +56,7 @@ export default function PendingQueuePage() {
           <li key={a.id} className="flex items-center justify-between border border-gray-200 rounded-xl p-4">
             <div>
               <p className="text-xs text-brand font-bold mb-1">{a.category?.name ?? '카테고리 미지정'}</p>
-              <p className="font-semibold text-gray-900">{a.title || '(제목 없음)'}</p>
+              <p className="font-semibold text-gray-900">{toFrenchBrackets(a.title) || '(제목 없음)'}</p>
               <p className="text-xs text-gray-400 mt-1">
                 {a.author.name} · {timeAgo(a.updatedAt)}
               </p>

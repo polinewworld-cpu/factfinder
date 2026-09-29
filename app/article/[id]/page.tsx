@@ -15,6 +15,7 @@ import TextSizeControl from '@/components/TextSizeControl';
 import RecommendButton from '@/components/RecommendButton';
 import DonateButtonLarge from '@/components/DonateButtonLarge';
 import { stripHtml } from '@/lib/stripHtml';
+import { toFrenchBrackets } from '@/lib/frenchBrackets';
 import { getCurrentUser } from '@/lib/session';
 import { EditIcon, ThinArrowIcon } from '@/components/icons';
 import { ROLES } from '@/lib/roles';
@@ -83,7 +84,11 @@ export default async function ArticlePage({ params }: { params: { id: string } }
     data: { viewCount: { increment: 1 }, updatedAt: article.updatedAt },
   });
 
-  const subtitles = [article.subtitle1, article.subtitle2, article.subtitle3].filter(Boolean) as string[];
+  const subtitles = [article.subtitle1, article.subtitle2, article.subtitle3]
+    .filter(Boolean)
+    .map((s) => toFrenchBrackets(s as string));
+  const title = toFrenchBrackets(article.title);
+  const content = toFrenchBrackets(article.content);
   const activeArticleBanners = articleBanners.slice(0, siteConfig?.articleBannerCount ?? 0);
 
   return (
@@ -105,7 +110,7 @@ export default async function ArticlePage({ params }: { params: { id: string } }
             )}
             {article.publishedAt ? ` · ${timeAgo(article.publishedAt)}` : ''}
           </p>
-          <h1>{article.title}</h1>
+          <h1>{title}</h1>
           {subtitles.length > 0 && (
             <div className="article-subtitles">
               {subtitles.map((s, i) => (
@@ -132,17 +137,17 @@ export default async function ArticlePage({ params }: { params: { id: string } }
               <TextSizeControl />
               <ReadAloudButton
                 articleId={article.id}
-                text={`${article.title.replace(/\s+/g, ' ').trim()}. ${stripHtml(article.content)}`}
+                text={`${title.replace(/\s+/g, ' ').trim()}. ${stripHtml(article.content)}`}
               />
             </span>
           </div>
-          <div className="article-content" dangerouslySetInnerHTML={{ __html: article.content }} />
+          <div className="article-content" dangerouslySetInnerHTML={{ __html: content }} />
           <div className="donate-cta-row">
             <div className="donate-cta-row-item" style={{ flex: 1 }}>
               <RecommendButton articleId={article.id} initialCount={article.recommendCount} variant="large" />
             </div>
             <div className="donate-cta-row-item" style={{ flex: 1 }}>
-              <ShareButtons title={article.title.replace(/\s+/g, ' ').trim()} coverImageUrl={article.coverImageUrl} variant="large" />
+              <ShareButtons title={title.replace(/\s+/g, ' ').trim()} coverImageUrl={article.coverImageUrl} variant="large" />
             </div>
             <div className="donate-cta-row-item" style={{ flex: 2 }}>
               <DonateButtonLarge reporterId={article.authorId} />
@@ -165,7 +170,7 @@ export default async function ArticlePage({ params }: { params: { id: string } }
                     <span className="line-ad-arrow">
                       <ThinArrowIcon />
                     </span>
-                    <span className="line-ad-text">{ad.text}</span>
+                    <span className="line-ad-text">{toFrenchBrackets(ad.text)}</span>
                   </a>
                 </li>
               ))}
@@ -192,7 +197,7 @@ export default async function ArticlePage({ params }: { params: { id: string } }
         keywordNames={article.keywords.map((k) => k.name)}
         manualRelated={article.relatedArticles.map((a) => ({
           id: a.id,
-          title: a.title,
+          title: toFrenchBrackets(a.title),
           author: { name: a.author.name },
           publishedAt: a.publishedAt as unknown as string,
           coverImageUrl: a.coverImageUrl,

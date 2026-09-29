@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { putBlob } from '@/lib/blobStorage';
 import { stripHtml } from '@/lib/stripHtml';
+import { toFrenchBrackets } from '@/lib/frenchBrackets';
 import { synthesizeKoreanSpeech } from '@/lib/googleTts';
 import { randomUUID } from 'crypto';
 
@@ -31,7 +32,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     return NextResponse.json({ url: article.audioUrl, cached: true });
   }
 
-  const text = `${article.title.replace(/\s+/g, ' ').trim()}. ${stripHtml(article.content)}`;
+  const text = `${toFrenchBrackets(article.title).replace(/\s+/g, ' ').trim()}. ${stripHtml(article.content)}`;
 
   let buffer: Buffer;
   let tierUsed: string;
