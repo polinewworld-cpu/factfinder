@@ -4,6 +4,9 @@ import { useEffect, useState } from 'react';
 import { timeAgo } from '@/lib/time';
 import { cardImageRatio, coverObjectPosition } from '@/lib/cardImage';
 import { toFrenchBrackets } from '@/lib/frenchBrackets';
+import { RightPanelIcon } from '@/components/icons';
+
+const RAIL_STORAGE_KEY = 'factfinder-article-rail';
 
 type Item = {
   id: string;
@@ -62,6 +65,19 @@ export default function RelatedArticles({
   const [mode, setMode] = useState<'related' | 'latest' | 'popular'>(manualRelated.length > 0 ? 'related' : 'latest');
   const [items, setItems] = useState<Item[]>(manualRelated);
   const [loaded, setLoaded] = useState(manualRelated.length > 0);
+  const [open, setOpen] = useState(true);
+
+  useEffect(() => {
+    if (localStorage.getItem(RAIL_STORAGE_KEY) === '0') setOpen(false);
+  }, []);
+
+  function toggleRail() {
+    setOpen((prev) => {
+      const next = !prev;
+      localStorage.setItem(RAIL_STORAGE_KEY, next ? '1' : '0');
+      return next;
+    });
+  }
 
   // 작성자가 직접 고른 관련기사가 있으면 그걸 우선 노출 (기능정의서 8.2) — 없을 때만 기존 키워드/최신 로직 사용
   useEffect(() => {
@@ -90,35 +106,53 @@ export default function RelatedArticles({
   }
 
   return (
-    <aside className="article-rail" aria-label="다른 기사">
-      {mode !== 'related' && (
-        <div className="article-rail-tabs">
-          <button
-            type="button"
-            onClick={() => switchMode('latest')}
-            className={mode === 'latest' ? 'is-on' : undefined}
-          >
-            최신기사
-          </button>
-          <button
-            type="button"
-            onClick={() => switchMode('popular')}
-            className={mode === 'popular' ? 'is-on' : undefined}
-          >
-            많이 본 기사
-          </button>
-        </div>
-      )}
-      {mode === 'related' && (
-        <p className="article-rail-tabs-label">관련기사</p>
-      )}
-      {!loaded && <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--ash)' }}>불러오는 중…</p>}
-      <div className="rail-list">
-        {items.map((a) => (
-          <RailCard key={a.id} article={a} />
-        ))}
-        {loaded && items.length === 0 && <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--ash)' }}>표시할 기사가 없습니다.</p>}
+    <aside className={`article-rail${open ? '' : ' is-collapsed'}`} aria-label="다른 기사">
+      <div className="article-rail-head">
+        {open && mode !== 'related' && (
+          <div className="article-rail-tabs">
+            <button
+              type="button"
+              onClick={() => switchMode('latest')}
+              className={mode === 'latest' ? 'is-on' : undefined}
+            >
+              최신기사
+            </button>
+            <button
+              type="button"
+              onClick={() => switchMode('popular')}
+              className={mode === 'popular' ? 'is-on' : undefined}
+            >
+              많이 본 기사
+            </button>
+          </div>
+        )}
+        {open && mode === 'related' && (
+          <p className="article-rail-tabs-label">관련기사</p>
+        )}
+        <button
+          type="button"
+          className="article-rail-toggle"
+          aria-label={open ? '사이드 칼럼 숨기기' : '사이드 칼럼 보이기'}
+          aria-pressed={open}
+          title={open ? '칼럼 숨기기' : '칼럼 보이기'}
+          onClick={toggleRail}
+        >
+          <RightPanelIcon />
+        </button>
       </div>
+      {open && (
+        <>
+          {!loaded && <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--ash)' }}>불러오는 중…</p>}
+          <div className="rail-list">
+            {items.map((a) => (
+              <RailCard key={a.id} article={a} />
+            ))}
+            {loaded && items.length === 0 && (
+              <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--ash)' }}>표시할 기사가 없습니다.</p>
+            )}
+          </div>
+        </>
+      )}
     </aside>
   );
 }
