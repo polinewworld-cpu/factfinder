@@ -939,10 +939,10 @@ img {
   user-select: text;
 }
 
-/* 줄간격 1.7, 단락 뒤 간격 8pt */
+/* 줄간격 1.7, 단락 뒤 간격 12pt */
 .composer-body p,
 .composer-body > div:not(.article-figure) {
-  margin: 0 0 8pt;
+  margin: 0 0 12pt;
 }
 
 .composer-body i,
@@ -1726,7 +1726,7 @@ img {
 
 .article-content p,
 .article-content > div:not(.article-figure) {
-  margin: 0 0 8pt;
+  margin: 0 0 12pt;
 }
 
 /* 기사 본문 맨 마지막 줄광고 — 핫핑크 얇은 화살표 + 기사제목처럼 굵은 한 줄 */
