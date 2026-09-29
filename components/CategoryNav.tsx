@@ -1,12 +1,21 @@
 'use client';
 
 import { usePathname, useSearchParams } from 'next/navigation';
+import AccountMenu from './AccountMenu';
 import HeaderSearch from './HeaderSearch';
 
 const CATEGORIES = ['전체', '정치', '국제', '사회', '문화', '정치신세계'];
 
+export type CategoryAccount = {
+  name: string;
+  image?: string | null;
+  userId?: string;
+  isWriter: boolean;
+  isChiefEditor: boolean;
+} | null;
+
 // 공개 사이트 상단 카테고리 탭 — 관리자 화면(/admin/*)과 작성 화면에서는 숨김
-export default function CategoryNav() {
+export default function CategoryNav({ account = null }: { account?: CategoryAccount }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   if (pathname?.startsWith('/admin') || pathname === '/write') return null;
@@ -31,6 +40,21 @@ export default function CategoryNav() {
           );
         })}
       </div>
+      {account ? (
+        <div className="category-account">
+          <AccountMenu
+            name={account.name}
+            image={account.image}
+            userId={account.userId}
+            isWriter={account.isWriter}
+            isChiefEditor={account.isChiefEditor}
+          />
+        </div>
+      ) : (
+        <a className="chip category-login" href="/api/auth/signin">
+          로그인
+        </a>
+      )}
       <div className="search-wrap">
         <HeaderSearch />
       </div>
