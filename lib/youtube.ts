@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { toFrenchBrackets } from '@/lib/frenchBrackets';
+import { preserveTitleBreaks } from '@/lib/titleLineBreak';
 
 // 정치신세계 자동 영상 카드 — 유튜브 채널 @polinewworld에서 쇼츠/영상/라이브를 가져와 VideoCard로 저장 (기능정의서 4.2.1)
 // 민트데스크 프로젝트에서 검증된 방식 재사용: forHandle -> 실패 시 search 폴백, 업로드 재생목록(UC->UU)으로 목록 조회.
@@ -83,17 +84,19 @@ export async function syncVideoCards(): Promise<SyncResult> {
     for (const video of detailsData.items ?? []) {
       try {
         const kind = classifyVideo(video);
+        const existing = await prisma.videoCard.findUnique({ where: { youtubeId: video.id } });
+        const title = preserveTitleBreaks(existing?.title, toFrenchBrackets(video.snippet.title));
         await prisma.videoCard.upsert({
           where: { youtubeId: video.id },
           update: {
-            title: toFrenchBrackets(video.snippet.title),
+            title,
             thumbnailUrl: video.snippet.thumbnails?.high?.url ?? video.snippet.thumbnails?.default?.url ?? '',
             kind,
             publishedAt: new Date(video.snippet.publishedAt),
           },
           create: {
             youtubeId: video.id,
-            title: toFrenchBrackets(video.snippet.title),
+            title,
             thumbnailUrl: video.snippet.thumbnails?.high?.url ?? video.snippet.thumbnails?.default?.url ?? '',
             kind,
             publishedAt: new Date(video.snippet.publishedAt),
@@ -118,17 +121,19 @@ export async function syncVideoCards(): Promise<SyncResult> {
     for (const item of liveData.items ?? []) {
       const videoId = item.id?.videoId;
       if (!videoId) continue;
+      const existing = await prisma.videoCard.findUnique({ where: { youtubeId: videoId } });
+      const title = preserveTitleBreaks(existing?.title, toFrenchBrackets(item.snippet.title));
       await prisma.videoCard.upsert({
         where: { youtubeId: videoId },
         update: {
-          title: toFrenchBrackets(item.snippet.title),
+          title,
           thumbnailUrl: item.snippet.thumbnails?.high?.url ?? item.snippet.thumbnails?.default?.url ?? '',
           kind: 'LIVE',
           publishedAt: new Date(item.snippet.publishedAt),
         },
         create: {
           youtubeId: videoId,
-          title: toFrenchBrackets(item.snippet.title),
+          title,
           thumbnailUrl: item.snippet.thumbnails?.high?.url ?? item.snippet.thumbnails?.default?.url ?? '',
           kind: 'LIVE',
           publishedAt: new Date(item.snippet.publishedAt),

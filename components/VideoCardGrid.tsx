@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { toFrenchBrackets } from '@/lib/frenchBrackets';
+import VideoHeadline from './VideoHeadline';
 
 type VideoCardData = {
   id: string;
@@ -136,7 +137,9 @@ export default function VideoCardGrid({
                   </>
                 )}
               </div>
-              <p className="video-card-title text-sm font-semibold text-gray-900 pt-2 line-clamp-2">{toFrenchBrackets(card.title)}</p>
+              <p className="video-card-title text-sm font-semibold text-gray-900 pt-2 line-clamp-2">
+                <VideoHeadline videoId={card.id} title={card.title} canEdit={canRefresh} />
+              </p>
             </a>
             );
           })}
