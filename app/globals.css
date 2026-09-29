@@ -126,6 +126,8 @@ img {
   width: 100%;
   padding: 0 16px;
   border-radius: 16px;
+  background: var(--chip);
+  color: var(--mute);
 }
 
 .search svg {
