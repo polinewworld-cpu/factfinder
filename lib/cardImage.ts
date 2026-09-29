@@ -1,4 +1,4 @@
-export const CARD_RATIOS = [0.72, 0.96, 1.22];
+export const CARD_RATIOS = [0.72, 0.96, 16 / 9];
 
 export function hashString(value: string) {
   let hash = 0;
