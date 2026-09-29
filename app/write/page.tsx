@@ -40,7 +40,7 @@ export default function WritePage() {
   const [hoverText, setHoverText] = useState(''); // 카드 이미지 마우스 오버 시 dimmed 배경 위에 흰색으로 표시되는 문구 (2026-09-11 신설)
   const [categoryId, setCategoryId] = useState('');
   const [keywordIds, setKeywordIds] = useState<string[]>([]);
-  // 커버이미지 — 별도 업로드 없이 본문에 삽입된 이미지 중 라디오로 선택 (첫 번째 삽입 이미지가 기본값, 2026-09-11 개편)
+  // 커버이미지 — 본문에 삽입된 이미지 중 고름 (첫 번째 삽입 이미지가 기본값, 2026-09-11 개편)
   const [coverImageUrl, setCoverImageUrl] = useState('');
   const [coverFocalX, setCoverFocalX] = useState(50);
   const [coverFocalY, setCoverFocalY] = useState(50);
@@ -890,8 +890,12 @@ export default function WritePage() {
           <div className="cover-pick-row">
             {bodyImageUrls.map((url, i) => {
               const selected = coverImageUrl === url;
+              const outlined = selected && bodyImageUrls.length > 1;
               return (
-                <div key={`${url}-${i}`} className={`cover-pick${selected ? ' is-on' : ''}`}>
+                <div
+                  key={`${url}-${i}`}
+                  className={`cover-pick${selected ? ' is-on' : ''}${outlined ? ' is-outlined' : ''}`}
+                >
                   {selected ? (
                     <CoverFocalEditor
                       imageUrl={url}
@@ -925,21 +929,7 @@ export default function WritePage() {
                       />
                     </button>
                   )}
-                  <label className="cover-pick-label">
-                    <input
-                      type="radio"
-                      name="coverImage"
-                      checked={selected}
-                      onChange={() => {
-                        if (selected) return;
-                        setCoverImageUrl(url);
-                        setCoverFocalX(50);
-                        setCoverFocalY(50);
-                        markDirty();
-                      }}
-                    />
-                    {i === 0 ? '기본' : `${i + 1}번째`}
-                  </label>
+                  {selected ? <span className="cover-pick-chip">커버</span> : null}
                 </div>
               );
             })}
