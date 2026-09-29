@@ -87,39 +87,24 @@ export default function CoverFocalEditor({
   }
 
   return (
-    <div className="cover-focal">
-      <div
-        ref={frameRef}
-        className={`cover-focal-preview${dragging ? ' is-dragging' : ''}`}
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={endDrag}
-        onPointerCancel={endDrag}
-      >
-        <img
-          ref={imgRef}
-          src={imageUrl}
-          alt=""
-          draggable={false}
-          style={{
-            aspectRatio: `1 / ${ratio}`,
-            objectPosition: coverObjectPosition(x, y),
-          }}
-        />
-      </div>
-      <div className="cover-focal-side">
-        <p className="cover-focal-hint">사진을 끌어 카드에 보이는 위치를 맞춥니다. 미리보기가 홈·카테고리 카드와 같습니다.</p>
-        <button
-          type="button"
-          className="cover-focal-reset"
-          onClick={() => {
-            onChangeX(50);
-            onChangeY(50);
-          }}
-        >
-          가운데로
-        </button>
-      </div>
+    <div
+      ref={frameRef}
+      className={`cover-focal-preview${dragging ? ' is-dragging' : ''}`}
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={endDrag}
+      onPointerCancel={endDrag}
+    >
+      <img
+        ref={imgRef}
+        src={imageUrl}
+        alt=""
+        draggable={false}
+        style={{
+          aspectRatio: `1 / ${ratio}`,
+          objectPosition: coverObjectPosition(x, y),
+        }}
+      />
     </div>
   );
 }
