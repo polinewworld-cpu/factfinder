@@ -1622,7 +1622,7 @@ img {
 .article-body h1 {
   margin: 0 0 18px;
   font-family: var(--title);
-  font-size: clamp(calc(26px + 2pt), calc(3vw + 2pt), calc(36px + 2pt));
+  font-size: clamp(calc(34px + 2pt), calc(3vw + 2pt), calc(44px + 2pt));
   font-weight: 700;
   line-height: 1.4;
   letter-spacing: -0.02em;
