@@ -1911,7 +1911,6 @@ img {
   display: grid;
   grid-template-columns: max-content minmax(0, 1fr);
   column-gap: 0.35em;
-  row-gap: 2px;
   align-items: baseline;
 }
 
@@ -1920,6 +1919,16 @@ img {
   grid-column: 1;
   grid-row: 1;
   color: var(--ash);
+}
+
+.reporter-card-entry {
+  grid-column: 2;
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 0.35em;
+  row-gap: 2px;
 }
 
 .article-comments {
@@ -2008,7 +2017,8 @@ img {
 }
 
 .reporter-card-list a {
-  grid-column: 2;
+  flex: 0 0 auto;
+  max-width: 100%;
   min-width: 0;
   color: var(--body);
   font-size: 14px;
@@ -2023,7 +2033,7 @@ img {
 }
 
 .reporter-card-when {
-  grid-column: 2;
+  flex: 0 0 auto;
   color: var(--mute);
   font-size: 13px;
   font-weight: 500;

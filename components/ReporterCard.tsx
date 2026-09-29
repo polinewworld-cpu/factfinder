@@ -11,6 +11,17 @@ type ReporterCardAuthor = {
 
 type ArticleLink = { id: string; title: string; publishedAt: Date | string | null };
 
+function ReporterArticleLink({ article }: { article: ArticleLink }) {
+  return (
+    <li>
+      <span className="reporter-card-entry">
+        <a href={`/article/${article.id}`}>{article.title.replace(/\s+/g, ' ')}</a>
+        {article.publishedAt ? <span className="reporter-card-when">{timeAgo(article.publishedAt)}</span> : null}
+      </span>
+    </li>
+  );
+}
+
 // 기사 말미 기자 프로필 — 최신 3건 / BEST 3건. 제목 옆에 발행 경과 시간 (2026-09-12 신설)
 export default function ReporterCard({
   author,
@@ -42,10 +53,7 @@ export default function ReporterCard({
             <div className="reporter-card-column">
               <ul className="reporter-card-list">
                 {recentArticles.map((a) => (
-                  <li key={a.id}>
-                    <a href={`/article/${a.id}`}>{a.title}</a>
-                    {a.publishedAt ? <span className="reporter-card-when">{timeAgo(a.publishedAt)}</span> : null}
-                  </li>
+                  <ReporterArticleLink key={a.id} article={a} />
                 ))}
               </ul>
             </div>
@@ -54,10 +62,7 @@ export default function ReporterCard({
             <div className="reporter-card-column">
               <ul className="reporter-card-list">
                 {bestArticles.map((a) => (
-                  <li key={a.id}>
-                    <a href={`/article/${a.id}`}>{a.title}</a>
-                    {a.publishedAt ? <span className="reporter-card-when">{timeAgo(a.publishedAt)}</span> : null}
-                  </li>
+                  <ReporterArticleLink key={a.id} article={a} />
                 ))}
               </ul>
             </div>
