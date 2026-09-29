@@ -2307,11 +2307,19 @@ img {
   padding: 0 0 40px 24px;
 }
 
+.article-rail-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 16px;
+  min-height: 24px;
+}
+
 .article-rail-tabs {
   display: flex;
   align-items: baseline;
   gap: 12px;
-  margin: 0 0 16px;
+  margin: 0;
   font-size: 14px;
   font-weight: 700;
   line-height: 1.2;
@@ -2331,11 +2339,48 @@ img {
 }
 
 .article-rail-tabs-label {
-  margin: 0 0 16px;
+  margin: 0;
   font-size: 14px;
   font-weight: 700;
   line-height: 1.2;
   color: var(--mute);
+}
+
+.article-rail-toggle {
+  margin-left: auto;
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ash);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.article-rail-toggle:hover {
+  color: var(--body);
+}
+
+.article-rail-toggle svg {
+  width: 20px;
+  height: 20px;
+}
+
+.article-layout:has(.article-rail.is-collapsed) {
+  grid-template-columns: minmax(0, 1fr) 24px;
+}
+
+.article-rail.is-collapsed {
+  padding: 0;
+  position: sticky;
+  top: calc(var(--header-h) + 24px);
+}
+
+.article-rail.is-collapsed .article-rail-head {
+  margin: 0;
 }
 
 .rail-list {
