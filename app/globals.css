@@ -91,6 +91,7 @@ body {
 
 button,
 input,
+textarea,
 a {
   font: inherit;
 }
@@ -502,6 +503,17 @@ img {
   .video-card-grid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
+}
+
+.video-card-title {
+  margin: 0;
+  padding-top: 8px;
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.45;
+  letter-spacing: -0.02em;
 }
 
 .video-card--short {

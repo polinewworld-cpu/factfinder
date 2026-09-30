@@ -84,10 +84,10 @@ export default function CardHeadline({
     return <span className={`card-headline${className ? ` ${className}` : ''}`}>{copy}</span>;
   }
 
-  return (
+  const editor = (
     <textarea
       ref={areaRef}
-      className={`card-headline is-editable${className ? ` ${className}` : ''}`}
+      className="card-headline is-editable"
       value={text}
       rows={1}
       aria-label={ariaLabel}
@@ -103,4 +103,7 @@ export default function CardHeadline({
       onBlur={flushSave}
     />
   );
+
+  if (className) return <div className={className}>{editor}</div>;
+  return editor;
 }
