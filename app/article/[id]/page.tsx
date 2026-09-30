@@ -19,6 +19,7 @@ import { toFrenchBrackets } from '@/lib/frenchBrackets';
 import { getCurrentUser } from '@/lib/session';
 import { EditIcon, ThinArrowIcon } from '@/components/icons';
 import { ROLES } from '@/lib/roles';
+import ArticleHeadline from '@/components/ArticleHeadline';
 
 export default async function ArticlePage({ params }: { params: { id: string } }) {
   const [article, currentUser, siteConfig, articleBanners, lineAds] = await Promise.all([
@@ -110,7 +111,7 @@ export default async function ArticlePage({ params }: { params: { id: string } }
             )}
             {article.publishedAt ? ` · ${timeAgo(article.publishedAt)}` : ''}
           </p>
-          <h1>{title}</h1>
+          <ArticleHeadline articleId={article.id} title={title} canEdit={canEdit} />
           {subtitles.length > 0 && (
             <div className="article-subtitles">
               {subtitles.map((s, i) => (

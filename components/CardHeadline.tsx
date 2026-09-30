@@ -8,6 +8,7 @@ export default function CardHeadline({
   canEdit,
   href,
   patchUrl,
+  patchField = 'title',
   className,
   ariaLabel = '제목',
   external = false,
@@ -16,6 +17,7 @@ export default function CardHeadline({
   canEdit: boolean;
   href?: string;
   patchUrl: string;
+  patchField?: 'title' | 'cardTitle';
   className?: string;
   ariaLabel?: string;
   external?: boolean;
@@ -41,7 +43,7 @@ export default function CardHeadline({
     await fetch(patchUrl, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title: next }),
+      body: JSON.stringify({ [patchField]: next }),
     });
   }
 

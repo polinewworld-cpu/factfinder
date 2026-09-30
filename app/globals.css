@@ -1805,6 +1805,18 @@ img {
   overflow-wrap: break-word;
 }
 
+.article-body h1 .card-headline {
+  font-family: var(--title) !important;
+  font-size: clamp(calc(34px + 2pt), calc(3vw + 2pt), calc(44px + 2pt)) !important;
+  font-weight: 700 !important;
+  line-height: 1.4;
+  letter-spacing: -0.02em;
+  color: inherit;
+  white-space: pre-wrap;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
 /* 부제목(요약) — 포인트 바는 모든 줄의 시각적 높이(라인박스 여백 제외)에 맞춰 세로로 늘림 */
 .article-subtitles {
   position: relative;

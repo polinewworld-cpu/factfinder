@@ -28,6 +28,7 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
 export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
   const body = await req.json();
   const { keywordIds, relatedArticleIds, intent, images, poll, themeTags, ...rest } = body; // intent: 'autosave' | 'submit' (글쓰기 화면 전용, 그 외 편집은 기존 방식 그대로) / poll: { question, options: string[] } | null
+  delete (rest as { cardTitle?: unknown }).cardTitle;
 
   if (rest.coverFocalX !== undefined) rest.coverFocalX = clampFocal(rest.coverFocalX);
   if (rest.coverFocalY !== undefined) rest.coverFocalY = clampFocal(rest.coverFocalY);
@@ -147,19 +148,34 @@ export async function DELETE(_req: NextRequest, { params }: { params: { id: stri
   return NextResponse.json({ ok: true });
 }
 
-// 기사 카드 제목 줄바꿈, 메인노출 빼기 — 메인(인덱스) 피드에서만 사후적으로 제외, 키워드/검색 등 다른 화면엔 계속 노출 (편집장 전용)
+// 카드 제목 줄바꿈(cardTitle), 기사 제목 줄바꿈(title), 메인노출 빼기
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: '로그인이 필요합니다' }, { status: 401 });
-  if (user.role !== ROLES.CHIEF_EDITOR) {
-    return NextResponse.json({ error: '편집장만 변경할 수 있습니다' }, { status: 403 });
-  }
+
+  const existing = await prisma.article.findUnique({ where: { id: params.id } });
+  if (!existing) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
   const body = await req.json();
-  const data: { showOnMain?: boolean; title?: string } = {};
-  if (typeof body.showOnMain === 'boolean') data.showOnMain = body.showOnMain;
-  if (typeof body.title === 'string') data.title = toFrenchBrackets(body.title);
-  if (data.showOnMain === undefined && data.title === undefined) {
+  const data: { showOnMain?: boolean; title?: string; cardTitle?: string } = {};
+  const isChief = user.role === ROLES.CHIEF_EDITOR;
+  const isAuthor = existing.authorId === user.id;
+
+  if (typeof body.showOnMain === 'boolean') {
+    if (!isChief) return NextResponse.json({ error: '편집장만 변경할 수 있습니다' }, { status: 403 });
+    data.showOnMain = body.showOnMain;
+  }
+  if (typeof body.cardTitle === 'string') {
+    if (!isChief) return NextResponse.json({ error: '편집장만 변경할 수 있습니다' }, { status: 403 });
+    data.cardTitle = toFrenchBrackets(body.cardTitle);
+  }
+  if (typeof body.title === 'string') {
+    if (!isChief && !isAuthor) {
+      return NextResponse.json({ error: '본인이 작성한 글만 수정할 수 있습니다' }, { status: 403 });
+    }
+    data.title = toFrenchBrackets(body.title);
+  }
+  if (data.showOnMain === undefined && data.title === undefined && data.cardTitle === undefined) {
     return NextResponse.json({ error: '변경할 값이 필요합니다' }, { status: 400 });
   }
 

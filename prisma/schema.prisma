@@ -139,6 +139,7 @@ model Category {
 model Article {
   id              String        @id @default(cuid())
   title           String
+  cardTitle       String? // 홈/카테고리 카드 전용 제목 줄바꿈 — 기사 페이지/컴포저 title과 분리
   subtitle1       String? // 부제목 3줄 (기능정의서 8.2) — 전부 선택 입력
   subtitle2       String?
   subtitle3       String?

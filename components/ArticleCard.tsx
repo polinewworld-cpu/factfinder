@@ -9,11 +9,13 @@ import { stripHtml } from '@/lib/stripHtml';
 import { deriveExcerpt } from '@/lib/excerpt';
 import { cardImageRatio, coverObjectPosition, hashString } from '@/lib/cardImage';
 import { toFrenchBrackets } from '@/lib/frenchBrackets';
+import { cardHeadlineText, withoutTitleBreaks } from '@/lib/titleLineBreak';
 import CardHeadline from './CardHeadline';
 
 export type CardArticle = {
   id: string;
   title: string;
+  cardTitle?: string | null;
   content?: string | null; // 사진 없는 카드의 키네틱 배경 텍스트를 문장 단위로 뽑아내는 데 씀 (2026-09-17)
   excerpt?: string | null; // 본문 앞부분 요약 — 카드 제목 아래 1~2줄로 노출
   hoverText?: string | null; // 카드 이미지 마우스 오버 시 dimmed 배경 위에 흰색으로 표시되는 문구
@@ -61,11 +63,11 @@ export default function ArticleCard({
   const fallbackRowCount = wide ? 7 : 11; // 와이드는 낮고 넓으니 줄 수를 줄임, 그 외엔 세로를 가득 채우도록 넉넉히
   const fallbackSentences = (() => {
     const pool = splitSentences(stripHtml(article.content || ''), fallbackRowCount);
-    return pool.length > 0 ? pool : [toFrenchBrackets(article.title || article.excerpt || '')];
+    return pool.length > 0 ? pool : [toFrenchBrackets(withoutTitleBreaks(article.title || article.excerpt || ''))];
   })();
   const fallbackFontSize = featured ? 20 : wide ? 20 : 14;
   const href = `/article/${article.id}`;
-  const title = toFrenchBrackets(article.title);
+  const title = toFrenchBrackets(cardHeadlineText(article.title, article.cardTitle));
   const hoverText = article.hoverText ? toFrenchBrackets(article.hoverText) : null;
   const excerpt = article.excerpt ? toFrenchBrackets(article.excerpt) : article.content ? deriveExcerpt(article.content) : '';
 
@@ -221,9 +223,10 @@ export default function ArticleCard({
       <div className="pin-copy">
         <h2>
           <CardHeadline
-            title={article.title}
+            title={title}
             canEdit={isChiefEditor}
             patchUrl={`/api/articles/${article.id}`}
+            patchField="cardTitle"
             href={isChiefEditor ? undefined : href}
             ariaLabel="기사 제목"
           />
