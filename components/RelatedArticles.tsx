@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { timeAgo } from '@/lib/time';
 import { cardImageRatio, coverObjectPosition } from '@/lib/cardImage';
 import { toFrenchBrackets } from '@/lib/frenchBrackets';
+import { withoutTitleBreaks } from '@/lib/titleLineBreak';
 import { RightPanelIcon } from '@/components/icons';
 
 const RAIL_STORAGE_KEY = 'factfinder-article-rail';
@@ -21,6 +22,7 @@ type Item = {
 function RailCard({ article }: { article: Item }) {
   const href = `/article/${article.id}`;
   const imageRatio = cardImageRatio(article.id);
+  const title = toFrenchBrackets(withoutTitleBreaks(article.title));
   return (
     <article className="pin rail-pin">
       <a className="pin-media" href={href}>
@@ -35,13 +37,13 @@ function RailCard({ article }: { article: Item }) {
           />
         ) : (
           <div className="pin-fallback" style={{ aspectRatio: `1 / ${imageRatio}` }}>
-            <p>{toFrenchBrackets(article.title)}</p>
+            <p>{title}</p>
           </div>
         )}
       </a>
       <div className="pin-copy">
         <h2>
-          <a href={href}>{toFrenchBrackets(article.title)}</a>
+          <a href={href}>{title}</a>
         </h2>
         <div className="pin-meta">
           <span>{article.author.name}</span>
