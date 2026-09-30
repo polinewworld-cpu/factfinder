@@ -85,9 +85,13 @@ export default function VideoMasonryCard({ video, wide = false }: { video: Mason
 
       <div className="pin-copy">
         <h2>
-          <a href={href} target="_blank" rel="noopener noreferrer">
-            <VideoHeadline videoId={video.id} title={video.title} canEdit={isChiefEditor} />
-          </a>
+          {isChiefEditor ? (
+            <VideoHeadline videoId={video.id} title={video.title} canEdit />
+          ) : (
+            <a href={href} target="_blank" rel="noopener noreferrer">
+              <VideoHeadline videoId={video.id} title={video.title} canEdit={false} />
+            </a>
+          )}
         </h2>
         <div className="pin-meta">
           <span>{KIND_LABEL[video.kind]}</span>
