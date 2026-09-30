@@ -509,17 +509,17 @@ img {
   margin: 0;
   padding-top: 8px;
   color: var(--ink);
-  font-family: var(--sans);
-  font-size: 14px;
-  font-weight: 600;
+  font-family: var(--title);
+  font-size: 16px;
+  font-weight: 700;
   line-height: 1.45;
   letter-spacing: -0.02em;
 }
 
 .video-card-grid .video-card-title .card-headline {
-  font-family: var(--sans) !important;
-  font-size: 14px !important;
-  font-weight: 600 !important;
+  font-family: var(--title) !important;
+  font-size: 16px !important;
+  font-weight: 700 !important;
   line-height: 1.45;
   letter-spacing: -0.02em;
   color: var(--ink);
@@ -557,8 +557,14 @@ img {
 
   .video-card--latest .video-card-title,
   .video-card-grid .video-card--latest .video-card-title .card-headline {
-    font-size: 20px !important;
+    font-size: 26px !important;
     line-height: 1.35;
+  }
+
+  .video-card--second .video-card-title,
+  .video-card-grid .video-card--second .video-card-title .card-headline {
+    font-size: 20px !important;
+    line-height: 1.4;
   }
 }
 
