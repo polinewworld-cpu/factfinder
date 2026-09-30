@@ -1594,13 +1594,26 @@ img {
 .video-headline {
   display: block;
   width: 100%;
-  white-space: pre-line;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  outline: none;
+  resize: none;
+  overflow: hidden;
+  white-space: pre-wrap;
   word-break: keep-all;
   overflow-wrap: break-word;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  line-height: inherit;
+  text-align: left;
 }
 
 .video-headline.is-editable {
   cursor: text;
+  appearance: none;
 }
 
 .pin-excerpt {

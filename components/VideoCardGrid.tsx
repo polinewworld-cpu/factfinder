@@ -92,55 +92,59 @@ export default function VideoCardGrid({
             const isLatest = index === 0;
             const isSecond = index === 1;
             const isShort = card.kind === 'SHORT' && !isLatest && !isSecond;
+            const href = videoUrl(card);
             return (
-            <a
-              key={card.id}
-              href={videoUrl(card)}
-              target="_blank"
-              rel="noopener noreferrer"
-              title={toFrenchBrackets(card.title)}
-              className={`group flex h-full min-h-0 flex-col${isLatest ? ' video-card--latest' : ''}${isSecond ? ' video-card--second' : ''}${isShort ? ' video-card--short' : ''}`}
-            >
               <div
-                className={`video-card-thumb relative min-h-0 overflow-hidden rounded-xl border border-gray-200 bg-gray-100 group-hover:border-brand ${
-                  isLatest || isSecond ? '' : isShort ? 'flex-1' : 'aspect-video'
-                }`}
+                key={card.id}
+                className={`group flex h-full min-h-0 flex-col${isLatest ? ' video-card--latest' : ''}${isSecond ? ' video-card--second' : ''}${isShort ? ' video-card--short' : ''}`}
               >
-                <img
-                  src={card.thumbnailUrl}
-                  alt={toFrenchBrackets(card.title)}
-                  className="absolute inset-0 h-full w-full object-cover"
+                <a
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title={toFrenchBrackets(card.title)}
+                  className={`video-card-thumb relative min-h-0 overflow-hidden rounded-xl border border-gray-200 bg-gray-100 group-hover:border-brand ${
+                    isLatest || isSecond ? '' : isShort ? 'flex-1' : 'aspect-video'
+                  }`}
+                >
+                  <img
+                    src={card.thumbnailUrl}
+                    alt={toFrenchBrackets(card.title)}
+                    className="absolute inset-0 h-full w-full object-cover"
+                  />
+                  <span className="absolute top-2 left-2 text-xs font-bold text-white bg-black/60 rounded-lg px-2 py-0.5">
+                    {KIND_LABEL[card.kind]}
+                  </span>
+                  {!card.showOnMain && (
+                    <>
+                      <span className="absolute top-2 right-2 text-xs font-bold text-white bg-red-600/90 rounded-lg px-2 py-0.5">
+                        메인제외
+                      </span>
+                      {canRefresh && (
+                        <button
+                          type="button"
+                          disabled={restoreBusyId === card.id}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            restoreToMain(card);
+                          }}
+                          className="absolute bottom-2 right-2 text-xs font-bold text-white bg-black/60 hover:bg-black/80 rounded-lg px-2 py-0.5 disabled:opacity-50"
+                        >
+                          메인노출 켜기
+                        </button>
+                      )}
+                    </>
+                  )}
+                </a>
+                <VideoHeadline
+                  videoId={card.id}
+                  title={card.title}
+                  canEdit={canRefresh}
+                  href={canRefresh ? undefined : href}
+                  className={`video-card-title text-sm font-semibold text-gray-900 pt-2${canRefresh ? '' : ' line-clamp-2'}`}
                 />
-                <span className="absolute top-2 left-2 text-xs font-bold text-white bg-black/60 rounded-lg px-2 py-0.5">
-                  {KIND_LABEL[card.kind]}
-                </span>
-                {/* '메인에서 제외'는 이제 메인(전체) 피드의 영상 카드에서 하도록 옮겨감 — 여기서는 상태 표시 + 되돌리기(복구)만 가능 (2026-09-12) */}
-                {!card.showOnMain && (
-                  <>
-                    <span className="absolute top-2 right-2 text-xs font-bold text-white bg-red-600/90 rounded-lg px-2 py-0.5">
-                      메인제외
-                    </span>
-                    {canRefresh && (
-                      <button
-                        type="button"
-                        disabled={restoreBusyId === card.id}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          restoreToMain(card);
-                        }}
-                        className="absolute bottom-2 right-2 text-xs font-bold text-white bg-black/60 hover:bg-black/80 rounded-lg px-2 py-0.5 disabled:opacity-50"
-                      >
-                        메인노출 켜기
-                      </button>
-                    )}
-                  </>
-                )}
               </div>
-              <p className="video-card-title text-sm font-semibold text-gray-900 pt-2 line-clamp-2">
-                <VideoHeadline videoId={card.id} title={card.title} canEdit={canRefresh} />
-              </p>
-            </a>
             );
           })}
         </div>
