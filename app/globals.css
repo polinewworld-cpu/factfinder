@@ -1260,8 +1260,9 @@ img {
   pointer-events: none;
 }
 
-.pin.is-featured .pin-copy h2 {
-  font-size: 26px;
+.pin.is-featured .pin-copy h2,
+.pin.is-featured .pin-copy h2 .card-headline {
+  font-size: 34px;
   line-height: 1.35;
 }
 
