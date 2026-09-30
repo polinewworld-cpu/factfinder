@@ -144,7 +144,7 @@ export default function VideoCardGrid({
                   href={canRefresh ? undefined : href}
                   external
                   ariaLabel="영상 제목"
-                  className={`video-card-title text-sm font-semibold text-gray-900 pt-2${canRefresh ? '' : ' line-clamp-2'}`}
+                  className={`video-card-title${canRefresh ? '' : ' line-clamp-2'}`}
                 />
               </div>
             );
