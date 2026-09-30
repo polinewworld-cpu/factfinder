@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { toFrenchBrackets } from '@/lib/frenchBrackets';
-import VideoHeadline from './VideoHeadline';
+import CardHeadline from './CardHeadline';
 
 type VideoCardData = {
   id: string;
@@ -137,11 +137,13 @@ export default function VideoCardGrid({
                     </>
                   )}
                 </a>
-                <VideoHeadline
-                  videoId={card.id}
+                <CardHeadline
                   title={card.title}
                   canEdit={canRefresh}
+                  patchUrl={`/api/video-cards/${card.id}`}
                   href={canRefresh ? undefined : href}
+                  external
+                  ariaLabel="영상 제목"
                   className={`video-card-title text-sm font-semibold text-gray-900 pt-2${canRefresh ? '' : ' line-clamp-2'}`}
                 />
               </div>

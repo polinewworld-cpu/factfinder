@@ -9,6 +9,7 @@ import { stripHtml } from '@/lib/stripHtml';
 import { deriveExcerpt } from '@/lib/excerpt';
 import { cardImageRatio, coverObjectPosition, hashString } from '@/lib/cardImage';
 import { toFrenchBrackets } from '@/lib/frenchBrackets';
+import CardHeadline from './CardHeadline';
 
 export type CardArticle = {
   id: string;
@@ -78,7 +79,7 @@ export default function ArticleCard({
     event.preventDefault();
     event.stopPropagation();
     const url = `${window.location.origin}${href}`;
-    const payload = { title, url };
+    const payload = { title: title.replace(/\n/g, ' '), url };
     if (navigator.share) {
       try {
         await navigator.share(payload);
@@ -219,7 +220,13 @@ export default function ArticleCard({
 
       <div className="pin-copy">
         <h2>
-          <a href={href}>{title}</a>
+          <CardHeadline
+            title={article.title}
+            canEdit={isChiefEditor}
+            patchUrl={`/api/articles/${article.id}`}
+            href={isChiefEditor ? undefined : href}
+            ariaLabel="기사 제목"
+          />
         </h2>
         {excerpt ? <p className="pin-excerpt">{excerpt}</p> : null}
         <div className="pin-meta">

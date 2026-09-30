@@ -3,18 +3,22 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { toFrenchBrackets } from '@/lib/frenchBrackets';
 
-export default function VideoHeadline({
-  videoId,
+export default function CardHeadline({
   title,
   canEdit,
   href,
+  patchUrl,
   className,
+  ariaLabel = '제목',
+  external = false,
 }: {
-  videoId: string;
   title: string;
   canEdit: boolean;
   href?: string;
+  patchUrl: string;
   className?: string;
+  ariaLabel?: string;
+  external?: boolean;
 }) {
   const areaRef = useRef<HTMLTextAreaElement>(null);
   const [text, setText] = useState(title);
@@ -33,6 +37,14 @@ export default function VideoHeadline({
     el.style.height = `${el.scrollHeight}px`;
   }, [text, canEdit]);
 
+  async function persist(next: string) {
+    await fetch(patchUrl, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title: next }),
+    });
+  }
+
   function queueSave(next: string) {
     pending.current = next;
     if (saveTimer.current) clearTimeout(saveTimer.current);
@@ -40,14 +52,6 @@ export default function VideoHeadline({
       saveTimer.current = null;
       void persist(next);
     }, 400);
-  }
-
-  async function persist(next: string) {
-    await fetch(`/api/video-cards/${videoId}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title: next }),
-    });
   }
 
   function flushSave() {
@@ -64,23 +68,29 @@ export default function VideoHeadline({
 
   if (!canEdit) {
     const copy = toFrenchBrackets(title);
+    const body = <span className="card-headline">{copy}</span>;
     if (href) {
       return (
-        <a href={href} target="_blank" rel="noopener noreferrer" className={className}>
-          <span className="video-headline">{copy}</span>
+        <a
+          href={href}
+          target={external ? '_blank' : undefined}
+          rel={external ? 'noopener noreferrer' : undefined}
+          className={className}
+        >
+          {body}
         </a>
       );
     }
-    return <span className={`video-headline${className ? ` ${className}` : ''}`}>{copy}</span>;
+    return <span className={`card-headline${className ? ` ${className}` : ''}`}>{copy}</span>;
   }
 
   return (
     <textarea
       ref={areaRef}
-      className={`video-headline is-editable${className ? ` ${className}` : ''}`}
+      className={`card-headline is-editable${className ? ` ${className}` : ''}`}
       value={text}
       rows={1}
-      aria-label="영상 제목"
+      aria-label={ariaLabel}
       title="엔터로 줄바꿈, 삭제로 줄바꿈 취소"
       onClick={(event) => event.stopPropagation()}
       onMouseDown={(event) => event.stopPropagation()}
