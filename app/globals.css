@@ -1823,7 +1823,7 @@ img {
   position: relative;
   margin: 0 0 12px;
   padding-left: 15px;
-  font-size: 20px;
+  font-size: 16px;
 }
 
 .article-subtitles::before {
@@ -1839,7 +1839,7 @@ img {
 .article-subtitles p {
   margin: 0;
   color: var(--ink);
-  font-size: 20px;
+  font-size: 16px;
   font-weight: 700;
   line-height: 1.5;
 }
