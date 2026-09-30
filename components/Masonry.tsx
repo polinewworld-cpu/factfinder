@@ -99,7 +99,7 @@ function packColumns(
 }
 
 const PAGE_SIZE = 12;
-const SNAP_PX = 16;
+const SNAP_PX = 40;
 const SNAP_PASSES = 3;
 
 type SnapNode = { el: HTMLElement; top: number };
