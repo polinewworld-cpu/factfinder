@@ -147,7 +147,7 @@ export async function DELETE(_req: NextRequest, { params }: { params: { id: stri
   return NextResponse.json({ ok: true });
 }
 
-// 기사 '메인노출 빼기' — 카드 마우스오버 (-) 버튼 전용. 메인(인덱스) 피드에서만 사후적으로 제외, 키워드/검색 등 다른 화면엔 계속 노출 (편집장 전용, 2026-09-12 신설)
+// 기사 카드 제목 줄바꿈, 메인노출 빼기 — 메인(인덱스) 피드에서만 사후적으로 제외, 키워드/검색 등 다른 화면엔 계속 노출 (편집장 전용)
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: '로그인이 필요합니다' }, { status: 401 });
@@ -156,13 +156,16 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   }
 
   const body = await req.json();
-  if (typeof body.showOnMain !== 'boolean') {
-    return NextResponse.json({ error: 'showOnMain 값이 필요합니다' }, { status: 400 });
+  const data: { showOnMain?: boolean; title?: string } = {};
+  if (typeof body.showOnMain === 'boolean') data.showOnMain = body.showOnMain;
+  if (typeof body.title === 'string') data.title = toFrenchBrackets(body.title);
+  if (data.showOnMain === undefined && data.title === undefined) {
+    return NextResponse.json({ error: '변경할 값이 필요합니다' }, { status: 400 });
   }
 
   const updated = await prisma.article.update({
     where: { id: params.id },
-    data: { showOnMain: body.showOnMain },
+    data,
   });
 
   return NextResponse.json(updated);

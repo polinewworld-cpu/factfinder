@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { timeAgo } from '@/lib/time';
 import { useSavedArticles } from './SavedArticlesProvider';
-import VideoHeadline from './VideoHeadline';
+import CardHeadline from './CardHeadline';
 
 export type MasonryVideo = {
   id: string;
@@ -85,13 +85,14 @@ export default function VideoMasonryCard({ video, wide = false }: { video: Mason
 
       <div className="pin-copy">
         <h2>
-          {isChiefEditor ? (
-            <VideoHeadline videoId={video.id} title={video.title} canEdit />
-          ) : (
-            <a href={href} target="_blank" rel="noopener noreferrer">
-              <VideoHeadline videoId={video.id} title={video.title} canEdit={false} />
-            </a>
-          )}
+          <CardHeadline
+            title={video.title}
+            canEdit={isChiefEditor}
+            patchUrl={`/api/video-cards/${video.id}`}
+            href={isChiefEditor ? undefined : href}
+            external
+            ariaLabel="영상 제목"
+          />
         </h2>
         <div className="pin-meta">
           <span>{KIND_LABEL[video.kind]}</span>
