@@ -100,12 +100,26 @@ function packColumns(
 
 const PAGE_SIZE = 12;
 const SNAP_PX = 80;
-const SNAP_PASSES = 3;
+const SNAP_PASSES = 4;
 
 type SnapNode = { el: HTMLElement; top: number };
 
 function columnCards(column: Element) {
   return Array.from(column.querySelectorAll<HTMLElement>(':scope > .masonry-card'));
+}
+
+function slackAbove(el: HTMLElement) {
+  const top = el.getBoundingClientRect().top;
+  const prev = el.previousElementSibling as HTMLElement | null;
+  if (prev) return Math.max(0, top - prev.getBoundingClientRect().bottom);
+  const parent = el.parentElement;
+  if (!parent) return 0;
+  return Math.max(0, top - parent.getBoundingClientRect().top);
+}
+
+function addMarginTop(el: HTMLElement, delta: number) {
+  const current = Number.parseFloat(el.style.marginTop) || 0;
+  el.style.marginTop = `${current + delta}px`;
 }
 
 function snapAdjacentTops(root: HTMLElement) {
@@ -138,11 +152,40 @@ function snapAdjacentTops(root: HTMLElement) {
     let changed = false;
     for (const pair of pairs) {
       if (used.has(pair.higher.el) || used.has(pair.lower.el)) continue;
-      const current = Number.parseFloat(pair.higher.el.style.marginTop) || 0;
-      pair.higher.el.style.marginTop = `${current + pair.lower.top - pair.higher.top}px`;
+
+      // Pull the lower card up first so alignment does not leave a hole
+      // above the shared top line. Eat the column gap if needed, then
+      // push the higher card down only for whatever delta remains.
+      const pull = Math.min(pair.delta, slackAbove(pair.lower.el));
+      if (pull > 0.5) {
+        addMarginTop(pair.lower.el, -pull);
+        changed = true;
+      }
+      const remain = pair.delta - pull;
+      if (remain > 0.5) {
+        addMarginTop(pair.higher.el, remain);
+        changed = true;
+      }
+
       used.add(pair.higher.el);
       used.add(pair.lower.el);
-      changed = true;
+    }
+
+    // If a snapped row still has extra space above the shared line,
+    // lift both cards together by the smaller of the two slacks.
+    for (let c = 0; c < measured.length - 1; c += 1) {
+      for (const a of columns[c]) {
+        for (const b of columns[c + 1]) {
+          const aTop = a.getBoundingClientRect().top;
+          const bTop = b.getBoundingClientRect().top;
+          if (Math.abs(aTop - bTop) > 1) continue;
+          const lift = Math.min(slackAbove(a), slackAbove(b));
+          if (lift <= 0.5) continue;
+          addMarginTop(a, -lift);
+          addMarginTop(b, -lift);
+          changed = true;
+        }
+      }
     }
 
     if (!changed) break;
