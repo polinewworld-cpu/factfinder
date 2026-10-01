@@ -964,7 +964,7 @@ img {
 
 .composer-bubble {
   position: fixed;
-  z-index: 45;
+  z-index: 200;
   top: 0;
   left: 0;
   padding: 6px 8px;
