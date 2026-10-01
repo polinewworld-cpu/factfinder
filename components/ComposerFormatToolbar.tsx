@@ -125,15 +125,18 @@ export function ComposerFormatTools({
 
 type BubblePos = { x: number; y: number; bottom: number };
 
+function nodeInEditor(editor: HTMLElement, node: Node | null) {
+  if (!node) return false;
+  return node === editor || editor.contains(node);
+}
+
 function selectionAnchor(editor: HTMLElement): BubblePos | null {
   const sel = window.getSelection();
   if (!sel || sel.rangeCount === 0 || sel.isCollapsed) return null;
+  if (!nodeInEditor(editor, sel.anchorNode) || !nodeInEditor(editor, sel.focusNode)) return null;
   const range = sel.getRangeAt(0);
-  if (!editor.contains(range.commonAncestorContainer)) return null;
-  const text = range.toString().replace(/\s+/g, '');
-  if (!text) return null;
   const rects = range.getClientRects();
-  const rect = rects[0] || range.getBoundingClientRect();
+  const rect = (rects.length ? rects[0] : range.getBoundingClientRect()) as DOMRect;
   if (!rect || (rect.width === 0 && rect.height === 0)) return null;
   return { x: rect.left + rect.width / 2, y: rect.top, bottom: rect.bottom };
 }
@@ -147,38 +150,32 @@ export function ComposerSelectionToolbar({
 }) {
   const barRef = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState<BubblePos | null>(null);
-  const draggingRef = useRef(false);
 
   useEffect(() => {
+    let frame = 0;
     function refresh() {
-      if (draggingRef.current) return;
-      const editor = editorRef.current;
-      if (!editor) {
-        setPos(null);
-        return;
-      }
-      setPos(selectionAnchor(editor));
-    }
-
-    function onMouseDown(event: MouseEvent) {
-      if (barRef.current?.contains(event.target as Node)) return;
-      if (editorRef.current?.contains(event.target as Node)) draggingRef.current = true;
-    }
-
-    function onMouseUp() {
-      draggingRef.current = false;
-      refresh();
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        const editor = editorRef.current;
+        if (!editor) {
+          setPos(null);
+          return;
+        }
+        setPos(selectionAnchor(editor));
+      });
     }
 
     document.addEventListener('selectionchange', refresh);
-    document.addEventListener('mousedown', onMouseDown);
-    document.addEventListener('mouseup', onMouseUp);
+    document.addEventListener('mouseup', refresh);
+    document.addEventListener('keyup', refresh);
     window.addEventListener('resize', refresh);
     window.addEventListener('scroll', refresh, true);
+    refresh();
     return () => {
+      cancelAnimationFrame(frame);
       document.removeEventListener('selectionchange', refresh);
-      document.removeEventListener('mousedown', onMouseDown);
-      document.removeEventListener('mouseup', onMouseUp);
+      document.removeEventListener('mouseup', refresh);
+      document.removeEventListener('keyup', refresh);
       window.removeEventListener('resize', refresh);
       window.removeEventListener('scroll', refresh, true);
     };
