@@ -10,6 +10,7 @@ import AdminSidebar from '@/components/AdminSidebar';
 import { WriteShell } from '@/components/AdminNav';
 import TagMultiSelect from '@/components/TagMultiSelect';
 import CoverFocalEditor from '@/components/CoverFocalEditor';
+import { ComposerFormatTools, ComposerSelectionToolbar } from '@/components/ComposerFormatToolbar';
 import { cardImageRatio } from '@/lib/cardImage';
 import { toFrenchBrackets, replaceFrenchBracketsInTree } from '@/lib/frenchBrackets';
 
@@ -19,9 +20,6 @@ type Keyword = { id: string; name: string };
 type ArticleSearchResult = { id: string; title: string; author: { name: string }; updatedAt: string };
 
 const WRITER_ROLES = ['REPORTER', 'COLUMNIST', 'CHIEF_EDITOR'];
-
-// 형광펜 — swatch는 툴바의 동그라미 버튼 색, mark는 본문에 칠해지는 반투명 하이라이트 색
-const HL_COLORS = [{ key: 'cyan', swatch: '#7FD7F5', mark: 'rgba(127,215,245,0.55)' }];
 
 // 기사 수정 — /write?id=... 로 들어오면 해당 기사를 불러와 채워넣음 (2026-09-11 신설, 관리자 "전체 기사"에서 진입)
 function getEditIdFromUrl(): string | null {
@@ -764,64 +762,20 @@ export default function WritePage() {
       </div>
 
       <div className="composer-editor">
-        <div className="composer-toolbar" onMouseDown={(e) => e.preventDefault()}>
-          <button type="button" onClick={() => exec('bold')} className="toolbar-btn font-bold" title="굵게">
-            B
-          </button>
-          <button type="button" onClick={() => exec('italic')} className="toolbar-btn italic" title="기울임">
-            I
-          </button>
-          <button type="button" onClick={() => exec('underline')} className="toolbar-btn underline" title="밑줄">
-            U
-          </button>
-          <span className="inline-flex items-center gap-1 px-0.5">
-            {HL_COLORS.map((c) => (
-              <button
-                key={c.key}
-                type="button"
-                onClick={() => applyHighlight(c.mark)}
-                className="w-5 h-5 rounded-full border border-black/10 shrink-0"
-                style={{ background: c.swatch, boxShadow: `0 0 8px ${c.swatch}` }}
-                title="형광펜"
-              />
-            ))}
-          </span>
-          <button
-            type="button"
-            onClick={insertLinkForSelection}
-            className="toolbar-btn"
-            title="선택한 문장을 드래그한 뒤 누르면 URL 링크로 연결됩니다"
-          >
-            링크
-          </button>
-          <span className="composer-rule" />
-          <label className="toolbar-btn cursor-pointer" title="사진을 업로드해서 커서 위치에 삽입">
-            <input
-              type="file"
-              accept="image/jpeg,image/png,image/webp,image/gif,image/avif,.avif"
-              className="hidden"
-              onClick={captureEditorSelection}
-              onChange={handleBodyImageUpload}
-            />
-            {bodyImageUploading ? '업로드 중…' : '사진'}
-          </label>
-          <button
-            type="button"
-            onClick={openBodyGallery}
-            className="toolbar-btn"
-            title="사진 라이브러리(갤러리)에서 골라 커서 위치에 삽입"
-          >
-            갤러리
-          </button>
-          <span className="composer-rule" />
-          <button
-            type="button"
-            onClick={openSpecialCharModal}
-            className="toolbar-btn"
-            title="특수문자 삽입 (누르면 문자 레이어가 열립니다)"
-          >
-            특수문자
-          </button>
+        <div className="composer-toolbar composer-format-bar" onMouseDown={(e) => e.preventDefault()}>
+          <ComposerFormatTools
+            idPrefix="composer-top"
+            handlers={{
+              exec,
+              applyHighlight,
+              insertLink: insertLinkForSelection,
+              captureSelection: captureEditorSelection,
+              onPhotoChange: handleBodyImageUpload,
+              photoUploading: bodyImageUploading,
+              openGallery: openBodyGallery,
+              openSpecialChars: openSpecialCharModal,
+            }}
+          />
           <span className="composer-save">
             {saving ? '저장 중…' : lastSavedAt ? `저장됨 ${lastSavedAt.toLocaleTimeString('ko-KR')}` : ''}
           </span>
@@ -838,6 +792,19 @@ export default function WritePage() {
           className="composer-body"
           data-placeholder="본문을 입력하세요"
           tabIndex={0}
+        />
+        <ComposerSelectionToolbar
+          editorRef={editorRef}
+          handlers={{
+            exec,
+            applyHighlight,
+            insertLink: insertLinkForSelection,
+            captureSelection: captureEditorSelection,
+            onPhotoChange: handleBodyImageUpload,
+            photoUploading: bodyImageUploading,
+            openGallery: openBodyGallery,
+            openSpecialChars: openSpecialCharModal,
+          }}
         />
       </div>
 

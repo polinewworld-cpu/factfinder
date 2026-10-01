@@ -907,18 +907,21 @@ img {
   background: var(--surface);
 }
 
-.composer-toolbar {
+.composer-format-bar {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 2px;
+}
+
+.composer-toolbar {
   padding: 8px 10px;
   border-bottom: 1px solid var(--hairline);
   border-radius: var(--radius) var(--radius) 0 0;
   background: color-mix(in srgb, var(--surface) 92%, var(--canvas));
 }
 
-.composer-toolbar .toolbar-btn {
+.composer-format-bar .toolbar-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -933,7 +936,7 @@ img {
   font-weight: 600;
 }
 
-.composer-toolbar .toolbar-btn:hover {
+.composer-format-bar .toolbar-btn:hover {
   background: var(--chip);
 }
 
@@ -944,8 +947,32 @@ img {
   background: var(--hairline);
 }
 
-.composer-toolbar .toolbar-btn.italic {
+.composer-format-bar .toolbar-btn.italic {
   font-style: italic;
+}
+
+.composer-format-bar .toolbar-hl {
+  display: inline-flex;
+  width: 20px;
+  height: 20px;
+  margin: 0 4px;
+  padding: 0;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.composer-bubble {
+  position: fixed;
+  z-index: 45;
+  top: 0;
+  left: 0;
+  padding: 6px 8px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.14);
+  max-width: min(92vw, 560px);
 }
 
 .composer-body {
