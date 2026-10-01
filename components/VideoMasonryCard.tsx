@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { timeAgo } from '@/lib/time';
 import { useSavedArticles } from './SavedArticlesProvider';
 import CardHeadline from './CardHeadline';
+import CoverHoverImage from './CoverHoverImage';
 
 export type MasonryVideo = {
   id: string;
@@ -56,13 +57,11 @@ export default function VideoMasonryCard({ video, wide = false }: { video: Mason
   return (
     <article className={wide ? 'pin is-wide' : 'pin'}>
       <a className="pin-media" href={href} target="_blank" rel="noopener noreferrer">
-        <img
+        <CoverHoverImage
           src={video.thumbnailUrl}
-          alt=""
-          style={{
-            aspectRatio: wide ? '1 / 0.46' : video.kind === 'SHORT' ? '9 / 16' : '16 / 9',
-            objectFit: 'cover',
-          }}
+          aspectRatio={wide ? '1 / 0.46' : video.kind === 'SHORT' ? '9 / 16' : '16 / 9'}
+          fallbackAxis={video.kind === 'SHORT' ? 'y' : 'x'}
+          style={{ objectFit: 'cover' }}
         />
         <div className="pin-badges">
           <span className="pin-badge-chip">정치신세계</span>

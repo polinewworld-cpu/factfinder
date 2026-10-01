@@ -7,10 +7,11 @@ import { useSavedArticles } from './SavedArticlesProvider';
 import KineticTextGrid from './AppearText';
 import { stripHtml } from '@/lib/stripHtml';
 import { deriveExcerpt } from '@/lib/excerpt';
-import { cardImageRatio, coverObjectPosition, hashString } from '@/lib/cardImage';
+import { cardImageRatio, hashString } from '@/lib/cardImage';
 import { toFrenchBrackets } from '@/lib/frenchBrackets';
 import { cardHeadlineText, withoutTitleBreaks } from '@/lib/titleLineBreak';
 import CardHeadline from './CardHeadline';
+import CoverHoverImage from './CoverHoverImage';
 
 export type CardArticle = {
   id: string;
@@ -134,13 +135,11 @@ export default function ArticleCard({
     <article className={pinClass}>
       <a className="pin-media" href={href}>
         {article.coverImageUrl ? (
-          <img
+          <CoverHoverImage
             src={article.coverImageUrl}
-            alt=""
-            style={{
-              aspectRatio: `1 / ${imageRatio}`,
-              objectPosition: coverObjectPosition(article.coverFocalX, article.coverFocalY),
-            }}
+            aspectRatio={`1 / ${imageRatio}`}
+            focalX={article.coverFocalX}
+            focalY={article.coverFocalY}
           />
         ) : (
           <div className="pin-fallback" style={{ aspectRatio: `1 / ${imageRatio}` }}>

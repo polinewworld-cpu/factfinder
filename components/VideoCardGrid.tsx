@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { toFrenchBrackets } from '@/lib/frenchBrackets';
 import CardHeadline from './CardHeadline';
+import CoverHoverImage from './CoverHoverImage';
 
 type VideoCardData = {
   id: string;
@@ -107,10 +108,11 @@ export default function VideoCardGrid({
                     isLatest || isSecond ? '' : isShort ? 'flex-1' : 'aspect-video'
                   }`}
                 >
-                  <img
+                  <CoverHoverImage
                     src={card.thumbnailUrl}
                     alt={toFrenchBrackets(card.title)}
                     className="absolute inset-0 h-full w-full object-cover"
+                    fallbackAxis={card.kind === 'SHORT' ? 'y' : 'x'}
                   />
                   <span className="absolute top-2 left-2 text-xs font-bold text-white bg-black/60 rounded-lg px-2 py-0.5">
                     {KIND_LABEL[card.kind]}
