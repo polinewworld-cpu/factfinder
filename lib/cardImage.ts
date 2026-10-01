@@ -26,8 +26,7 @@ export function coverObjectPosition(x?: number | null, y?: number | null) {
 }
 
 export const COVER_HOVER_SCALE = 1.05;
-const COVER_HOVER_PAN_OF_ZOOM = 0.9;
-const COVER_HOVER_OBJECT_SHIFT = 8;
+const COVER_HOVER_PAN_OF_ZOOM = 0.4;
 
 export function coverOverflowAxis(
   naturalW: number,
@@ -45,24 +44,11 @@ export function coverOverflowAxis(
   return fallback;
 }
 
-export function coverOverflowAmount(
-  naturalW: number,
-  naturalH: number,
-  boxW: number,
-  boxH: number,
-  axis: 'x' | 'y',
-) {
-  if (!naturalW || !naturalH || !boxW || !boxH) return 0;
-  const cover = Math.max(boxW / naturalW, boxH / naturalH);
-  return axis === 'x' ? Math.max(0, naturalW * cover - boxW) : Math.max(0, naturalH * cover - boxH);
-}
-
 export function coverHoverPanVars(
   axis: 'x' | 'y',
   focalX?: number | null,
   focalY?: number | null,
   scale = COVER_HOVER_SCALE,
-  overflowPx = 0,
 ) {
   const fx = clampFocal(focalX);
   const fy = clampFocal(focalY);
@@ -71,15 +57,10 @@ export function coverHoverPanVars(
   const towardHigh = origin <= 0.5;
   const leftoverPct = extra * (towardHigh ? 1 - origin : origin) * COVER_HOVER_PAN_OF_ZOOM * 100;
   const signed = `${towardHigh ? -leftoverPct : leftoverPct}%`;
-  const cropShift = overflowPx > 4 ? COVER_HOVER_OBJECT_SHIFT : 0;
-  const panFocal = (axis === 'x' ? fx : fy) + (towardHigh ? cropShift : -cropShift);
-  const panPos = Math.min(100, Math.max(0, panFocal));
   return {
     originX: `${fx}%`,
     originY: `${fy}%`,
     panX: axis === 'x' ? signed : '0%',
     panY: axis === 'y' ? signed : '0%',
-    panOx: `${axis === 'x' ? panPos : fx}%`,
-    panOy: `${axis === 'y' ? panPos : fy}%`,
   };
 }
