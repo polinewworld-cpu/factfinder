@@ -44,23 +44,47 @@ export function coverOverflowAxis(
   return fallback;
 }
 
+export function coverDrawnLayout(
+  boxW: number,
+  boxH: number,
+  naturalW: number,
+  naturalH: number,
+  focalX?: number | null,
+  focalY?: number | null,
+) {
+  const fx = clampFocal(focalX) / 100;
+  const fy = clampFocal(focalY) / 100;
+  const cover = Math.max(boxW / naturalW, boxH / naturalH);
+  const width = naturalW * cover;
+  const height = naturalH * cover;
+  return {
+    width,
+    height,
+    left: -(width - boxW) * fx,
+    top: -(height - boxH) * fy,
+  };
+}
+
 export function coverHoverPanVars(
   axis: 'x' | 'y',
   focalX?: number | null,
   focalY?: number | null,
   scale = COVER_HOVER_SCALE,
+  boxW = 0,
+  boxH = 0,
 ) {
   const fx = clampFocal(focalX);
   const fy = clampFocal(focalY);
   const extra = Math.max(0, scale - 1);
   const origin = (axis === 'x' ? fx : fy) / 100;
   const towardHigh = origin <= 0.5;
-  const leftoverPct = extra * (towardHigh ? 1 - origin : origin) * COVER_HOVER_PAN_OF_ZOOM * 100;
-  const signed = `${towardHigh ? -leftoverPct : leftoverPct}%`;
+  const boxPx = axis === 'x' ? boxW : boxH;
+  const leftoverPx = extra * (towardHigh ? 1 - origin : origin) * COVER_HOVER_PAN_OF_ZOOM * boxPx;
+  const signed = `${towardHigh ? -leftoverPx : leftoverPx}px`;
   return {
     originX: `${fx}%`,
     originY: `${fy}%`,
-    panX: axis === 'x' ? signed : '0%',
-    panY: axis === 'y' ? signed : '0%',
+    panX: axis === 'x' ? signed : '0px',
+    panY: axis === 'y' ? signed : '0px',
   };
 }

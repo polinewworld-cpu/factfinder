@@ -79,15 +79,15 @@
 }
 
 @property --cover-tx {
-  syntax: '<percentage>';
+  syntax: '<length>';
   inherits: false;
-  initial-value: 0%;
+  initial-value: 0px;
 }
 
 @property --cover-ty {
-  syntax: '<percentage>';
+  syntax: '<length>';
   inherits: false;
-  initial-value: 0%;
+  initial-value: 0px;
 }
 
 * {
@@ -1344,13 +1344,33 @@ img {
   background: var(--hairline);
 }
 
+.cover-hover-frame {
+  display: block;
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+}
+
+.cover-hover-frame--fill {
+  position: absolute;
+  inset: 0;
+  width: auto;
+  height: auto;
+}
+
+.pin-media .cover-hover-frame img,
+.video-card-thumb .cover-hover-frame img {
+  width: auto;
+  max-width: none;
+  height: auto;
+}
+
 .pin-media img,
 .video-card-thumb img {
   transform-origin: var(--cover-ox, 50%) var(--cover-oy, 50%);
-  object-position: var(--cover-ox, 50%) var(--cover-oy, 50%);
   --cover-scale: 1;
-  --cover-tx: 0%;
-  --cover-ty: 0%;
+  --cover-tx: 0px;
+  --cover-ty: 0px;
   transform: scale(var(--cover-scale)) translate(var(--cover-tx), var(--cover-ty));
   transition: --cover-scale 2000ms ease 250ms, --cover-tx 1600ms ease, --cover-ty 1600ms ease;
 }
@@ -1360,8 +1380,8 @@ img {
 .video-card-thumb:hover img,
 .video-card-thumb:focus-visible img {
   --cover-scale: 1.05;
-  --cover-tx: var(--cover-pan-x, 0%);
-  --cover-ty: var(--cover-pan-y, 0%);
+  --cover-tx: var(--cover-pan-x, 0px);
+  --cover-ty: var(--cover-pan-y, 0px);
   transition: --cover-scale 2200ms ease, --cover-tx 3200ms ease 700ms, --cover-ty 3200ms ease 700ms;
 }
 
@@ -1373,8 +1393,8 @@ img {
   .video-card-thumb:hover img,
   .video-card-thumb:focus-visible img {
     --cover-scale: 1;
-    --cover-tx: 0%;
-    --cover-ty: 0%;
+    --cover-tx: 0px;
+    --cover-ty: 0px;
     transform: none;
     transition: none;
   }
