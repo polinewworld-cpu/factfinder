@@ -1,7 +1,14 @@
 'use client';
 
-import { useCallback, useLayoutEffect, useRef, type CSSProperties } from 'react';
-import { clampFocal, coverHoverPanVars, coverOverflowAxis } from '@/lib/cardImage';
+import { useCallback, useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
+import {
+  COVER_HOVER_SCALE,
+  clampFocal,
+  coverDrawnLayout,
+  coverHoverPanVars,
+  coverObjectPosition,
+  coverOverflowAxis,
+} from '@/lib/cardImage';
 
 type CoverHoverStyle = CSSProperties & {
   '--cover-ox': string;
@@ -10,6 +17,8 @@ type CoverHoverStyle = CSSProperties & {
   '--cover-pan-y': string;
 };
 
+type Drawn = { width: number; height: number; left: number; top: number };
+
 export default function CoverHoverImage({
   src,
   alt = '',
@@ -17,8 +26,8 @@ export default function CoverHoverImage({
   focalX,
   focalY,
   className,
-  style,
   fallbackAxis = 'x',
+  fill = false,
 }: {
   src: string;
   alt?: string;
@@ -26,48 +35,90 @@ export default function CoverHoverImage({
   focalX?: number | null;
   focalY?: number | null;
   className?: string;
-  style?: CSSProperties;
   fallbackAxis?: 'x' | 'y';
+  fill?: boolean;
 }) {
+  const frameRef = useRef<HTMLSpanElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
   const ox = clampFocal(focalX);
   const oy = clampFocal(focalY);
+  const [drawn, setDrawn] = useState<Drawn | null>(null);
   const pan = coverHoverPanVars(fallbackAxis, ox, oy);
 
-  const applyAxis = useCallback(() => {
+  const applyLayout = useCallback(() => {
+    const frame = frameRef.current;
     const img = imgRef.current;
-    if (!img?.naturalWidth || !img.clientWidth) return;
-    const axis = coverOverflowAxis(
-      img.naturalWidth,
-      img.naturalHeight,
-      img.clientWidth,
-      img.clientHeight,
-      fallbackAxis,
-    );
-    const next = coverHoverPanVars(axis, ox, oy);
+    if (!frame || !img?.naturalWidth) return;
+    const boxW = frame.clientWidth;
+    const boxH = frame.clientHeight;
+    if (!boxW || !boxH) return;
+    const nextDrawn = coverDrawnLayout(boxW, boxH, img.naturalWidth, img.naturalHeight, ox, oy);
+    setDrawn((prev) => {
+      if (
+        prev &&
+        Math.abs(prev.width - nextDrawn.width) < 0.5 &&
+        Math.abs(prev.height - nextDrawn.height) < 0.5 &&
+        Math.abs(prev.left - nextDrawn.left) < 0.5 &&
+        Math.abs(prev.top - nextDrawn.top) < 0.5
+      ) {
+        return prev;
+      }
+      return nextDrawn;
+    });
+    const axis = coverOverflowAxis(img.naturalWidth, img.naturalHeight, boxW, boxH, fallbackAxis);
+    const next = coverHoverPanVars(axis, ox, oy, COVER_HOVER_SCALE, boxW, boxH);
+    img.style.setProperty('--cover-ox', next.originX);
+    img.style.setProperty('--cover-oy', next.originY);
     img.style.setProperty('--cover-pan-x', next.panX);
     img.style.setProperty('--cover-pan-y', next.panY);
   }, [fallbackAxis, ox, oy]);
 
   useLayoutEffect(() => {
-    applyAxis();
-    const img = imgRef.current;
-    if (!img) return;
-    const observer = new ResizeObserver(applyAxis);
-    observer.observe(img);
+    applyLayout();
+    const frame = frameRef.current;
+    if (!frame) return;
+    const observer = new ResizeObserver(applyLayout);
+    observer.observe(frame);
     return () => observer.disconnect();
-  }, [applyAxis, src]);
+  }, [applyLayout, src]);
 
-  const hoverStyle: CoverHoverStyle = {
-    ...style,
-    ...(aspectRatio ? { aspectRatio } : null),
+  const hoverVars: CoverHoverStyle = {
     '--cover-ox': pan.originX,
     '--cover-oy': pan.originY,
     '--cover-pan-x': pan.panX,
     '--cover-pan-y': pan.panY,
   };
 
+  const imgStyle: CoverHoverStyle = drawn
+    ? {
+        position: 'absolute',
+        width: drawn.width,
+        height: drawn.height,
+        left: drawn.left,
+        top: drawn.top,
+        maxWidth: 'none',
+        objectFit: 'fill',
+        transformOrigin: `${ox}% ${oy}%`,
+        ...hoverVars,
+      }
+    : {
+        position: 'absolute',
+        inset: 0,
+        width: '100%',
+        height: '100%',
+        objectFit: 'cover',
+        objectPosition: coverObjectPosition(ox, oy),
+        transformOrigin: `${ox}% ${oy}%`,
+        ...hoverVars,
+      };
+
   return (
-    <img ref={imgRef} src={src} alt={alt} className={className} onLoad={applyAxis} style={hoverStyle} />
+    <span
+      ref={frameRef}
+      className={`cover-hover-frame${fill ? ' cover-hover-frame--fill' : ''}${className ? ` ${className}` : ''}`}
+      style={fill ? undefined : { aspectRatio }}
+    >
+      <img ref={imgRef} src={src} alt={alt} onLoad={applyLayout} style={imgStyle} />
+    </span>
   );
 }

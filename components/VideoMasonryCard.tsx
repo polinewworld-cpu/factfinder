@@ -61,7 +61,6 @@ export default function VideoMasonryCard({ video, wide = false }: { video: Mason
           src={video.thumbnailUrl}
           aspectRatio={wide ? '1 / 0.46' : video.kind === 'SHORT' ? '9 / 16' : '16 / 9'}
           fallbackAxis={video.kind === 'SHORT' ? 'y' : 'x'}
-          style={{ objectFit: 'cover' }}
         />
         <div className="pin-badges">
           <span className="pin-badge-chip">정치신세계</span>
