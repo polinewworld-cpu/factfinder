@@ -1352,7 +1352,7 @@ img {
   --cover-tx: 0%;
   --cover-ty: 0%;
   transform: scale(var(--cover-scale)) translate(var(--cover-tx), var(--cover-ty));
-  transition: --cover-scale 1200ms ease 150ms, --cover-tx 900ms ease, --cover-ty 900ms ease;
+  transition: --cover-scale 2000ms ease 250ms, --cover-tx 1600ms ease, --cover-ty 1600ms ease;
 }
 
 .pin-media:hover img,
@@ -1362,7 +1362,7 @@ img {
   --cover-scale: 1.05;
   --cover-tx: var(--cover-pan-x, 0%);
   --cover-ty: var(--cover-pan-y, 0%);
-  transition: --cover-scale 1200ms ease, --cover-tx 1800ms ease 400ms, --cover-ty 1800ms ease 400ms;
+  transition: --cover-scale 2200ms ease, --cover-tx 3200ms ease 700ms, --cover-ty 3200ms ease 700ms;
 }
 
 @media (prefers-reduced-motion: reduce) {
