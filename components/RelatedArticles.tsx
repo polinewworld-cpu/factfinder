@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import { timeAgo } from '@/lib/time';
-import { cardImageRatio, coverObjectPosition } from '@/lib/cardImage';
+import { cardImageRatio } from '@/lib/cardImage';
 import { toFrenchBrackets } from '@/lib/frenchBrackets';
 import { withoutTitleBreaks } from '@/lib/titleLineBreak';
 import { RightPanelIcon } from '@/components/icons';
+import CoverHoverImage from './CoverHoverImage';
 
 const RAIL_STORAGE_KEY = 'factfinder-article-rail';
 
@@ -27,13 +28,11 @@ function RailCard({ article }: { article: Item }) {
     <article className="pin rail-pin">
       <a className="pin-media" href={href}>
         {article.coverImageUrl ? (
-          <img
+          <CoverHoverImage
             src={article.coverImageUrl}
-            alt=""
-            style={{
-              aspectRatio: `1 / ${imageRatio}`,
-              objectPosition: coverObjectPosition(article.coverFocalX, article.coverFocalY),
-            }}
+            aspectRatio={`1 / ${imageRatio}`}
+            focalX={article.coverFocalX}
+            focalY={article.coverFocalY}
           />
         ) : (
           <div className="pin-fallback" style={{ aspectRatio: `1 / ${imageRatio}` }}>

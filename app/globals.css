@@ -1326,14 +1326,30 @@ img {
   background: var(--hairline);
 }
 
-/* 카드 마우스 오버 시 메인 이미지를 흑백으로 전환 (2026-09-12 신설) */
-.pin-media img {
-  transition: filter 200ms ease;
+.pin-media img,
+.video-card-thumb img {
+  transform-origin: var(--cover-ox, 50%) var(--cover-oy, 50%);
+  transform: scale(1) translate(0, 0);
+  transition: transform 500ms ease;
 }
 
 .pin-media:hover img,
-.pin-media:focus-visible img {
-  filter: grayscale(100%);
+.pin-media:focus-visible img,
+.video-card-thumb:hover img,
+.video-card-thumb:focus-visible img {
+  transform: scale(1.05) translate(var(--cover-pan-x, -1.75%), var(--cover-pan-y, 0%));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pin-media img,
+  .video-card-thumb img,
+  .pin-media:hover img,
+  .pin-media:focus-visible img,
+  .video-card-thumb:hover img,
+  .video-card-thumb:focus-visible img {
+    transform: none;
+    transition: none;
+  }
 }
 
 /* 사진이 없는 기사 카드 — 어두운 랜덤 컬러 배경 위에 핫핑크 타이포가 그리드로 반복되며
