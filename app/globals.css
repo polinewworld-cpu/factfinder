@@ -1329,15 +1329,18 @@ img {
 .pin-media img,
 .video-card-thumb img {
   transform-origin: var(--cover-ox, 50%) var(--cover-oy, 50%);
+  object-position: var(--cover-ox, 50%) var(--cover-oy, 50%);
   transform: scale(1) translate(0, 0);
-  transition: transform 500ms ease;
+  transition: transform 1200ms ease, object-position 700ms ease;
 }
 
 .pin-media:hover img,
 .pin-media:focus-visible img,
 .video-card-thumb:hover img,
 .video-card-thumb:focus-visible img {
-  transform: scale(1.05) translate(var(--cover-pan-x, -1.75%), var(--cover-pan-y, 0%));
+  transform: scale(1.05) translate(var(--cover-pan-x, 0%), var(--cover-pan-y, 0%));
+  object-position: var(--cover-pan-ox, var(--cover-ox, 50%)) var(--cover-pan-oy, var(--cover-oy, 50%));
+  transition: transform 1200ms ease, object-position 900ms ease 650ms;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1348,6 +1351,7 @@ img {
   .video-card-thumb:hover img,
   .video-card-thumb:focus-visible img {
     transform: none;
+    object-position: var(--cover-ox, 50%) var(--cover-oy, 50%);
     transition: none;
   }
 }
