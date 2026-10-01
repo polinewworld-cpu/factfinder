@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useLayoutEffect, useRef, useState, type ChangeEvent, type ReactNode, type RefObject } from 'react';
-import { createPortal } from 'react-dom';
 
 export type FormatToolbarHandlers = {
   exec: (cmd: string) => void;
@@ -145,7 +144,7 @@ export function ComposerSelectionToolbar({
   editorRef,
   handlers,
 }: {
-  editorRef: RefObject<HTMLDivElement | null>;
+  editorRef: RefObject<HTMLDivElement>;
   handlers: FormatToolbarHandlers;
 }) {
   const barRef = useRef<HTMLDivElement>(null);
@@ -194,9 +193,9 @@ export function ComposerSelectionToolbar({
     el.style.top = `${top}px`;
   }, [pos]);
 
-  if (!pos || typeof document === 'undefined') return null;
+  if (!pos) return null;
 
-  return createPortal(
+  return (
     <div
       ref={barRef}
       className="composer-bubble composer-format-bar"
@@ -205,7 +204,6 @@ export function ComposerSelectionToolbar({
       onMouseDown={(event) => event.preventDefault()}
     >
       <ComposerFormatTools handlers={handlers} idPrefix="composer-bubble" />
-    </div>,
-    document.body
+    </div>
   );
 }
