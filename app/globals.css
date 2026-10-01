@@ -72,6 +72,24 @@
   --sans: 'IBM Plex Sans', 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
+@property --cover-scale {
+  syntax: '<number>';
+  inherits: false;
+  initial-value: 1;
+}
+
+@property --cover-tx {
+  syntax: '<percentage>';
+  inherits: false;
+  initial-value: 0%;
+}
+
+@property --cover-ty {
+  syntax: '<percentage>';
+  inherits: false;
+  initial-value: 0%;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -1330,17 +1348,21 @@ img {
 .video-card-thumb img {
   transform-origin: var(--cover-ox, 50%) var(--cover-oy, 50%);
   object-position: var(--cover-ox, 50%) var(--cover-oy, 50%);
-  transform: scale(1) translate(0, 0);
-  transition: transform 1200ms ease, object-position 700ms ease;
+  --cover-scale: 1;
+  --cover-tx: 0%;
+  --cover-ty: 0%;
+  transform: scale(var(--cover-scale)) translate(var(--cover-tx), var(--cover-ty));
+  transition: --cover-scale 1200ms ease 150ms, --cover-tx 900ms ease, --cover-ty 900ms ease;
 }
 
 .pin-media:hover img,
 .pin-media:focus-visible img,
 .video-card-thumb:hover img,
 .video-card-thumb:focus-visible img {
-  transform: scale(1.05) translate(var(--cover-pan-x, 0%), var(--cover-pan-y, 0%));
-  object-position: var(--cover-pan-ox, var(--cover-ox, 50%)) var(--cover-pan-oy, var(--cover-oy, 50%));
-  transition: transform 1200ms ease, object-position 900ms ease 650ms;
+  --cover-scale: 1.05;
+  --cover-tx: var(--cover-pan-x, 0%);
+  --cover-ty: var(--cover-pan-y, 0%);
+  transition: --cover-scale 1200ms ease, --cover-tx 1800ms ease 400ms, --cover-ty 1800ms ease 400ms;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1350,8 +1372,10 @@ img {
   .pin-media:focus-visible img,
   .video-card-thumb:hover img,
   .video-card-thumb:focus-visible img {
+    --cover-scale: 1;
+    --cover-tx: 0%;
+    --cover-ty: 0%;
     transform: none;
-    object-position: var(--cover-ox, 50%) var(--cover-oy, 50%);
     transition: none;
   }
 }
@@ -1399,7 +1423,7 @@ img {
   flex-direction: column;
   justify-content: flex-end;
   padding: 14px;
-  background: var(--overlay);
+  background: transparent;
   opacity: 0;
   transition: opacity 160ms ease;
   pointer-events: none;
@@ -1425,6 +1449,7 @@ img {
   font-size: 14px;
   font-weight: 700;
   line-height: 1.5;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.55);
   pointer-events: none;
 }
 

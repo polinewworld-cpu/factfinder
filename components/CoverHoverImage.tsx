@@ -1,20 +1,13 @@
 'use client';
 
 import { useCallback, useLayoutEffect, useRef, type CSSProperties } from 'react';
-import {
-  clampFocal,
-  coverHoverPanVars,
-  coverOverflowAmount,
-  coverOverflowAxis,
-} from '@/lib/cardImage';
+import { clampFocal, coverHoverPanVars, coverOverflowAxis } from '@/lib/cardImage';
 
 type CoverHoverStyle = CSSProperties & {
   '--cover-ox': string;
   '--cover-oy': string;
   '--cover-pan-x': string;
   '--cover-pan-y': string;
-  '--cover-pan-ox': string;
-  '--cover-pan-oy': string;
 };
 
 export default function CoverHoverImage({
@@ -51,18 +44,9 @@ export default function CoverHoverImage({
       img.clientHeight,
       fallbackAxis,
     );
-    const overflowPx = coverOverflowAmount(
-      img.naturalWidth,
-      img.naturalHeight,
-      img.clientWidth,
-      img.clientHeight,
-      axis,
-    );
-    const next = coverHoverPanVars(axis, ox, oy, undefined, overflowPx);
+    const next = coverHoverPanVars(axis, ox, oy);
     img.style.setProperty('--cover-pan-x', next.panX);
     img.style.setProperty('--cover-pan-y', next.panY);
-    img.style.setProperty('--cover-pan-ox', next.panOx);
-    img.style.setProperty('--cover-pan-oy', next.panOy);
   }, [fallbackAxis, ox, oy]);
 
   useLayoutEffect(() => {
@@ -81,8 +65,6 @@ export default function CoverHoverImage({
     '--cover-oy': pan.originY,
     '--cover-pan-x': pan.panX,
     '--cover-pan-y': pan.panY,
-    '--cover-pan-ox': pan.panOx,
-    '--cover-pan-oy': pan.panOy,
   };
 
   return (
