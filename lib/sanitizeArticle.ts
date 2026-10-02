@@ -17,7 +17,7 @@ export function sanitizeArticleContent(html: string): string {
     allowedAttributes: {
       a: ['href', 'target', 'rel'],
       img: ['src', 'alt'],
-      div: ['class', 'contenteditable'],
+      div: ['class', 'contenteditable', 'data-embed-url', 'data-link-text'],
       mark: ['class', 'style'],
       span: ['class', 'style'],
       blockquote: ['class', 'data-instgrm-permalink'],
