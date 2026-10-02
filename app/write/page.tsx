@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { parseEmbedUrl } from '@/lib/embeds';
+import { parseEmbedUrl, youtubeWatchUrlFromEmbedSrc } from '@/lib/embeds';
 import { compressImageFile } from '@/lib/imageCompress';
 import PhotoGalleryModal, { GalleryPickedPhoto } from '@/components/PhotoGalleryModal';
 import RelatedArticlePickerModal from '@/components/RelatedArticlePickerModal';
@@ -212,6 +212,7 @@ export default function WritePage() {
     if (loadedContent !== null && !contentAppliedRef.current && editorRef.current) {
       editorRef.current.innerHTML = loadedContent;
       contentAppliedRef.current = true;
+      ensureYoutubeEmbedControls();
       syncBodyImagesFromDom();
     }
   }, [loadedContent, me]);
@@ -377,8 +378,43 @@ export default function WritePage() {
     setCoverImageUrl((prev) => (prev && imgs.includes(prev) ? prev : imgs[0] || ''));
   }
 
+  function youtubeUrlFromEmbed(el: HTMLElement): string {
+    const stored = el.getAttribute('data-embed-url')?.trim();
+    if (stored) return stored;
+    const src = el.querySelector('iframe')?.getAttribute('src') || '';
+    return youtubeWatchUrlFromEmbedSrc(src) ?? '';
+  }
+
+  function convertYoutubeEmbedToTextLink(el: HTMLElement) {
+    const url = youtubeUrlFromEmbed(el);
+    if (!url) return;
+    const text = el.getAttribute('data-link-text')?.trim() || url;
+    const paragraph = document.createElement('p');
+    const link = document.createElement('a');
+    link.href = url;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    link.textContent = text;
+    paragraph.appendChild(link);
+    el.replaceWith(paragraph);
+  }
+
+  function ensureYoutubeEmbedControls() {
+    const editor = editorRef.current;
+    if (!editor) return;
+    editor.querySelectorAll<HTMLElement>('.embed-youtube').forEach((el) => {
+      if (el.querySelector('.embed-to-text')) return;
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'embed-to-text';
+      button.textContent = '일반 텍스트 링크로 변환하기';
+      el.appendChild(button);
+    });
+  }
+
   function handleEditorInput() {
     replaceFrenchBracketsInTree(editorRef.current);
+    ensureYoutubeEmbedControls();
     markDirty();
     syncBodyImagesFromDom();
   }
@@ -394,6 +430,17 @@ export default function WritePage() {
 
   function handleEditorClick(e: React.MouseEvent<HTMLDivElement>) {
     const target = e.target as HTMLElement;
+    const convertBtn = target.closest?.('.embed-to-text') as HTMLElement | null;
+    if (convertBtn) {
+      e.preventDefault();
+      e.stopPropagation();
+      const embed = convertBtn.closest('.embed-youtube') as HTMLElement | null;
+      if (embed) {
+        convertYoutubeEmbedToTextLink(embed);
+        markDirty();
+      }
+      return;
+    }
     const figure = target.closest?.('.article-figure') as HTMLElement | null;
     if (target.tagName === 'IMG' && figure) {
       clearImageSelection();
@@ -557,9 +604,8 @@ export default function WritePage() {
     markDirty();
   }
 
-  // 링크(임베드 버튼) — 원래 텍스트를 드래그해서 선택한 뒤 누르면 주소창(prompt)이 뜨고, 그 URL로 연결되는 링크가 됨.
-  // (유튜브/X/인스타그램 게시물을 실제로 카드 형태로 임베드하는 것은 버튼이 아니라 본문에 SNS 주소를 그냥 붙여넣을 때
-  // 자동으로 처리되는 기능으로 별도 내장되어 있음 — 아래 handleEditorPaste 참고, 2026-09-11 개편)
+  // 링크 도구 — 선택한 문장에 URL을 건다. 유튜브 주소면 바로 영상 임베드로 넣고,
+  // 그 외 URL은 일반 텍스트 하이퍼링크로 감싼다.
   function insertLinkForSelection() {
     const sel = window.getSelection();
     if (!sel || sel.rangeCount === 0 || sel.isCollapsed || !editorRef.current?.contains(sel.getRangeAt(0).commonAncestorContainer)) {
@@ -569,8 +615,20 @@ export default function WritePage() {
     // window.prompt()로 주소창이 뜨는 순간 브라우저가 포커스를 잃으면서 드래그 선택이 풀려버리므로,
     // prompt를 띄우기 전에 선택 범위를 미리 복제해뒀다가 그걸로 링크를 삽입한다 (선택 풀림 버그 수정, 2026-09-11)
     const savedRange = sel.getRangeAt(0).cloneRange();
+    const selectedText = savedRange.toString().trim();
     const url = window.prompt('연결할 URL을 입력하세요');
     if (!url) return;
+    const youtubeEmbed = parseEmbedUrl(url, selectedText);
+    if (youtubeEmbed?.type === 'youtube') {
+      editorRef.current?.focus();
+      const nextSel = window.getSelection();
+      nextSel?.removeAllRanges();
+      nextSel?.addRange(savedRange);
+      document.execCommand('insertHTML', false, youtubeEmbed.html + '<p><br></p>');
+      ensureYoutubeEmbedControls();
+      markDirty();
+      return;
+    }
     const a = document.createElement('a');
     a.href = url;
     a.target = '_blank';
@@ -594,6 +652,7 @@ export default function WritePage() {
       if (embed) {
         e.preventDefault();
         document.execCommand('insertHTML', false, embed.html + '<p><br></p>');
+        ensureYoutubeEmbedControls();
         markDirty();
         return;
       }
@@ -787,6 +846,9 @@ export default function WritePage() {
           onInput={handleEditorInput}
           onPaste={handleEditorPaste}
           onClick={handleEditorClick}
+          onMouseDown={(e) => {
+            if ((e.target as HTMLElement).closest?.('.embed-to-text')) e.preventDefault();
+          }}
           onKeyDown={handleEditorKeyDown}
           onBlur={clearImageSelection}
           className="composer-body"

@@ -2643,6 +2643,36 @@ img {
   display: block;
 }
 
+.composer-body .embed-youtube iframe {
+  pointer-events: none;
+}
+
+.embed-to-text {
+  display: none;
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+  border: 0;
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--ink);
+  background: #fff;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.18);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.composer-body .embed-youtube:hover .embed-to-text,
+.composer-body .embed-youtube:focus-within .embed-to-text {
+  display: block;
+}
+
 .hl-mark {
   /* 색상은 인라인 style(background) — 형광펜 시안 */
   padding: 0 1px;
