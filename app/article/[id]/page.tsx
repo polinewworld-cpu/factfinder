@@ -16,6 +16,7 @@ import RecommendButton from '@/components/RecommendButton';
 import DonateButtonLarge from '@/components/DonateButtonLarge';
 import { stripHtml } from '@/lib/stripHtml';
 import { toFrenchBrackets } from '@/lib/frenchBrackets';
+import { stripYoutubeComposerControls } from '@/lib/sanitizeArticle';
 import { getCurrentUser } from '@/lib/session';
 import { EditIcon, ThinArrowIcon } from '@/components/icons';
 import { ROLES } from '@/lib/roles';
@@ -89,7 +90,7 @@ export default async function ArticlePage({ params }: { params: { id: string } }
     .filter(Boolean)
     .map((s) => toFrenchBrackets(s as string));
   const title = toFrenchBrackets(article.title);
-  const content = toFrenchBrackets(article.content);
+  const content = toFrenchBrackets(stripYoutubeComposerControls(article.content));
   const activeArticleBanners = articleBanners.slice(0, siteConfig?.articleBannerCount ?? 0);
 
   return (
@@ -139,7 +140,7 @@ export default async function ArticlePage({ params }: { params: { id: string } }
               <TextSizeControl />
               <ReadAloudButton
                 articleId={article.id}
-                text={`${title.replace(/\s+/g, ' ').trim()}. ${stripHtml(article.content)}`}
+                text={`${title.replace(/\s+/g, ' ').trim()}. ${stripHtml(content)}`}
               />
             </span>
           </div>
