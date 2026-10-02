@@ -32,6 +32,7 @@ export default function SpecialCharacterModal({
   const [newCategory, setNewCategory] = useState('');
   const [busy, setBusy] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [editing, setEditing] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -53,6 +54,10 @@ export default function SpecialCharacterModal({
         setLoading(false);
       }
     })();
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) setEditing(false);
   }, [open]);
 
   const categories = useMemo(() => {
@@ -122,20 +127,34 @@ export default function SpecialCharacterModal({
           </button>
         </div>
 
-        {categories.length > 0 && (
-          <div className="px-4 pt-3 flex flex-wrap gap-1.5 border-b border-gray-100 pb-3">
-            {categories.map((cat) => (
+        {(categories.length > 0 || canManage) && (
+          <div className="px-4 pt-3 flex items-start gap-2 border-b border-gray-100 pb-3">
+            <div className="flex min-w-0 flex-1 flex-wrap gap-1.5">
+              {categories.map((cat) => (
+                <button
+                  key={cat}
+                  type="button"
+                  onClick={() => setActiveCategory(cat)}
+                  className={`text-xs font-bold rounded-lg px-3 py-1 border ${
+                    activeCategory === cat ? 'bg-brand text-white border-brand' : 'bg-white text-gray-500 border-gray-200'
+                  }`}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+            {canManage && (
               <button
-                key={cat}
                 type="button"
-                onClick={() => setActiveCategory(cat)}
-                className={`text-xs font-bold rounded-lg px-3 py-1 border ${
-                  activeCategory === cat ? 'bg-brand text-white border-brand' : 'bg-white text-gray-500 border-gray-200'
+                onClick={() => setEditing((on) => !on)}
+                aria-pressed={editing}
+                className={`shrink-0 text-xs font-bold rounded-lg px-3 py-1 border ${
+                  editing ? 'bg-brand text-white border-brand' : 'bg-white text-gray-500 border-gray-200'
                 }`}
               >
-                {cat}
+                편집
               </button>
-            ))}
+            )}
           </div>
         )}
 
@@ -154,7 +173,7 @@ export default function SpecialCharacterModal({
                 className="relative aspect-square rounded-lg border border-gray-200 text-lg flex items-center justify-center hover:border-brand hover:bg-brand/5"
               >
                 {c.char}
-                {canManage && (
+                {canManage && editing && (
                   <span
                     role="button"
                     onClick={(e) => {
