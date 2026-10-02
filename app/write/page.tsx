@@ -230,6 +230,14 @@ export default function WritePage() {
     dirtyRef.current = true;
   }
 
+  function getEditorHtml() {
+    const editor = editorRef.current;
+    if (!editor) return '';
+    const clone = editor.cloneNode(true) as HTMLElement;
+    clone.querySelectorAll('.embed-to-text').forEach((el) => el.remove());
+    return clone.innerHTML;
+  }
+
   async function doAutosave() {
     if (submittedRef.current) return;
     setSaving(true);
@@ -244,7 +252,7 @@ export default function WritePage() {
       coverImageUrl: s.coverImageUrl || null,
       coverFocalX: s.coverFocalX,
       coverFocalY: s.coverFocalY,
-      content: editorRef.current?.innerHTML ?? '',
+      content: getEditorHtml(),
       keywordIds: s.keywordIds,
       relatedArticleIds: s.relatedSelected.map((a) => a.id),
       images: s.cardImages,
@@ -663,7 +671,7 @@ export default function WritePage() {
   async function handleSubmit() {
     setErrorMsg('');
     const s = stateRef.current;
-    const content = editorRef.current?.innerHTML ?? '';
+    const content = getEditorHtml();
     const plainText = editorRef.current?.innerText?.trim() ?? '';
 
     if (!s.title.replace(/\s+/g, '')) return setErrorMsg('제목을 입력해주세요.');

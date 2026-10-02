@@ -2677,6 +2677,10 @@ img {
   display: block;
 }
 
+.article-content .embed-to-text {
+  display: none !important;
+}
+
 .hl-mark {
   /* 색상은 인라인 style(background) — 형광펜 시안 */
   padding: 0 1px;
