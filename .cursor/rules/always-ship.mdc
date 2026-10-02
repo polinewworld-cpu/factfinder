@@ -7,7 +7,7 @@ alwaysApply: true
 
 When work is done, ship it. Do not wait for "ship" or "build and ship".
 
-1. Commit on `ui/market-ticker-black`.
+1. Commit on `ui/general-ui`.
 2. Push, open a PR, merge with `gh pr merge --merge` into `main` so Render deploys `https://factfinder-85w9.onrender.com/`.
 3. Never force-push `main`. Never skip hooks unless asked. Do not commit secrets.
 
