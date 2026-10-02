@@ -134,6 +134,7 @@ export default async function ArticlePage({ params }: { params: { id: string } }
                   <EditIcon />
                 </a>
               )}
+              <ShareButtons title={title.replace(/\s+/g, ' ').trim()} coverImageUrl={article.coverImageUrl} />
               <SaveButton articleId={article.id} initialSaved={alreadySaved} loggedIn={!!currentUser} />
               <TextSizeControl />
               <ReadAloudButton
