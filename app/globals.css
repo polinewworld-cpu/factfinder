@@ -1648,8 +1648,8 @@ img {
   opacity: 0.7;
 }
 
-/* 기사 상단 byline 안의 SVG 아이콘 공통 크기 */
-.article-byline svg {
+/* 기사 상단 byline 안의 SVG 아이콘 공통 크기 — 공유 모달 아이콘은 건드리지 않음 */
+.article-byline .icon-action svg {
   width: 28px;
   height: 28px;
 }
@@ -1659,6 +1659,10 @@ img {
   align-items: center;
   gap: 3px;
   flex-wrap: nowrap;
+}
+
+.article-byline .icon-action-group > .share-modal-overlay {
+  position: fixed;
 }
 
 .article-byline .icon-action {
