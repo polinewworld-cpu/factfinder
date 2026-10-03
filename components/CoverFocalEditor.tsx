@@ -1,24 +1,23 @@
 'use client';
 
 import { useRef, useState, type PointerEvent } from 'react';
-import { cardImageRatio, clampFocal, coverObjectPosition } from '@/lib/cardImage';
+import { clampFocal, coverObjectPosition } from '@/lib/cardImage';
 
 export default function CoverFocalEditor({
   imageUrl,
-  articleId,
+  ratio,
   x,
   y,
   onChangeX,
   onChangeY,
 }: {
   imageUrl: string;
-  articleId?: string | null;
+  ratio: number;
   x: number;
   y: number;
   onChangeX: (value: number) => void;
   onChangeY: (value: number) => void;
 }) {
-  const ratio = cardImageRatio(articleId);
   const frameRef = useRef<HTMLDivElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
   const dragRef = useRef<{

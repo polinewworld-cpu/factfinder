@@ -1,4 +1,6 @@
 export const CARD_RATIOS = [1, 1, 16 / 9];
+export const FEATURED_CARD_RATIO = 1.12;
+export const WIDE_CARD_RATIO = 0.46;
 
 export function hashString(value: string) {
   let hash = 0;
@@ -9,10 +11,14 @@ export function hashString(value: string) {
 }
 
 export function cardImageRatio(articleId?: string | null, featured = false, wide = false) {
-  if (featured) return 1.12;
-  if (wide) return 0.46;
+  if (featured) return FEATURED_CARD_RATIO;
+  if (wide) return WIDE_CARD_RATIO;
   if (!articleId) return 1;
   return CARD_RATIOS[hashString(articleId) % CARD_RATIOS.length];
+}
+
+export function isSquareAssignedCrop(articleId?: string | null) {
+  return cardImageRatio(articleId) === 1;
 }
 
 export function clampFocal(value: unknown, fallback = 50) {

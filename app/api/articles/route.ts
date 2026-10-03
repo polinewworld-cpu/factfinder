@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
     title, content, hoverText, themeTags, coverImageUrl, categoryId, images,
     subtitle1, subtitle2, subtitle3, relatedArticleIds,
     keywordIds, isFrontpageTop, intent, poll, // intent: 'autosave' | 'submit' (기본값 submit) / poll: { question, options: string[] } | null
-    coverFocalX, coverFocalY,
+    coverFocalX, coverFocalY, coverFeatureFocalX, coverFeatureFocalY, coverSecondFocalX, coverSecondFocalY,
   } = body;
   // 저장 전 항상 새니타이즈 — 렌더링(app/article/[id]/page.tsx)이 dangerouslySetInnerHTML로
   // 그대로 뿌리기 때문에 여기서 걸러지지 않으면 스크립트 태그 등이 방문자 브라우저에서 그대로 실행됨
@@ -94,6 +94,10 @@ export async function POST(req: NextRequest) {
         coverImageUrl,
         coverFocalX: clampFocal(coverFocalX),
         coverFocalY: clampFocal(coverFocalY),
+        coverFeatureFocalX: clampFocal(coverFeatureFocalX),
+        coverFeatureFocalY: clampFocal(coverFeatureFocalY),
+        coverSecondFocalX: clampFocal(coverSecondFocalX),
+        coverSecondFocalY: clampFocal(coverSecondFocalY),
         categoryId,
         authorId,
         status,

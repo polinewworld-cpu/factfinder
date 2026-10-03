@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import ArticleCard, { CardArticle } from './ArticleCard';
 import BannerSlotCard from './BannerSlotCard';
 import VideoMasonryCard, { MasonryVideo } from './VideoMasonryCard';
+import { FEATURED_CARD_RATIO, WIDE_CARD_RATIO } from '@/lib/cardImage';
 
 export type HomepageBanner = { slot: 3 | 5 | 7; imageUrl: string; linkUrl: string };
 type BannerGridItem = { id: string; isBanner: true; imageUrl: string; linkUrl: string };
@@ -76,13 +77,13 @@ function packColumns(
   const heights = Array(columnCount).fill(0);
 
   if (hasFeatured && columnCount >= 2) {
-    const featuredHeight = 2.08 * 1.12 + 0.38;
+    const featuredHeight = 2.08 * FEATURED_CARD_RATIO + 0.38;
     heights[0] = featuredHeight;
     heights[1] = featuredHeight;
   }
 
   if (hasSecond && columnCount >= 4) {
-    const secondHeight = 2.08 * 0.46 + 0.38;
+    const secondHeight = 2.08 * WIDE_CARD_RATIO + 0.38;
     heights[2] += secondHeight;
     heights[3] += secondHeight;
   }
@@ -237,7 +238,7 @@ export default function Masonry({
   const estimatedSecondHeight = useMemo(() => {
     if (columnCount < 4) return 0;
     const columnWidth = (width - 16 * (columnCount - 1)) / columnCount;
-    return (2 * columnWidth + 16) * 0.46 + 110;
+    return (2 * columnWidth + 16) * WIDE_CARD_RATIO + 110;
   }, [width, columnCount]);
 
   const hasMore = visibleCount < rest.length;
