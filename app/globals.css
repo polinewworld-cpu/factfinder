@@ -1107,11 +1107,18 @@ img {
   width: calc(160px * 2 + 12px);
 }
 
-.cover-pick-chip {
+.cover-pick-chips {
   position: absolute;
   top: 9.6px;
   left: 9.6px;
   z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  pointer-events: none;
+}
+
+.cover-pick-chip {
   display: inline-flex;
   align-items: center;
   padding: 3.33px 8.44px;
@@ -1124,7 +1131,6 @@ img {
   line-height: 1.2;
   white-space: nowrap;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
-  pointer-events: none;
 }
 
 .cover-focal-preview {

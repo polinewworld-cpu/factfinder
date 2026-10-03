@@ -1008,7 +1008,14 @@ export default function WritePage() {
                         />
                       </button>
                     )}
-                    {selected ? <span className="cover-pick-chip">커버</span> : null}
+                    {selected ? (
+                      <span className="cover-pick-chips">
+                        <span className="cover-pick-chip">커버</span>
+                        {isFrontpageTop && isSquareAssignedCrop(articleId) ? (
+                          <span className="cover-pick-chip">1면톱</span>
+                        ) : null}
+                      </span>
+                    ) : null}
                   </div>
                   {showFeatureCrop ? (
                     <div className="cover-pick">
@@ -1026,7 +1033,9 @@ export default function WritePage() {
                           markDirty();
                         }}
                       />
-                      <span className="cover-pick-chip">1면톱</span>
+                      <span className="cover-pick-chips">
+                        <span className="cover-pick-chip">1면톱</span>
+                      </span>
                     </div>
                   ) : null}
                   {selected ? (
@@ -1045,7 +1054,9 @@ export default function WritePage() {
                           markDirty();
                         }}
                       />
-                      <span className="cover-pick-chip">상단 두번째</span>
+                      <span className="cover-pick-chips">
+                        <span className="cover-pick-chip">상단 두번째</span>
+                      </span>
                     </div>
                   ) : null}
                 </Fragment>
