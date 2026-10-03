@@ -24,6 +24,10 @@ export type CardArticle = {
   coverImageUrl?: string | null;
   coverFocalX?: number | null;
   coverFocalY?: number | null;
+  coverFeatureFocalX?: number | null;
+  coverFeatureFocalY?: number | null;
+  coverSecondFocalX?: number | null;
+  coverSecondFocalY?: number | null;
   publishedAt?: string | Date | null;
   author: { name: string };
   keywords: { name: string }[];
@@ -57,6 +61,16 @@ export default function ArticleCard({
   wide?: boolean;
 }) {
   const imageRatio = cardImageRatio(article.id, featured, wide);
+  const focalX = featured
+    ? (article.coverFeatureFocalX ?? article.coverFocalX)
+    : wide
+      ? (article.coverSecondFocalX ?? article.coverFocalX)
+      : article.coverFocalX;
+  const focalY = featured
+    ? (article.coverFeatureFocalY ?? article.coverFocalY)
+    : wide
+      ? (article.coverSecondFocalY ?? article.coverFocalY)
+      : article.coverFocalY;
   const pinClass = featured ? 'pin is-featured' : wide ? 'pin is-wide' : 'pin';
   const badges = article.keywords.map((k) => k.name).slice(0, 2);
   const firstTheme = (article.themeTags ?? '').split(',').map((t) => t.trim()).filter(Boolean)[0];
@@ -138,8 +152,8 @@ export default function ArticleCard({
           <CoverHoverImage
             src={article.coverImageUrl}
             aspectRatio={`1 / ${imageRatio}`}
-            focalX={article.coverFocalX}
-            focalY={article.coverFocalY}
+            focalX={focalX}
+            focalY={focalY}
           />
         ) : (
           <div className="pin-fallback" style={{ aspectRatio: `1 / ${imageRatio}` }}>

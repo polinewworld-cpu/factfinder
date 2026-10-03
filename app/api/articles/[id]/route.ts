@@ -32,6 +32,10 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
 
   if (rest.coverFocalX !== undefined) rest.coverFocalX = clampFocal(rest.coverFocalX);
   if (rest.coverFocalY !== undefined) rest.coverFocalY = clampFocal(rest.coverFocalY);
+  if (rest.coverFeatureFocalX !== undefined) rest.coverFeatureFocalX = clampFocal(rest.coverFeatureFocalX);
+  if (rest.coverFeatureFocalY !== undefined) rest.coverFeatureFocalY = clampFocal(rest.coverFeatureFocalY);
+  if (rest.coverSecondFocalX !== undefined) rest.coverSecondFocalX = clampFocal(rest.coverSecondFocalX);
+  if (rest.coverSecondFocalY !== undefined) rest.coverSecondFocalY = clampFocal(rest.coverSecondFocalY);
 
   // 요약문은 별도 입력을 받지 않고 본문에서 자동 추출 — 화면에는 노출하지 않고 RSS용으로만 사용 (2026-09-11)
   // 본문이 바뀌면 "읽어주기"용으로 캐싱해둔 오디오도 더 이상 최신 내용이 아니므로 초기화 — 다음 재생 요청 때 새 본문으로 재생성됨 (2026-09-12)

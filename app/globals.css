@@ -1080,6 +1080,7 @@ img {
 .cover-pick-row {
   display: flex;
   flex-wrap: wrap;
+  align-items: flex-start;
   gap: 12px;
   margin-top: 12px;
 }
@@ -1101,6 +1102,11 @@ img {
   background: var(--chip);
 }
 
+.cover-pick--wide .cover-pick-thumb,
+.cover-pick--wide .cover-focal-preview {
+  width: calc(160px * 2 + 12px);
+}
+
 .cover-pick-chip {
   position: absolute;
   top: 9.6px;
@@ -1116,6 +1122,7 @@ img {
   font-weight: 700;
   letter-spacing: 0.04em;
   line-height: 1.2;
+  white-space: nowrap;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
   pointer-events: none;
 }

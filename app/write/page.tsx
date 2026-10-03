@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, Fragment } from 'react';
 import { parseEmbedUrl, youtubeWatchUrlFromEmbedSrc } from '@/lib/embeds';
 import { compressImageFile } from '@/lib/imageCompress';
 import PhotoGalleryModal, { GalleryPickedPhoto } from '@/components/PhotoGalleryModal';
@@ -11,7 +11,7 @@ import { WriteShell } from '@/components/AdminNav';
 import TagMultiSelect from '@/components/TagMultiSelect';
 import CoverFocalEditor from '@/components/CoverFocalEditor';
 import { ComposerFormatTools, ComposerSelectionToolbar } from '@/components/ComposerFormatToolbar';
-import { cardImageRatio } from '@/lib/cardImage';
+import { cardImageRatio, FEATURED_CARD_RATIO, WIDE_CARD_RATIO, isSquareAssignedCrop } from '@/lib/cardImage';
 import { toFrenchBrackets, replaceFrenchBracketsInTree } from '@/lib/frenchBrackets';
 
 type Me = { id: string; role: string; name?: string; email?: string };
@@ -43,6 +43,10 @@ export default function WritePage() {
   const [coverImageUrl, setCoverImageUrl] = useState('');
   const [coverFocalX, setCoverFocalX] = useState(50);
   const [coverFocalY, setCoverFocalY] = useState(50);
+  const [coverFeatureFocalX, setCoverFeatureFocalX] = useState(50);
+  const [coverFeatureFocalY, setCoverFeatureFocalY] = useState(50);
+  const [coverSecondFocalX, setCoverSecondFocalX] = useState(50);
+  const [coverSecondFocalY, setCoverSecondFocalY] = useState(50);
   const [bodyImageUrls, setBodyImageUrls] = useState<string[]>([]);
   const [isFrontpageTop, setIsFrontpageTop] = useState(false);
   const [cardImages, setCardImages] = useState<{ url: string; caption?: string }[]>([]);
@@ -92,15 +96,15 @@ export default function WritePage() {
   const selectedFigureRef = useRef<HTMLElement | null>(null); // 본문에서 클릭으로 선택된 이미지(figure) — Delete/Backspace로 삭제 가능 (2026-09-12 신설)
 
   const stateRef = useRef({
-    title, subtitle1, subtitle2, subtitle3, hoverText, themeTags, categoryId, keywordIds, coverImageUrl, coverFocalX, coverFocalY, isFrontpageTop, cardImages,
+    title, subtitle1, subtitle2, subtitle3, hoverText, themeTags, categoryId, keywordIds, coverImageUrl, coverFocalX, coverFocalY, coverFeatureFocalX, coverFeatureFocalY, coverSecondFocalX, coverSecondFocalY, isFrontpageTop, cardImages,
     pollEnabled, pollQuestion, pollOptions, relatedSelected,
   });
   useEffect(() => {
     stateRef.current = {
-      title, subtitle1, subtitle2, subtitle3, hoverText, themeTags, categoryId, keywordIds, coverImageUrl, coverFocalX, coverFocalY, isFrontpageTop, cardImages,
+      title, subtitle1, subtitle2, subtitle3, hoverText, themeTags, categoryId, keywordIds, coverImageUrl, coverFocalX, coverFocalY, coverFeatureFocalX, coverFeatureFocalY, coverSecondFocalX, coverSecondFocalY, isFrontpageTop, cardImages,
       pollEnabled, pollQuestion, pollOptions, relatedSelected,
     };
-  }, [title, subtitle1, subtitle2, subtitle3, hoverText, themeTags, categoryId, keywordIds, coverImageUrl, coverFocalX, coverFocalY, isFrontpageTop, cardImages, pollEnabled, pollQuestion, pollOptions, relatedSelected]);
+  }, [title, subtitle1, subtitle2, subtitle3, hoverText, themeTags, categoryId, keywordIds, coverImageUrl, coverFocalX, coverFocalY, coverFeatureFocalX, coverFeatureFocalY, coverSecondFocalX, coverSecondFocalY, isFrontpageTop, cardImages, pollEnabled, pollQuestion, pollOptions, relatedSelected]);
 
   useLayoutEffect(() => {
     const el = titleRef.current;
@@ -111,6 +115,19 @@ export default function WritePage() {
 
   function pollPayload(s: typeof stateRef.current) {
     return s.pollEnabled ? { question: s.pollQuestion, options: s.pollOptions } : null;
+  }
+
+  function featureFocalPayload(s: typeof stateRef.current) {
+    if (s.isFrontpageTop && !isSquareAssignedCrop(articleIdRef.current)) {
+      return {
+        coverFeatureFocalX: s.coverFeatureFocalX,
+        coverFeatureFocalY: s.coverFeatureFocalY,
+      };
+    }
+    return {
+      coverFeatureFocalX: s.coverFocalX,
+      coverFeatureFocalY: s.coverFocalY,
+    };
   }
 
   function togglePoll(on: boolean) {
@@ -176,6 +193,10 @@ export default function WritePage() {
         setCoverImageUrl(data.coverImageUrl ?? '');
         setCoverFocalX(typeof data.coverFocalX === 'number' ? data.coverFocalX : 50);
         setCoverFocalY(typeof data.coverFocalY === 'number' ? data.coverFocalY : 50);
+        setCoverFeatureFocalX(typeof data.coverFeatureFocalX === 'number' ? data.coverFeatureFocalX : 50);
+        setCoverFeatureFocalY(typeof data.coverFeatureFocalY === 'number' ? data.coverFeatureFocalY : 50);
+        setCoverSecondFocalX(typeof data.coverSecondFocalX === 'number' ? data.coverSecondFocalX : 50);
+        setCoverSecondFocalY(typeof data.coverSecondFocalY === 'number' ? data.coverSecondFocalY : 50);
         setIsFrontpageTop(!!data.isFrontpageTop);
         setCardImages((data.images ?? []).map((img: { url: string; caption?: string | null }) => ({
           url: img.url,
@@ -252,6 +273,9 @@ export default function WritePage() {
       coverImageUrl: s.coverImageUrl || null,
       coverFocalX: s.coverFocalX,
       coverFocalY: s.coverFocalY,
+      ...featureFocalPayload(s),
+      coverSecondFocalX: s.coverSecondFocalX,
+      coverSecondFocalY: s.coverSecondFocalY,
       content: getEditorHtml(),
       keywordIds: s.keywordIds,
       relatedArticleIds: s.relatedSelected.map((a) => a.id),
@@ -695,6 +719,9 @@ export default function WritePage() {
       coverImageUrl: s.coverImageUrl || null,
       coverFocalX: s.coverFocalX,
       coverFocalY: s.coverFocalY,
+      ...featureFocalPayload(s),
+      coverSecondFocalX: s.coverSecondFocalX,
+      coverSecondFocalY: s.coverSecondFocalY,
       categoryId: s.categoryId,
       content,
       keywordIds: s.keywordIds,
@@ -922,6 +949,10 @@ export default function WritePage() {
               onClick={() => {
                 setCoverFocalX(50);
                 setCoverFocalY(50);
+                setCoverFeatureFocalX(50);
+                setCoverFeatureFocalY(50);
+                setCoverSecondFocalX(50);
+                setCoverSecondFocalY(50);
                 markDirty();
               }}
             >
@@ -935,43 +966,89 @@ export default function WritePage() {
           <div className="cover-pick-row">
             {bodyImageUrls.map((url, i) => {
               const selected = coverImageUrl === url;
+              const assignedRatio = cardImageRatio(articleId);
+              const showFeatureCrop = selected && isFrontpageTop && !isSquareAssignedCrop(articleId);
               return (
-                <div key={`${url}-${i}`} className="cover-pick">
-                  {selected ? (
-                    <CoverFocalEditor
-                      imageUrl={url}
-                      articleId={articleId}
-                      x={coverFocalX}
-                      y={coverFocalY}
-                      onChangeX={(value) => {
-                        setCoverFocalX(value);
-                        markDirty();
-                      }}
-                      onChangeY={(value) => {
-                        setCoverFocalY(value);
-                        markDirty();
-                      }}
-                    />
-                  ) : (
-                    <button
-                      type="button"
-                      className="cover-pick-thumb"
-                      onClick={() => {
-                        setCoverImageUrl(url);
-                        setCoverFocalX(50);
-                        setCoverFocalY(50);
-                        markDirty();
-                      }}
-                    >
-                      <img
-                        src={url}
-                        alt=""
-                        style={{ aspectRatio: `1 / ${cardImageRatio(articleId)}` }}
+                <Fragment key={`${url}-${i}`}>
+                  <div className="cover-pick">
+                    {selected ? (
+                      <CoverFocalEditor
+                        imageUrl={url}
+                        ratio={assignedRatio}
+                        x={coverFocalX}
+                        y={coverFocalY}
+                        onChangeX={(value) => {
+                          setCoverFocalX(value);
+                          markDirty();
+                        }}
+                        onChangeY={(value) => {
+                          setCoverFocalY(value);
+                          markDirty();
+                        }}
                       />
-                    </button>
-                  )}
-                  {selected ? <span className="cover-pick-chip">커버</span> : null}
-                </div>
+                    ) : (
+                      <button
+                        type="button"
+                        className="cover-pick-thumb"
+                        onClick={() => {
+                          setCoverImageUrl(url);
+                          setCoverFocalX(50);
+                          setCoverFocalY(50);
+                          setCoverFeatureFocalX(50);
+                          setCoverFeatureFocalY(50);
+                          setCoverSecondFocalX(50);
+                          setCoverSecondFocalY(50);
+                          markDirty();
+                        }}
+                      >
+                        <img
+                          src={url}
+                          alt=""
+                          style={{ aspectRatio: `1 / ${assignedRatio}` }}
+                        />
+                      </button>
+                    )}
+                    {selected ? <span className="cover-pick-chip">커버</span> : null}
+                  </div>
+                  {showFeatureCrop ? (
+                    <div className="cover-pick">
+                      <CoverFocalEditor
+                        imageUrl={url}
+                        ratio={FEATURED_CARD_RATIO}
+                        x={coverFeatureFocalX}
+                        y={coverFeatureFocalY}
+                        onChangeX={(value) => {
+                          setCoverFeatureFocalX(value);
+                          markDirty();
+                        }}
+                        onChangeY={(value) => {
+                          setCoverFeatureFocalY(value);
+                          markDirty();
+                        }}
+                      />
+                      <span className="cover-pick-chip">1면톱</span>
+                    </div>
+                  ) : null}
+                  {selected ? (
+                    <div className="cover-pick cover-pick--wide">
+                      <CoverFocalEditor
+                        imageUrl={url}
+                        ratio={WIDE_CARD_RATIO}
+                        x={coverSecondFocalX}
+                        y={coverSecondFocalY}
+                        onChangeX={(value) => {
+                          setCoverSecondFocalX(value);
+                          markDirty();
+                        }}
+                        onChangeY={(value) => {
+                          setCoverSecondFocalY(value);
+                          markDirty();
+                        }}
+                      />
+                      <span className="cover-pick-chip">상단 두번째</span>
+                    </div>
+                  ) : null}
+                </Fragment>
               );
             })}
           </div>

@@ -151,8 +151,12 @@ model Article {
   recommendCount  Int       @default(0) // "추천" 버튼 클릭 수 — 로그인 불필요, 브라우저당 1회로 클라이언트에서만 제한 (2026-09-12 신설)
   audioUrl        String? // "읽어주기" — Google Cloud TTS로 생성해둔 오디오 파일 캐시. 본문 수정 시 PUT에서 null로 초기화되어 재생성됨 (2026-09-12 신설)
   coverImageUrl   String?
-  coverFocalX     Int           @default(50) // 카드 썸네일 object-position 가로 (0=왼쪽, 100=오른쪽)
-  coverFocalY     Int           @default(50) // 카드 썸네일 object-position 세로 (0=위, 100=아래)
+  coverFocalX         Int           @default(50) // 카드 썸네일 object-position 가로 (0=왼쪽, 100=오른쪽)
+  coverFocalY         Int           @default(50) // 카드 썸네일 object-position 세로 (0=위, 100=아래)
+  coverFeatureFocalX  Int           @default(50) // 1면톱(featured) 카드 크롭 가로
+  coverFeatureFocalY  Int           @default(50) // 1면톱(featured) 카드 크롭 세로
+  coverSecondFocalX   Int           @default(50) // 상단 두번째(wide 2열) 카드 크롭 가로
+  coverSecondFocalY   Int           @default(50) // 상단 두번째(wide 2열) 카드 크롭 세로
   status          ArticleStatus @default(PUBLISHED)
   viewCount       Int           @default(0)
   isFrontpageTop  Boolean       @default(false) // 1면톱 - 사이트 전체 1건만 true
