@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type PointerEvent } from 'react';
 import {
   COVER_HOVER_SCALE,
   clampFocal,
@@ -8,6 +8,7 @@ import {
   coverHoverPanVars,
   coverObjectPosition,
   coverOverflowAxis,
+  coverOverflowPx,
 } from '@/lib/cardImage';
 
 type CoverHoverStyle = CSSProperties & {
@@ -30,6 +31,9 @@ export default function CoverHoverImage({
   fill = false,
   contentAspect,
   fallbackSrc,
+  editable = false,
+  onFocalChange,
+  onFocalCommit,
 }: {
   src: string;
   alt?: string;
@@ -41,6 +45,9 @@ export default function CoverHoverImage({
   fill?: boolean;
   contentAspect?: number | null;
   fallbackSrc?: string;
+  editable?: boolean;
+  onFocalChange?: (x: number, y: number) => void;
+  onFocalCommit?: (x: number, y: number) => void;
 }) {
   const frameRef = useRef<HTMLSpanElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
@@ -48,6 +55,16 @@ export default function CoverHoverImage({
   const oy = clampFocal(focalY);
   const [drawn, setDrawn] = useState<Drawn | null>(null);
   const [currentSrc, setCurrentSrc] = useState(src);
+  const [dragging, setDragging] = useState(false);
+  const dragRef = useRef<{
+    pointerId: number;
+    lastX: number;
+    lastY: number;
+    focalX: number;
+    focalY: number;
+    moved: boolean;
+  } | null>(null);
+  const suppressClickRef = useRef(false);
   const pan = coverHoverPanVars(fallbackAxis, ox, oy);
 
   useEffect(() => {
@@ -107,6 +124,64 @@ export default function CoverHoverImage({
     return () => observer.disconnect();
   }, [applyLayout, currentSrc]);
 
+  function onPointerDown(event: PointerEvent<HTMLSpanElement>) {
+    if (!editable || event.button !== 0) return;
+    event.preventDefault();
+    event.currentTarget.setPointerCapture(event.pointerId);
+    dragRef.current = {
+      pointerId: event.pointerId,
+      lastX: event.clientX,
+      lastY: event.clientY,
+      focalX: ox,
+      focalY: oy,
+      moved: false,
+    };
+    suppressClickRef.current = false;
+    setDragging(true);
+  }
+
+  function onPointerMove(event: PointerEvent<HTMLSpanElement>) {
+    const drag = dragRef.current;
+    if (!drag || event.pointerId !== drag.pointerId) return;
+    const dx = event.clientX - drag.lastX;
+    const dy = event.clientY - drag.lastY;
+    drag.lastX = event.clientX;
+    drag.lastY = event.clientY;
+    if (Math.abs(dx) > 0.5 || Math.abs(dy) > 0.5) {
+      drag.moved = true;
+      suppressClickRef.current = true;
+    }
+    const frame = frameRef.current;
+    const img = imgRef.current;
+    if (!frame || !img?.naturalWidth) return;
+    const extra = coverOverflowPx(
+      frame.clientWidth,
+      frame.clientHeight,
+      img.naturalWidth,
+      img.naturalHeight,
+      contentAspect,
+    );
+    if (extra.x > 0.5) {
+      drag.focalX = clampFocal(drag.focalX - (dx / extra.x) * 100);
+      onFocalChange?.(drag.focalX, drag.focalY);
+    }
+    if (extra.y > 0.5) {
+      drag.focalY = clampFocal(drag.focalY - (dy / extra.y) * 100);
+      onFocalChange?.(drag.focalX, drag.focalY);
+    }
+  }
+
+  function endDrag(event: PointerEvent<HTMLSpanElement>) {
+    const drag = dragRef.current;
+    if (!drag || event.pointerId !== drag.pointerId) return;
+    dragRef.current = null;
+    setDragging(false);
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+    if (drag.moved) onFocalCommit?.(drag.focalX, drag.focalY);
+  }
+
   const hoverVars: CoverHoverStyle = {
     '--cover-ox': pan.originX,
     '--cover-oy': pan.originY,
@@ -140,13 +215,29 @@ export default function CoverHoverImage({
   return (
     <span
       ref={frameRef}
-      className={`cover-hover-frame${fill ? ' cover-hover-frame--fill' : ''}${className ? ` ${className}` : ''}`}
+      className={`cover-hover-frame${fill ? ' cover-hover-frame--fill' : ''}${editable ? ' is-editable' : ''}${dragging ? ' is-dragging' : ''}${className ? ` ${className}` : ''}`}
       style={fill ? undefined : { aspectRatio }}
+      onPointerDown={editable ? onPointerDown : undefined}
+      onPointerMove={editable ? onPointerMove : undefined}
+      onPointerUp={editable ? endDrag : undefined}
+      onPointerCancel={editable ? endDrag : undefined}
+      onClick={
+        editable
+          ? (event) => {
+              if (suppressClickRef.current) {
+                event.preventDefault();
+                event.stopPropagation();
+                suppressClickRef.current = false;
+              }
+            }
+          : undefined
+      }
     >
       <img
         ref={imgRef}
         src={currentSrc}
         alt={alt}
+        draggable={false}
         onLoad={applyLayout}
         onError={() => {
           if (fallbackSrc && currentSrc !== fallbackSrc) setCurrentSrc(fallbackSrc);

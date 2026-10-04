@@ -102,6 +102,22 @@ export function coverDrawnLayout(
   };
 }
 
+export function coverOverflowPx(
+  boxW: number,
+  boxH: number,
+  naturalW: number,
+  naturalH: number,
+  contentAspect?: number | null,
+) {
+  const content = coverContentInset(naturalW, naturalH, contentAspect);
+  if (!content.w || !content.h || !boxW || !boxH) return { x: 0, y: 0 };
+  const cover = Math.max(boxW / content.w, boxH / content.h);
+  return {
+    x: Math.max(0, content.w * cover - boxW),
+    y: Math.max(0, content.h * cover - boxH),
+  };
+}
+
 export function coverHoverPanVars(
   axis: 'x' | 'y',
   focalX?: number | null,

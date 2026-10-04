@@ -336,6 +336,8 @@ model VideoCard {
   publishedAt  DateTime
   createdAt    DateTime  @default(now())
   showOnMain   Boolean   @default(true) // 전체(인덱스) 피드 노출 여부 — 편집장이 관리화면에서 개별로 끌 수 있음 (2026-09-11 신설)
+  coverFocalX  Int       @default(50) // 정치신세계 피처 카드 크롭 가로 (0=왼쪽, 100=오른쪽)
+  coverFocalY  Int       @default(50) // 정치신세계 피처 카드 크롭 세로 (0=위, 100=아래)
 }
 
 // 뉴스레터 발송 이력 — 중복발송 방지 확인용 로그 (기능정의서 6)

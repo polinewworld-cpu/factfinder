@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { toFrenchBrackets } from '@/lib/frenchBrackets';
-import { youtubeFullFrameThumb } from '@/lib/cardImage';
+import { clampFocal, youtubeFullFrameThumb } from '@/lib/cardImage';
 import CardHeadline from './CardHeadline';
 import CoverHoverImage from './CoverHoverImage';
 
@@ -14,6 +14,8 @@ type VideoCardData = {
   kind: 'SHORT' | 'VIDEO' | 'LIVE';
   publishedAt: string;
   showOnMain: boolean;
+  coverFocalX?: number | null;
+  coverFocalY?: number | null;
 };
 
 const KIND_LABEL: Record<VideoCardData['kind'], string> = {
@@ -36,6 +38,14 @@ export default function VideoCardGrid({
   canRefresh: boolean;
 }) {
   const [restoreBusyId, setRestoreBusyId] = useState<string | null>(null);
+  const latest = cards[0];
+  const [featureFocalX, setFeatureFocalX] = useState(clampFocal(latest?.coverFocalX));
+  const [featureFocalY, setFeatureFocalY] = useState(clampFocal(latest?.coverFocalY));
+
+  useEffect(() => {
+    setFeatureFocalX(clampFocal(latest?.coverFocalX));
+    setFeatureFocalY(clampFocal(latest?.coverFocalY));
+  }, [latest?.id, latest?.coverFocalX, latest?.coverFocalY]);
 
   // 메인에서 제외된 영상을 되돌리는 복구 전용 버튼 — 빼는 조작 자체는 메인(전체) 피드 카드로 옮겨감 (2026-09-12)
   async function restoreToMain(card: VideoCardData) {
@@ -50,6 +60,15 @@ export default function VideoCardGrid({
     } finally {
       setRestoreBusyId(null);
     }
+  }
+
+  async function saveFeatureFocal(x: number, y: number) {
+    if (!latest) return;
+    await fetch(`/api/video-cards/${latest.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ coverFocalX: x, coverFocalY: y }),
+    });
   }
 
   return (
@@ -67,6 +86,7 @@ export default function VideoCardGrid({
             const href = videoUrl(card);
             const frameAspect = card.kind === 'SHORT' ? 9 / 16 : 16 / 9;
             const thumbSrc = isLatest ? youtubeFullFrameThumb(card.thumbnailUrl) : card.thumbnailUrl;
+            const canCrop = canRefresh && isLatest;
             return (
               <div
                 key={card.id}
@@ -77,7 +97,7 @@ export default function VideoCardGrid({
                   target="_blank"
                   rel="noopener noreferrer"
                   title={toFrenchBrackets(card.title)}
-                  className={`video-card-thumb relative min-h-0 overflow-hidden rounded-xl border border-gray-200 bg-gray-100 group-hover:border-brand ${
+                  className={`video-card-thumb relative min-h-0 overflow-hidden rounded-xl border border-gray-200 bg-gray-100 group-hover:border-brand${canCrop ? ' video-card-thumb--crop' : ''} ${
                     isLatest || isSecond ? '' : isShort ? 'flex-1' : 'aspect-video'
                   }`}
                 >
@@ -88,10 +108,23 @@ export default function VideoCardGrid({
                     fill
                     fallbackAxis={card.kind === 'SHORT' ? 'y' : 'x'}
                     contentAspect={isLatest ? frameAspect : undefined}
+                    focalX={isLatest ? featureFocalX : undefined}
+                    focalY={isLatest ? featureFocalY : undefined}
+                    editable={canCrop}
+                    onFocalChange={
+                      canCrop
+                        ? (x, y) => {
+                            setFeatureFocalX(x);
+                            setFeatureFocalY(y);
+                          }
+                        : undefined
+                    }
+                    onFocalCommit={canCrop ? saveFeatureFocal : undefined}
                   />
                   <span className="absolute top-2 left-2 text-xs font-bold text-white bg-black/60 rounded-lg px-2 py-0.5">
                     {KIND_LABEL[card.kind]}
                   </span>
+                  {canCrop ? <span className="video-card-crop-hint">드래그해서 크롭 위치를 맞추세요</span> : null}
                   {!card.showOnMain && (
                     <>
                       <span className="absolute top-2 right-2 text-xs font-bold text-white bg-red-600/90 rounded-lg px-2 py-0.5">
