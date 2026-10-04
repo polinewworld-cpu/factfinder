@@ -35,6 +35,10 @@ export function coverObjectPosition(x?: number | null, y?: number | null) {
 export const COVER_HOVER_SCALE = 1.05;
 const COVER_HOVER_PAN_OF_ZOOM = 0.4;
 
+export function youtubeFullFrameThumb(url: string) {
+  return url.replace(/\/(hqdefault|sddefault|default|0)\.(jpg|webp)(\?.*)?$/i, '/maxresdefault.$2$3');
+}
+
 // YouTube hqdefault/sddefault are 4:3 with 16:9 (or 9:16) content and bars.
 // Strip those bars first so a 1:1 cover is full-bleed of the video frame.
 export function coverContentInset(

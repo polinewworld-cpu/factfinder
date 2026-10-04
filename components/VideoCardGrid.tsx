@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { toFrenchBrackets } from '@/lib/frenchBrackets';
+import { youtubeFullFrameThumb } from '@/lib/cardImage';
 import CardHeadline from './CardHeadline';
 import CoverHoverImage from './CoverHoverImage';
 
@@ -34,8 +35,6 @@ export default function VideoCardGrid({
   cards: VideoCardData[];
   canRefresh: boolean;
 }) {
-  const [refreshing, setRefreshing] = useState(false);
-  const [errorMsg, setErrorMsg] = useState('');
   const [restoreBusyId, setRestoreBusyId] = useState<string | null>(null);
 
   // 메인에서 제외된 영상을 되돌리는 복구 전용 버튼 — 빼는 조작 자체는 메인(전체) 피드 카드로 옮겨감 (2026-09-12)
@@ -53,36 +52,8 @@ export default function VideoCardGrid({
     }
   }
 
-  async function refresh() {
-    setRefreshing(true);
-    setErrorMsg('');
-    const res = await fetch('/api/video-cards/sync', { method: 'POST' });
-    const data = await res.json().catch(() => null);
-    if (!res.ok) {
-      setErrorMsg(data?.error ?? '새로고침에 실패했습니다.');
-      setRefreshing(false);
-      return;
-    }
-    setRefreshing(false);
-    window.location.reload();
-  }
-
   return (
     <div className="content">
-      {canRefresh && (
-        <div className="flex items-center gap-3 mb-4">
-          <button
-            type="button"
-            onClick={refresh}
-            disabled={refreshing}
-            className="text-xs font-bold text-white bg-brand rounded-lg px-4 py-1.5 disabled:opacity-50"
-          >
-            {refreshing ? '새로고침 중…' : '정치신세계 새로고침'}
-          </button>
-          {errorMsg && <p className="text-red-600 text-xs">{errorMsg}</p>}
-        </div>
-      )}
-
       {cards.length === 0 ? (
         <div className="empty-state">
           <p>아직 수집된 영상이 없습니다.</p>
@@ -94,6 +65,8 @@ export default function VideoCardGrid({
             const isSecond = index === 1;
             const isShort = card.kind === 'SHORT' && !isLatest && !isSecond;
             const href = videoUrl(card);
+            const frameAspect = card.kind === 'SHORT' ? 9 / 16 : 16 / 9;
+            const thumbSrc = isLatest ? youtubeFullFrameThumb(card.thumbnailUrl) : card.thumbnailUrl;
             return (
               <div
                 key={card.id}
@@ -109,10 +82,12 @@ export default function VideoCardGrid({
                   }`}
                 >
                   <CoverHoverImage
-                    src={card.thumbnailUrl}
+                    src={thumbSrc}
+                    fallbackSrc={isLatest && thumbSrc !== card.thumbnailUrl ? card.thumbnailUrl : undefined}
                     alt={toFrenchBrackets(card.title)}
                     fill
                     fallbackAxis={card.kind === 'SHORT' ? 'y' : 'x'}
+                    contentAspect={isLatest ? frameAspect : undefined}
                   />
                   <span className="absolute top-2 left-2 text-xs font-bold text-white bg-black/60 rounded-lg px-2 py-0.5">
                     {KIND_LABEL[card.kind]}

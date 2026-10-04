@@ -5,6 +5,7 @@ import { timeAgo } from '@/lib/time';
 import { useSavedArticles } from './SavedArticlesProvider';
 import CardHeadline from './CardHeadline';
 import CoverHoverImage from './CoverHoverImage';
+import { youtubeFullFrameThumb } from '@/lib/cardImage';
 
 export type MasonryVideo = {
   id: string;
@@ -24,10 +25,6 @@ const KIND_LABEL: Record<MasonryVideo['kind'], string> = {
 function videoUrl(video: MasonryVideo) {
   if (video.kind === 'SHORT') return `https://www.youtube.com/shorts/${video.youtubeId}`;
   return `https://www.youtube.com/watch?v=${video.youtubeId}`;
-}
-
-function youtubeFullFrameThumb(url: string) {
-  return url.replace(/\/(hqdefault|sddefault|default|0)\.(jpg|webp)(\?.*)?$/i, '/maxresdefault.$2$3');
 }
 
 // 정치신세계 영상을 "기사 생성"처럼 취급해 인덱스(전체) 피드의 일반 기사 카드와 같은 메이슨리 레이아웃에 섞어 보여주는 카드 (2026-09-11 신설)
