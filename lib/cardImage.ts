@@ -35,17 +35,41 @@ export function coverObjectPosition(x?: number | null, y?: number | null) {
 export const COVER_HOVER_SCALE = 1.05;
 const COVER_HOVER_PAN_OF_ZOOM = 0.4;
 
+// YouTube hqdefault/sddefault are 4:3 with 16:9 (or 9:16) content and bars.
+// Strip those bars first so a 1:1 cover is full-bleed of the video frame.
+export function coverContentInset(
+  naturalW: number,
+  naturalH: number,
+  contentAspect?: number | null,
+) {
+  if (!contentAspect || !naturalW || !naturalH) {
+    return { w: naturalW, h: naturalH, x: 0, y: 0 };
+  }
+  const imageAspect = naturalW / naturalH;
+  if (imageAspect > contentAspect + 0.02) {
+    const w = naturalH * contentAspect;
+    return { w, h: naturalH, x: (naturalW - w) / 2, y: 0 };
+  }
+  if (imageAspect + 0.02 < contentAspect) {
+    const h = naturalW / contentAspect;
+    return { w: naturalW, h, x: 0, y: (naturalH - h) / 2 };
+  }
+  return { w: naturalW, h: naturalH, x: 0, y: 0 };
+}
+
 export function coverOverflowAxis(
   naturalW: number,
   naturalH: number,
   boxW: number,
   boxH: number,
   fallback: 'x' | 'y' = 'x',
+  contentAspect?: number | null,
 ): 'x' | 'y' {
-  if (!naturalW || !naturalH || !boxW || !boxH) return fallback;
-  const cover = Math.max(boxW / naturalW, boxH / naturalH);
-  const overflowX = naturalW * cover - boxW;
-  const overflowY = naturalH * cover - boxH;
+  const content = coverContentInset(naturalW, naturalH, contentAspect);
+  if (!content.w || !content.h || !boxW || !boxH) return fallback;
+  const cover = Math.max(boxW / content.w, boxH / content.h);
+  const overflowX = content.w * cover - boxW;
+  const overflowY = content.h * cover - boxH;
   if (overflowX > overflowY + 0.5) return 'x';
   if (overflowY > overflowX + 0.5) return 'y';
   return fallback;
@@ -58,17 +82,19 @@ export function coverDrawnLayout(
   naturalH: number,
   focalX?: number | null,
   focalY?: number | null,
+  contentAspect?: number | null,
 ) {
+  const content = coverContentInset(naturalW, naturalH, contentAspect);
   const fx = clampFocal(focalX) / 100;
   const fy = clampFocal(focalY) / 100;
-  const cover = Math.max(boxW / naturalW, boxH / naturalH);
+  const cover = Math.max(boxW / content.w, boxH / content.h);
   const width = naturalW * cover;
   const height = naturalH * cover;
   return {
     width,
     height,
-    left: -(width - boxW) * fx,
-    top: -(height - boxH) * fy,
+    left: -content.x * cover - (content.w * cover - boxW) * fx,
+    top: -content.y * cover - (content.h * cover - boxH) * fy,
   };
 }
 
