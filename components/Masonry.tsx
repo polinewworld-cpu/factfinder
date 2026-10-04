@@ -238,7 +238,7 @@ export default function Masonry({
   const estimatedSecondHeight = useMemo(() => {
     if (columnCount < 4) return 0;
     const columnWidth = (width - 16 * (columnCount - 1)) / columnCount;
-    return (2 * columnWidth + 16) * WIDE_CARD_RATIO + 110;
+    return columnWidth + 110;
   }, [width, columnCount]);
 
   const hasMore = visibleCount < rest.length;
