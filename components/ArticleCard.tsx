@@ -55,12 +55,14 @@ export default function ArticleCard({
   article,
   featured = false,
   wide = false,
+  square = false,
 }: {
   article: CardArticle;
   featured?: boolean;
   wide?: boolean;
+  square?: boolean;
 }) {
-  const imageRatio = cardImageRatio(article.id, featured, wide);
+  const imageRatio = square ? 1 : cardImageRatio(article.id, featured, wide);
   const focalX = featured
     ? (article.coverFeatureFocalX ?? article.coverFocalX)
     : wide
