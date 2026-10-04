@@ -312,25 +312,28 @@ export default function Masonry({
                 aria-hidden="true"
               />
             )}
-            {column.map((item, itemIndex) => (
-              <div
-                className="masonry-card"
-                key={item.id}
-                style={
-                  second && index >= 4 && itemIndex === 0
-                    ? { minHeight: secondHeight || estimatedSecondHeight }
-                    : undefined
-                }
-              >
-                {isBannerItem(item) ? (
-                  <BannerSlotCard imageUrl={item.imageUrl} linkUrl={item.linkUrl} />
-                ) : isVideoItem(item) ? (
-                  <VideoMasonryCard video={item} />
-                ) : (
-                  <ArticleCard article={item} />
-                )}
-              </div>
-            ))}
+            {column.map((item, itemIndex) => {
+              const squareTop = !!second && index >= 4 && itemIndex === 0;
+              return (
+                <div
+                  className="masonry-card"
+                  key={item.id}
+                  style={
+                    squareTop
+                      ? { minHeight: secondHeight || estimatedSecondHeight }
+                      : undefined
+                  }
+                >
+                  {isBannerItem(item) ? (
+                    <BannerSlotCard imageUrl={item.imageUrl} linkUrl={item.linkUrl} />
+                  ) : isVideoItem(item) ? (
+                    <VideoMasonryCard video={item} square={squareTop} />
+                  ) : (
+                    <ArticleCard article={item} square={squareTop} />
+                  )}
+                </div>
+              );
+            })}
           </div>
         ))}
       </div>
