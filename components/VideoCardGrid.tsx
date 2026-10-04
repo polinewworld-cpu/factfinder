@@ -29,7 +29,7 @@ function videoUrl(card: VideoCardData) {
   return `https://www.youtube.com/watch?v=${card.youtubeId}`;
 }
 
-type CardVariant = 'latest' | 'second' | 'regular';
+type CardVariant = 'latest' | 'second' | 'pair' | 'regular';
 
 // 정치신세계 — 유튜브에서 자동 수집된 영상 카드 그리드 (기능정의서 4.2.1)
 export default function VideoCardGrid({
@@ -76,6 +76,7 @@ export default function VideoCardGrid({
   function renderCard(card: VideoCardData, variant: CardVariant) {
     const isLatest = variant === 'latest';
     const isSecond = variant === 'second';
+    const isPair = variant === 'pair';
     const isShort = variant === 'regular' && card.kind === 'SHORT';
     const href = videoUrl(card);
     const frameAspect = card.kind === 'SHORT' ? 9 / 16 : 16 / 9;
@@ -85,15 +86,15 @@ export default function VideoCardGrid({
     return (
       <div
         key={card.id}
-        className={`group flex h-full min-h-0 flex-col${isLatest ? ' video-card--latest' : ''}${isSecond ? ' video-card--second' : ''}${isShort ? ' video-card--short' : ''}`}
+        className={`group flex h-full min-h-0 flex-col${isLatest ? ' video-card--latest' : ''}${isSecond ? ' video-card--second' : ''}${isPair ? ' video-card--pair' : ''}${isShort ? ' video-card--short' : ''}`}
       >
         <a
           href={href}
           target="_blank"
           rel="noopener noreferrer"
           title={toFrenchBrackets(card.title)}
-          className={`video-card-thumb relative min-h-0 overflow-hidden rounded-xl border border-gray-200 bg-gray-100 group-hover:border-brand${canCrop ? ' video-card-thumb--crop' : ''} ${
-            isLatest || isSecond ? '' : isShort ? 'flex-1' : 'aspect-video'
+          className={`video-card-thumb relative min-h-0 overflow-hidden rounded-xl border border-gray-200 bg-gray-100 hover:border-brand group-hover:border-brand${canCrop ? ' video-card-thumb--crop' : ''} ${
+            isLatest || isSecond || isPair ? '' : isShort ? 'flex-1' : 'aspect-video'
           }`}
         >
           <CoverHoverImage
@@ -173,7 +174,7 @@ export default function VideoCardGrid({
                 {renderCard(hero[1], 'second')}
                 {hero.length > 2 ? (
                   <div className="video-hero-pair">
-                    {hero.slice(2, 4).map((card) => renderCard(card, 'regular'))}
+                    {hero.slice(2, 4).map((card) => renderCard(card, 'pair'))}
                   </div>
                 ) : null}
               </div>

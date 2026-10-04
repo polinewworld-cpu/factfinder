@@ -584,10 +584,15 @@ img {
 
   .video-hero-right {
     height: 100%;
+    min-height: 0;
+  }
+
+  .video-card--latest {
+    height: 100%;
   }
 
   .video-card--latest .video-card-thumb {
-    flex: 0 0 auto;
+    flex: 1 1 auto;
     aspect-ratio: 1 / 0.92;
     min-height: 0;
   }
@@ -605,6 +610,18 @@ img {
 
   .video-hero-pair {
     flex: 0 0 auto;
+    margin-top: auto;
+    align-items: stretch;
+  }
+
+  .video-card--pair {
+    min-height: 0;
+  }
+
+  .video-card--pair .video-card-thumb {
+    flex: 1 1 auto;
+    aspect-ratio: 16 / 9;
+    min-height: 0;
   }
 
   .video-card--latest .video-card-title,
