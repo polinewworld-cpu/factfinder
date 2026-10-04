@@ -1,6 +1,7 @@
 export const CARD_RATIOS = [1, 1, 16 / 9];
 export const FEATURED_CARD_RATIO = 1.12;
-export const WIDE_CARD_RATIO = 0.46;
+// 2열 슬롯 너비 대비 높이. 1열 1:1 크롭 높이와 맞추면 col/(2col+gap) ≈ 0.484
+export const WIDE_CARD_RATIO = 0.484;
 
 export function hashString(value: string) {
   let hash = 0;

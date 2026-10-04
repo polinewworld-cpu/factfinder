@@ -59,7 +59,7 @@ export default function VideoMasonryCard({ video, wide = false }: { video: Mason
       <a className="pin-media" href={href} target="_blank" rel="noopener noreferrer">
         <CoverHoverImage
           src={video.thumbnailUrl}
-          aspectRatio={wide ? '1 / 0.46' : video.kind === 'SHORT' ? '9 / 16' : '16 / 9'}
+          aspectRatio={wide ? '1 / 0.484' : video.kind === 'SHORT' ? '9 / 16' : '16 / 9'}
           fallbackAxis={video.kind === 'SHORT' ? 'y' : 'x'}
         />
         <div className="pin-badges">

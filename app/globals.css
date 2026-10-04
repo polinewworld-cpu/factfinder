@@ -1105,6 +1105,14 @@ img {
 .cover-pick--wide .cover-pick-thumb,
 .cover-pick--wide .cover-focal-preview {
   width: calc(160px * 2 + 12px);
+  height: 160px;
+}
+
+.cover-pick--wide .cover-focal-preview img,
+.cover-pick--wide .cover-pick-thumb img {
+  width: 100%;
+  height: 100%;
+  aspect-ratio: unset !important;
 }
 
 .cover-pick-chips {
@@ -1310,6 +1318,13 @@ img {
   left: calc(((100% - var(--gap) * (var(--cols) - 1)) / var(--cols) + var(--gap)) * 2);
   z-index: 1;
   width: calc((100% - var(--gap) * (var(--cols) - 1)) / var(--cols) * 2 + var(--gap));
+  container-type: inline-size;
+}
+
+.second-slot .pin-media > .cover-hover-frame,
+.second-slot .pin-fallback {
+  aspect-ratio: auto !important;
+  height: calc((100cqw - var(--gap)) / 2);
 }
 
 .featured-spacer {
