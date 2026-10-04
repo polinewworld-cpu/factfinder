@@ -26,6 +26,10 @@ function videoUrl(video: MasonryVideo) {
   return `https://www.youtube.com/watch?v=${video.youtubeId}`;
 }
 
+function youtubeFullFrameThumb(url: string) {
+  return url.replace(/\/(hqdefault|sddefault|default|0)\.(jpg|webp)(\?.*)?$/i, '/maxresdefault.$2$3');
+}
+
 // 정치신세계 영상을 "기사 생성"처럼 취급해 인덱스(전체) 피드의 일반 기사 카드와 같은 메이슨리 레이아웃에 섞어 보여주는 카드 (2026-09-11 신설)
 // 클릭하면 사이트 내 상세페이지가 아니라 유튜브로 바로 이동함.
 // '메인에서 제외' 기능은 정치신세계 서브페이지가 아니라 이 메인 피드 카드에서 하도록 위치를 옮김 (2026-09-12 사용자 지시)
@@ -62,13 +66,18 @@ export default function VideoMasonryCard({
 
   if (hiddenFromMain) return null;
 
+  const frameAspect = video.kind === 'SHORT' ? 9 / 16 : 16 / 9;
+  const thumbSrc = square ? youtubeFullFrameThumb(video.thumbnailUrl) : video.thumbnailUrl;
+
   return (
     <article className={wide ? 'pin is-wide' : 'pin'}>
       <a className="pin-media" href={href} target="_blank" rel="noopener noreferrer">
         <CoverHoverImage
-          src={video.thumbnailUrl}
+          src={thumbSrc}
+          fallbackSrc={square && thumbSrc !== video.thumbnailUrl ? video.thumbnailUrl : undefined}
           aspectRatio={wide ? '1 / 0.484' : square ? '1 / 1' : video.kind === 'SHORT' ? '9 / 16' : '16 / 9'}
           fallbackAxis={video.kind === 'SHORT' ? 'y' : 'x'}
+          contentAspect={square ? frameAspect : undefined}
         />
         <div className="pin-badges">
           <span className="pin-badge-chip">정치신세계</span>
