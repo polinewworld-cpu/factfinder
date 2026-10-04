@@ -312,8 +312,16 @@ export default function Masonry({
                 aria-hidden="true"
               />
             )}
-            {column.map((item) => (
-              <div className="masonry-card" key={item.id}>
+            {column.map((item, itemIndex) => (
+              <div
+                className="masonry-card"
+                key={item.id}
+                style={
+                  second && index >= 4 && itemIndex === 0
+                    ? { minHeight: secondHeight || estimatedSecondHeight }
+                    : undefined
+                }
+              >
                 {isBannerItem(item) ? (
                   <BannerSlotCard imageUrl={item.imageUrl} linkUrl={item.linkUrl} />
                 ) : isVideoItem(item) ? (
