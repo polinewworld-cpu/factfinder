@@ -148,12 +148,12 @@ export async function syncVideoCards(): Promise<SyncResult> {
   return { synced, skipped };
 }
 
-// 방문자가 정치신세계 탭을 열 때마다 호출 — 마지막 동기화 후 MIN_SYNC_INTERVAL_MS가 지났으면
-// 자동으로 백그라운드 재동기화하여 편집장의 수동 새로고침 없이도 '항상' 최신 상태를 유지한다.
+// 방문자가 정치신세계 탭을 열거나 브라우저를 새로고침할 때 호출.
+// force면 최소 간격 없이 유튜브에서 다시 가져와, 수동 새로고침 버튼을 대체한다.
 // 실패해도 페이지 렌더링을 막지 않도록 항상 조용히 무시한다.
-export async function ensureVideoCardsFresh(): Promise<void> {
+export async function ensureVideoCardsFresh(force = false): Promise<void> {
   if (!isYoutubeConfigured()) return;
-  if (Date.now() - lastSyncedAt < MIN_SYNC_INTERVAL_MS) return;
+  if (!force && Date.now() - lastSyncedAt < MIN_SYNC_INTERVAL_MS) return;
   if (!inFlightSync) {
     inFlightSync = syncVideoCards()
       .catch(() => ({ synced: 0, skipped: 0 }))

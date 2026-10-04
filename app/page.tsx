@@ -6,13 +6,15 @@ import { ROLES } from '@/lib/roles';
 import { ensureVideoCardsFresh } from '@/lib/youtube';
 import type { ArticleStatus } from '@prisma/client';
 
+export const dynamic = 'force-dynamic';
+
 export default async function Home({ searchParams }: { searchParams: { category?: string } }) {
   const category = searchParams.category;
 
   // 정치신세계는 Article이 아니라 유튜브에서 자동 수집된 VideoCard로 구성되는 전용 피드 (기능정의서 4.2.1)
-  // 편집장의 수동 새로고침 없이도 '항상' 최신 영상이 보이도록, 탭을 열 때마다 일정 간격이 지났으면 자동 재동기화 (2026-09-11 신설)
+  // 브라우저 새로고침마다 유튜브와 동기화한다.
   if (category === '정치신세계') {
-    await ensureVideoCardsFresh();
+    await ensureVideoCardsFresh(true);
     const [cards, user] = await Promise.all([
       prisma.videoCard.findMany({ orderBy: { publishedAt: 'desc' }, take: 60 }),
       getCurrentUser(),
