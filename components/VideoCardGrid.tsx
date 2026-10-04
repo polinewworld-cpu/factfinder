@@ -29,6 +29,8 @@ function videoUrl(card: VideoCardData) {
   return `https://www.youtube.com/watch?v=${card.youtubeId}`;
 }
 
+type CardVariant = 'latest' | 'second' | 'regular';
+
 // 정치신세계 — 유튜브에서 자동 수집된 영상 카드 그리드 (기능정의서 4.2.1)
 export default function VideoCardGrid({
   cards,
@@ -71,6 +73,91 @@ export default function VideoCardGrid({
     });
   }
 
+  function renderCard(card: VideoCardData, variant: CardVariant) {
+    const isLatest = variant === 'latest';
+    const isSecond = variant === 'second';
+    const isShort = variant === 'regular' && card.kind === 'SHORT';
+    const href = videoUrl(card);
+    const frameAspect = card.kind === 'SHORT' ? 9 / 16 : 16 / 9;
+    const bleed = isLatest || isSecond;
+    const thumbSrc = bleed ? youtubeFullFrameThumb(card.thumbnailUrl) : card.thumbnailUrl;
+    const canCrop = canRefresh && isLatest;
+    return (
+      <div
+        key={card.id}
+        className={`group flex h-full min-h-0 flex-col${isLatest ? ' video-card--latest' : ''}${isSecond ? ' video-card--second' : ''}${isShort ? ' video-card--short' : ''}`}
+      >
+        <a
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer"
+          title={toFrenchBrackets(card.title)}
+          className={`video-card-thumb relative min-h-0 overflow-hidden rounded-xl border border-gray-200 bg-gray-100 group-hover:border-brand${canCrop ? ' video-card-thumb--crop' : ''} ${
+            isLatest || isSecond ? '' : isShort ? 'flex-1' : 'aspect-video'
+          }`}
+        >
+          <CoverHoverImage
+            src={thumbSrc}
+            fallbackSrc={bleed && thumbSrc !== card.thumbnailUrl ? card.thumbnailUrl : undefined}
+            alt={toFrenchBrackets(card.title)}
+            fill
+            fallbackAxis={card.kind === 'SHORT' ? 'y' : 'x'}
+            contentAspect={bleed ? frameAspect : undefined}
+            focalX={isLatest ? featureFocalX : undefined}
+            focalY={isLatest ? featureFocalY : undefined}
+            editable={canCrop}
+            onFocalChange={
+              canCrop
+                ? (x, y) => {
+                    setFeatureFocalX(x);
+                    setFeatureFocalY(y);
+                  }
+                : undefined
+            }
+            onFocalCommit={canCrop ? saveFeatureFocal : undefined}
+          />
+          <span className="absolute top-2 left-2 text-xs font-bold text-white bg-black/60 rounded-lg px-2 py-0.5">
+            {KIND_LABEL[card.kind]}
+          </span>
+          {canCrop ? <span className="video-card-crop-hint">드래그해서 크롭 위치를 맞추세요</span> : null}
+          {!card.showOnMain && (
+            <>
+              <span className="absolute top-2 right-2 text-xs font-bold text-white bg-red-600/90 rounded-lg px-2 py-0.5">
+                메인제외
+              </span>
+              {canRefresh && (
+                <button
+                  type="button"
+                  disabled={restoreBusyId === card.id}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    restoreToMain(card);
+                  }}
+                  className="absolute bottom-2 right-2 text-xs font-bold text-white bg-black/60 hover:bg-black/80 rounded-lg px-2 py-0.5 disabled:opacity-50"
+                >
+                  메인노출 켜기
+                </button>
+              )}
+            </>
+          )}
+        </a>
+        <CardHeadline
+          title={card.title}
+          canEdit={canRefresh}
+          patchUrl={`/api/video-cards/${card.id}`}
+          href={canRefresh ? undefined : href}
+          external
+          ariaLabel="영상 제목"
+          className={`video-card-title${canRefresh ? '' : ' line-clamp-2'}`}
+        />
+      </div>
+    );
+  }
+
+  const hero = cards.slice(0, 4);
+  const rest = cards.slice(4);
+
   return (
     <div className="content">
       {cards.length === 0 ? (
@@ -78,88 +165,26 @@ export default function VideoCardGrid({
           <p>아직 수집된 영상이 없습니다.</p>
         </div>
       ) : (
-        <div className="video-card-grid">
-          {cards.map((card, index) => {
-            const isLatest = index === 0;
-            const isSecond = index === 1;
-            const isShort = card.kind === 'SHORT' && !isLatest && !isSecond;
-            const href = videoUrl(card);
-            const frameAspect = card.kind === 'SHORT' ? 9 / 16 : 16 / 9;
-            const thumbSrc = isLatest ? youtubeFullFrameThumb(card.thumbnailUrl) : card.thumbnailUrl;
-            const canCrop = canRefresh && isLatest;
-            return (
-              <div
-                key={card.id}
-                className={`group flex h-full min-h-0 flex-col${isLatest ? ' video-card--latest' : ''}${isSecond ? ' video-card--second' : ''}${isShort ? ' video-card--short' : ''}`}
-              >
-                <a
-                  href={href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  title={toFrenchBrackets(card.title)}
-                  className={`video-card-thumb relative min-h-0 overflow-hidden rounded-xl border border-gray-200 bg-gray-100 group-hover:border-brand${canCrop ? ' video-card-thumb--crop' : ''} ${
-                    isLatest || isSecond ? '' : isShort ? 'flex-1' : 'aspect-video'
-                  }`}
-                >
-                  <CoverHoverImage
-                    src={thumbSrc}
-                    fallbackSrc={isLatest && thumbSrc !== card.thumbnailUrl ? card.thumbnailUrl : undefined}
-                    alt={toFrenchBrackets(card.title)}
-                    fill
-                    fallbackAxis={card.kind === 'SHORT' ? 'y' : 'x'}
-                    contentAspect={isLatest ? frameAspect : undefined}
-                    focalX={isLatest ? featureFocalX : undefined}
-                    focalY={isLatest ? featureFocalY : undefined}
-                    editable={canCrop}
-                    onFocalChange={
-                      canCrop
-                        ? (x, y) => {
-                            setFeatureFocalX(x);
-                            setFeatureFocalY(y);
-                          }
-                        : undefined
-                    }
-                    onFocalCommit={canCrop ? saveFeatureFocal : undefined}
-                  />
-                  <span className="absolute top-2 left-2 text-xs font-bold text-white bg-black/60 rounded-lg px-2 py-0.5">
-                    {KIND_LABEL[card.kind]}
-                  </span>
-                  {canCrop ? <span className="video-card-crop-hint">드래그해서 크롭 위치를 맞추세요</span> : null}
-                  {!card.showOnMain && (
-                    <>
-                      <span className="absolute top-2 right-2 text-xs font-bold text-white bg-red-600/90 rounded-lg px-2 py-0.5">
-                        메인제외
-                      </span>
-                      {canRefresh && (
-                        <button
-                          type="button"
-                          disabled={restoreBusyId === card.id}
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            restoreToMain(card);
-                          }}
-                          className="absolute bottom-2 right-2 text-xs font-bold text-white bg-black/60 hover:bg-black/80 rounded-lg px-2 py-0.5 disabled:opacity-50"
-                        >
-                          메인노출 켜기
-                        </button>
-                      )}
-                    </>
-                  )}
-                </a>
-                <CardHeadline
-                  title={card.title}
-                  canEdit={canRefresh}
-                  patchUrl={`/api/video-cards/${card.id}`}
-                  href={canRefresh ? undefined : href}
-                  external
-                  ariaLabel="영상 제목"
-                  className={`video-card-title${canRefresh ? '' : ' line-clamp-2'}`}
-                />
+        <>
+          <div className="video-hero">
+            {hero[0] ? renderCard(hero[0], 'latest') : null}
+            {hero[1] ? (
+              <div className="video-hero-right">
+                {renderCard(hero[1], 'second')}
+                {hero.length > 2 ? (
+                  <div className="video-hero-pair">
+                    {hero.slice(2, 4).map((card) => renderCard(card, 'regular'))}
+                  </div>
+                ) : null}
               </div>
-            );
-          })}
-        </div>
+            ) : null}
+          </div>
+          {rest.length > 0 ? (
+            <div className="video-card-grid">
+              {rest.map((card) => renderCard(card, 'regular'))}
+            </div>
+          ) : null}
+        </>
       )}
     </div>
   );
