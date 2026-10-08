@@ -58,10 +58,23 @@ let lastSyncedAt = 0;
 let inFlightSync: Promise<SyncResult> | null = null;
 
 // 2026-10-08 규칙 변경(사장님 지시): 정치신세계는 "라이브 방송"만 가져온다 — 진행 중·예정 라이브 + 끝난 라이브 다시보기.
-// 쇼츠·일반 업로드 영상은 저장하지 않고, 예전에 저장된 것도 동기화 때 정리(삭제)한다.
-// 판별: 유튜브 videos API의 liveStreamingDetails는 라이브로 방송된(될) 영상에만 붙는다.
-const isLiveBroadcast = (video: any) => !!video.liveStreamingDetails || ['live', 'upcoming'].includes(video.snippet?.liveBroadcastContent);
-const UPLOAD_PAGES = 2; // 최근 업로드 100개(50×2)까지 훑어 라이브를 찾음 — 쇼츠가 많아도 라이브가 묻히지 않게
+// 쇼츠·일반 업로드·최초공개(프리미어) 영상은 저장하지 않고, 이미 저장된 것도 동기화 때마다 다시 확인해 정리(삭제)한다.
+//
+// 판별(유튜브 API에 "진짜 라이브" 표시가 따로 없어 실제 데이터로 확인한 규칙):
+//  - liveStreamingDetails 없음 → 일반 업로드/쇼츠
+//  - 영상 길이 0(P0D) → 아직 방송 전이거나 방송 중인 진짜 라이브 (프리미어는 미리 올린 영상이라 길이가 있음)
+//  - 길이 있음 + 게시 시각이 방송 시작 이후 → 끝난 라이브의 다시보기 (방송 끝나고 게시됨, 예: 10:01 시작 → 11:08 게시)
+//  - 길이 있음 + 게시 시각이 방송 시작과 같거나 이전 → 프리미어 (예: 03:00 게시 = 03:00 시작)
+function isLiveBroadcast(video: any): boolean {
+  const live = video.liveStreamingDetails;
+  if (!live) return false;
+  const duration = video.contentDetails?.duration as string | undefined;
+  if (!duration || duration === 'P0D') return true;
+  if (!live.actualStartTime) return false;
+  const publishedAt = new Date(video.snippet.publishedAt).getTime();
+  return publishedAt > new Date(live.actualStartTime).getTime() + 60_000;
+}
+const UPLOAD_PAGES = 2; // 최근 업로드 100개(50×2)까지 훑어 라이브를 찾음 — 쇼츠·프리미어가 많아도 라이브가 묻히지 않게
 
 async function fetchVideoDetails(ids: string[]): Promise<any[]> {
   const out: any[] = [];
@@ -77,7 +90,7 @@ export async function syncVideoCards(): Promise<SyncResult> {
   const channelId = await resolveChannelId();
   const playlistId = uploadsPlaylistId(channelId);
 
-  const videoIds: string[] = [];
+  const candidateIds = new Set<string>();
   let pageToken: string | undefined;
   for (let page = 0; page < UPLOAD_PAGES; page++) {
     const playlistData = await ytFetch('playlistItems', {
@@ -86,90 +99,44 @@ export async function syncVideoCards(): Promise<SyncResult> {
       maxResults: '50',
       ...(pageToken ? { pageToken } : {}),
     });
-    videoIds.push(...(playlistData.items ?? []).map((item: any) => item.contentDetails?.videoId).filter(Boolean));
+    for (const item of playlistData.items ?? []) if (item.contentDetails?.videoId) candidateIds.add(item.contentDetails.videoId);
     pageToken = playlistData.nextPageToken;
     if (!pageToken) break;
   }
 
-  let synced = 0;
-  let skipped = 0;
-
-  if (videoIds.length > 0) {
-    const details = await fetchVideoDetails(videoIds);
-    const nonLiveIds = details.filter((v) => !isLiveBroadcast(v)).map((v) => v.id);
-    if (nonLiveIds.length) await prisma.videoCard.deleteMany({ where: { youtubeId: { in: nonLiveIds } } });
-
-    for (const video of details.filter(isLiveBroadcast)) {
-      try {
-        const kind = 'LIVE' as const;
-        const existing = await prisma.videoCard.findUnique({ where: { youtubeId: video.id } });
-        const title = preserveTitleBreaks(existing?.title, toFrenchBrackets(video.snippet.title));
-        await prisma.videoCard.upsert({
-          where: { youtubeId: video.id },
-          update: {
-            title,
-            thumbnailUrl: video.snippet.thumbnails?.high?.url ?? video.snippet.thumbnails?.default?.url ?? '',
-            kind,
-            publishedAt: new Date(video.snippet.publishedAt),
-          },
-          create: {
-            youtubeId: video.id,
-            title,
-            thumbnailUrl: video.snippet.thumbnails?.high?.url ?? video.snippet.thumbnails?.default?.url ?? '',
-            kind,
-            publishedAt: new Date(video.snippet.publishedAt),
-          },
-        });
-        synced += 1;
-      } catch {
-        skipped += 1;
-      }
-    }
-  }
-
-  // 진행 중/예정 라이브는 업로드 재생목록에 아직 안 잡힐 수 있어 별도로 확인 (기능정의서 4.2.1 warning 1)
+  // 진행 중 라이브는 업로드 재생목록에 아직 안 잡힐 수 있어 별도로 확인 (기능정의서 4.2.1 warning 1)
   try {
-    const liveData = await ytFetch('search', {
-      part: 'snippet',
-      channelId,
-      eventType: 'live',
-      type: 'video',
-      maxResults: '5',
-    });
-    for (const item of liveData.items ?? []) {
-      const videoId = item.id?.videoId;
-      if (!videoId) continue;
-      const existing = await prisma.videoCard.findUnique({ where: { youtubeId: videoId } });
-      const title = preserveTitleBreaks(existing?.title, toFrenchBrackets(item.snippet.title));
-      await prisma.videoCard.upsert({
-        where: { youtubeId: videoId },
-        update: {
-          title,
-          thumbnailUrl: item.snippet.thumbnails?.high?.url ?? item.snippet.thumbnails?.default?.url ?? '',
-          kind: 'LIVE',
-          publishedAt: new Date(item.snippet.publishedAt),
-        },
-        create: {
-          youtubeId: videoId,
-          title,
-          thumbnailUrl: item.snippet.thumbnails?.high?.url ?? item.snippet.thumbnails?.default?.url ?? '',
-          kind: 'LIVE',
-          publishedAt: new Date(item.snippet.publishedAt),
-        },
-      });
-      synced += 1;
-    }
+    const liveData = await ytFetch('search', { part: 'snippet', channelId, eventType: 'live', type: 'video', maxResults: '5' });
+    for (const item of liveData.items ?? []) if (item.id?.videoId) candidateIds.add(item.id.videoId);
   } catch {
     /* 라이브 확인 실패는 전체 동기화를 막지 않음 */
   }
 
-  // 규칙 변경 전에 저장된 쇼츠·일반 영상 정리 — 최근 100개 밖의 옛 카드도 유튜브에 라이브 여부를 물어 확인한 뒤 처리
-  const legacyCards = await prisma.videoCard.findMany({ where: { kind: { not: 'LIVE' } }, select: { youtubeId: true } });
-  if (legacyCards.length) {
-    const details = await fetchVideoDetails(legacyCards.map((c) => c.youtubeId));
-    const liveIds = details.filter(isLiveBroadcast).map((v) => v.id);
-    if (liveIds.length) await prisma.videoCard.updateMany({ where: { youtubeId: { in: liveIds } }, data: { kind: 'LIVE' } });
-    await prisma.videoCard.deleteMany({ where: { kind: { not: 'LIVE' } } }); // 남은 것 = 라이브 아님(또는 유튜브에서 삭제된 영상)
+  // 이미 저장된 카드도 함께 재확인 — 규칙에 안 맞으면(또는 유튜브에서 삭제됐으면) 정리
+  const stored = await prisma.videoCard.findMany({ select: { youtubeId: true } });
+  const details = await fetchVideoDetails([...new Set([...candidateIds, ...stored.map((c) => c.youtubeId)])]);
+  const liveVideos = details.filter(isLiveBroadcast);
+  const keepIds = new Set(liveVideos.map((v) => v.id));
+  const removeIds = stored.map((c) => c.youtubeId).filter((id) => !keepIds.has(id));
+  if (removeIds.length) await prisma.videoCard.deleteMany({ where: { youtubeId: { in: removeIds } } });
+
+  let synced = 0;
+  let skipped = 0;
+  for (const video of liveVideos) {
+    try {
+      const existing = await prisma.videoCard.findUnique({ where: { youtubeId: video.id } });
+      const title = preserveTitleBreaks(existing?.title, toFrenchBrackets(video.snippet.title));
+      const thumbnailUrl = video.snippet.thumbnails?.high?.url ?? video.snippet.thumbnails?.default?.url ?? '';
+      const publishedAt = new Date(video.snippet.publishedAt);
+      await prisma.videoCard.upsert({
+        where: { youtubeId: video.id },
+        update: { title, thumbnailUrl, kind: 'LIVE', publishedAt },
+        create: { youtubeId: video.id, title, thumbnailUrl, kind: 'LIVE', publishedAt },
+      });
+      synced += 1;
+    } catch {
+      skipped += 1;
+    }
   }
 
   return { synced, skipped };

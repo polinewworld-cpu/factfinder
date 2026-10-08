@@ -4,7 +4,8 @@ import { usePathname, useSearchParams } from 'next/navigation';
 import AccountMenu from './AccountMenu';
 import HeaderSearch from './HeaderSearch';
 
-const CATEGORIES = ['전체', '정치', '국제', '사회', '문화', '정치신세계'];
+// 정치신세계 탭은 2026-10-08 사장님 지시로 제거 — 라이브 방송 카드는 '전체' 피드에만 섞여 나옴
+const CATEGORIES = ['전체', '정치', '국제', '사회', '문화'];
 
 export type CategoryAccount = {
   name: string;
