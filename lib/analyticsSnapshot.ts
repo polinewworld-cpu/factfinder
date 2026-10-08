@@ -2,6 +2,7 @@ import { prisma } from '@/lib/prisma';
 import { gaConfigured } from '@/lib/ga';
 import { buildAnalyticsReport, type AnalyticsReport } from '@/lib/gaReport';
 import { analyzeWithGemini, geminiConfigured } from '@/lib/geminiAnalysis';
+import { buildMediaWatch } from '@/lib/mediaWatch';
 
 // 하루 한 번 만든 방문 분석 보고서를 DB에 저장해 두고 재사용 (2026-10-08)
 // 자동화: 10분마다 오는 잠들기 방지 핑(/api/health)이 한국시간 오전 6시 이후 그날 보고서가 없으면 만들어 둔다.
@@ -14,11 +15,17 @@ let inFlight: Promise<AnalyticsReport> | null = null;
 export async function buildAndSaveToday(): Promise<AnalyticsReport> {
   if (!inFlight) {
     inFlight = (async () => {
-      const report = await buildAnalyticsReport();
+      const [report, media] = await Promise.all([
+        buildAnalyticsReport(),
+        buildMediaWatch().catch((e) => (e instanceof Error ? e.message : '매체 동향 수집 실패')),
+      ]);
+      // 매체 동향(네이버) — 실패해도 나머지는 저장
+      if (typeof media === 'string') report.mediaError = media;
+      else report.media = media;
       // 숫자 보고서에 제미나이 전략 분석을 덧붙임 — 실패해도 숫자 보고서는 저장
       if (geminiConfigured()) {
         try {
-          report.ai = await analyzeWithGemini(report);
+          report.ai = await analyzeWithGemini(report, report.media ?? null);
         } catch (e) {
           report.ai = null;
           report.aiError = e instanceof Error ? e.message : '제미나이 분석 실패';

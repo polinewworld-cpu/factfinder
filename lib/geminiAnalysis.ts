@@ -1,17 +1,33 @@
 import { prisma } from '@/lib/prisma';
 import { authorName } from '@/lib/byline';
 import type { AnalyticsReport } from '@/lib/gaReport';
+import type { MediaWatch } from '@/lib/mediaWatch';
 
 // 제미나이 전략·정성 분석 (2026-10-08) — 숫자 보고서(GA) + 이번 주 실제 기사 제목들을 넘겨
 // "무엇이 왜 읽혔고 다음 주 무엇을 언제 쓸지"를 편집국 관점으로 받는다. 매일 아침 보고서와 함께 자동 생성.
+// 2026-10-09: 일반론("중도 관점을 보여라") 대신 매체 동향(lib/mediaWatch.ts — 조선·중앙·동아·매일·서울신문 1면·많이 본·댓글 많은 뉴스)
+// 근거의 구체적 기사 아이디어(키워드·제목 예시·근거·추천 기자·연결할 옛 기사)로 개편.
 // Render 환경변수: GEMINI_API_KEY(비밀값), GEMINI_MODEL(선택, 기본 gemini-3.6-flash)
 // 개인정보는 보내지 않음(집계 수치·기사 제목·기자 필명만).
 
+export type ArticleIdea = {
+  priority: number; // 1·2·3순위
+  keyword: string;
+  issue: string;
+  headline: string; // 제목 예시
+  angle: string; // 쓸 각도
+  evidence: string; // 근거(어느 매체 몇 면·몇 위)
+  reporter: string; // 추천 기자
+  related: { id: string; title: string; date: string | null }[]; // 연결할 우리 옛 기사(서버가 붙임)
+};
+
 export type GeminiAnalysis = {
   headline: string;
+  ideas?: ArticleIdea[];
+  outletComparison?: string[];
   whatWorked: string[];
   whatDidnt: string[];
-  topicStrategy: string[];
+  topicStrategy?: string[]; // 옛 보고서 호환(더 이상 만들지 않음)
   scheduleStrategy: string[];
   channelStrategy: string[];
   reporterNotes: string[];
@@ -19,33 +35,67 @@ export type GeminiAnalysis = {
 };
 
 const LIST = { type: 'ARRAY', items: { type: 'STRING' } };
+const IDEA = {
+  type: 'OBJECT',
+  properties: {
+    priority: { type: 'INTEGER' },
+    keyword: { type: 'STRING' },
+    issue: { type: 'STRING' },
+    headline: { type: 'STRING' },
+    angle: { type: 'STRING' },
+    evidence: { type: 'STRING' },
+    reporter: { type: 'STRING' },
+  },
+  required: ['priority', 'keyword', 'issue', 'headline', 'angle', 'evidence', 'reporter'],
+};
 const RESPONSE_SCHEMA = {
   type: 'OBJECT',
   properties: {
     headline: { type: 'STRING' },
+    ideas: { type: 'ARRAY', items: IDEA },
+    outletComparison: LIST,
     whatWorked: LIST,
     whatDidnt: LIST,
-    topicStrategy: LIST,
     scheduleStrategy: LIST,
     channelStrategy: LIST,
     reporterNotes: LIST,
     nextWeekActions: LIST,
   },
-  required: ['headline', 'whatWorked', 'whatDidnt', 'topicStrategy', 'scheduleStrategy', 'channelStrategy', 'reporterNotes', 'nextWeekActions'],
+  required: ['headline', 'ideas', 'outletComparison', 'whatWorked', 'whatDidnt', 'scheduleStrategy', 'channelStrategy', 'reporterNotes', 'nextWeekActions'],
 };
 
 export function geminiConfigured() {
   return !!process.env.GEMINI_API_KEY;
 }
 
-export async function analyzeWithGemini(report: AnalyticsReport): Promise<GeminiAnalysis> {
+const isFront = (page?: string) => /^A?1면$/.test(page ?? '');
+
+export async function analyzeWithGemini(report: AnalyticsReport, media: MediaWatch | null): Promise<GeminiAnalysis> {
   const since = new Date(Date.now() - 7 * 86400_000);
-  const published = await prisma.article.findMany({
-    where: { status: 'PUBLISHED', publishedAt: { gte: since } },
-    orderBy: { publishedAt: 'desc' },
-    take: 80,
-    select: { title: true, publishedAt: true, category: { select: { name: true } }, author: { select: { name: true, nickname: true } } },
-  });
+  const [published, recent] = await Promise.all([
+    prisma.article.findMany({
+      where: { status: 'PUBLISHED', publishedAt: { gte: since } },
+      orderBy: { publishedAt: 'desc' },
+      take: 80,
+      select: { title: true, publishedAt: true, category: { select: { name: true } }, author: { select: { name: true, nickname: true } } },
+    }),
+    // 기자 추천용 — 최근 90일 기자별 기사 제목
+    prisma.article.findMany({
+      where: { status: 'PUBLISHED', publishedAt: { gte: new Date(Date.now() - 90 * 86400_000) } },
+      orderBy: { publishedAt: 'desc' },
+      take: 300,
+      select: { title: true, author: { select: { name: true, nickname: true } } },
+    }),
+  ]);
+  const byReporter = new Map<string, string[]>();
+  for (const a of recent) {
+    const name = authorName(a.author);
+    if (!name) continue;
+    const list = byReporter.get(name) ?? [];
+    if (list.length < 4) list.push(a.title);
+    byReporter.set(name, list);
+  }
+  const hasVisits = report.summary.users > 0;
 
   const viewsByTitle = new Map(report.topArticles.map((a) => [a.title, a.views]));
   const data = {
@@ -73,21 +123,56 @@ export async function analyzeWithGemini(report: AnalyticsReport): Promise<Gemini
       조회: viewsByTitle.get(a.title) ?? null,
     })),
     자동계산인사이트: report.insights.map((i) => i.text),
+    우리기자_최근기사: Object.fromEntries([...byReporter.entries()].slice(0, 20)),
+    매체동향: media
+      ? {
+          매체별: media.outlets.map((o) => ({
+            매체: o.name,
+            지면날짜: o.paperDate,
+            일면: o.newspaper.filter((i) => isFront(i.page)).map((i) => i.title),
+            주요지면: o.newspaper
+              .filter((i) => /^A?[2-6]면$/.test(i.page ?? ''))
+              .slice(0, 15)
+              .map((i) => `${i.page} ${i.title}`),
+            많이본뉴스: o.popular.slice(0, 10).map((i) => `${i.rank}위 ${i.title}`),
+            댓글많은뉴스: o.commented.slice(0, 10).map((i) => `${i.rank}위 ${i.title}`),
+          })),
+          키워드: media.keywords.map((k) => ({
+            키워드: k.word,
+            다룬매체: k.outlets,
+            기사수: k.articles,
+            일면매체수: k.front,
+            많이본: k.popular,
+            댓글많은: k.commented,
+            팩트파인더_최근7일: k.oursWeek,
+            팩트파인더_전체: k.oursAll,
+          })),
+        }
+      : null,
   };
 
-  const prompt = `당신은 한국 인터넷 정치 언론사의 편집 전략 컨설턴트입니다.
-매체: 팩트파인더 — "진영주의를 벗어나 중도주의 관점으로 정치와 사회를 보는" 인터넷신문. 정치 기사 비중이 크고 기자 수가 적은 소규모 매체입니다.
-아래는 최근 7일 구글 애널리틱스 집계와 이번 주 발행 기사 목록입니다(조회가 null이면 상위권 밖).
+  const prompt = `당신은 한국 인터넷 정치 언론사의 편집국 데스크입니다.
+매체: 팩트파인더 — 정치 기사 중심의 소규모 인터넷신문. 기자 수가 적어 하루 몇 건만 씁니다.
+아래 데이터: ① 구글 애널리틱스 최근 7일 집계(방문자 ${report.summary.users}명) ② 팩트파인더 이번 주 발행 기사 ③ 우리 기자별 최근 기사 ④ 매체동향 — 조선·중앙·동아·매일신문·서울신문의 오늘 신문 1면·주요 지면, 네이버 많이 본 뉴스·댓글 많은 뉴스, 그리고 키워드 집계(팩트파인더가 그 키워드로 쓴 기사 수 포함).
 
-규칙:
-- 숫자를 그대로 다시 읊지 말고, 숫자가 의미하는 바와 원인 가설, 다음 행동을 쓰세요.
-- 기사 제목을 근거로 어떤 주제·인물·논조·제목 방식이 읽혔는지 정성적으로 해석하세요.
-- 특정 정당·정치인에 대한 지지·비판 의견은 내지 말고, 독자 반응과 편집 전략 관점에서만 쓰세요.
-- 자료가 적거나 불확실하면 그렇다고 밝히고 단정하지 마세요.
-- 모든 항목은 한국어, 한두 문장, 구체적으로. 각 배열은 2~5개.
+가장 중요한 일: "ideas" — 오늘·이번 주 팩트파인더가 실제로 쓸 기사 5~7개.
+- priority 1: 여러 매체가 1면·많이 본·댓글 많은 뉴스로 다뤘는데 팩트파인더 최근 7일 기사가 없는 이슈
+- priority 2: 한두 매체만 1면·단독으로 강하게 다뤘거나 댓글이 몰린(논쟁적인) 이슈 중 우리가 안 쓴 것
+- priority 3: 팩트파인더 전체(옛 기사)에 쌓인 주제와 이어지는 후속 기사감
+- keyword: 키워드 집계의 단어 그대로(가능하면). issue: 어떤 사건인지 한 줄(인물·기관·사건명 포함)
+- headline: 실제로 달 수 있는 기사 제목(30자 안팎). angle: 다른 매체 기사와 차별화할 구체적 취재·분석 각도
+- evidence: 근거를 숫자로 — 예) "조선·동아 1면, 중앙 많이 본 뉴스 2위, 댓글 많은 뉴스 3개 매체"
+- reporter: 우리기자_최근기사를 보고 이 주제를 써 온 기자 이름(없으면 "편집장")
+"outletComparison": 같은 이슈를 5개 매체가 어떻게 다르게 다뤘는지 3~5개 — 1면 배치 여부, 어느 매체만 다뤘는지, 제목에서 드러나는 초점 차이를 매체 이름과 함께.
 
-다음 JSON 하나만 출력하세요:
-{"headline":"이번 주를 한 문장으로","whatWorked":[],"whatDidnt":[],"topicStrategy":["다음 주 다룰 주제·후속기사 제안"],"scheduleStrategy":["발행 시간·요일 전략"],"channelStrategy":["네이버·구글·SNS 등 유입 전략"],"reporterNotes":["기자별 강점·배치 제안"],"nextWeekActions":["다음 주 바로 할 일 체크리스트"]}
+절대 규칙:
+- 인물·기관·사건·법안 같은 고유명사가 없는 일반론 문장 금지. ("중도 관점을 보여라", "신뢰도를 높여라", "회의를 열어라" 같은 말은 쓰지 말 것)
+- 데이터에 없는 사실을 지어내지 말 것. 근거는 위 데이터에서만.
+- 특정 정당·정치인 지지·비판 의견은 내지 말고 편집·취재 관점에서만.
+- 방문자 데이터가 없으면(방문자 0) whatWorked·whatDidnt·scheduleStrategy·channelStrategy·reporterNotes는 빈 배열.${hasVisits ? '' : ' 지금이 그 경우입니다.'}
+- nextWeekActions: ideas를 실행하는 구체적 할 일(누가·무엇을) 3~5개.
+- headline(맨 위 한 줄 요약): "오늘 가장 먼저 쓸 기사는 무엇이고 왜인가"를 한 문장으로.
+- 모든 문장은 한국어, 한두 문장.
 
 데이터:
 ${JSON.stringify(data)}`;
@@ -107,7 +192,7 @@ ${JSON.stringify(data)}`;
           // responseSchema로 형식을 강제 — 문장 속 따옴표 등으로 JSON이 깨지는 것 방지
           generationConfig: { temperature: 0.5, responseMimeType: 'application/json', responseSchema: RESPONSE_SCHEMA },
         }),
-        signal: AbortSignal.timeout(90_000),
+        signal: AbortSignal.timeout(120_000),
       }).catch((e) => {
         lastError = e instanceof Error ? e.message : String(e);
         return null;
@@ -133,11 +218,44 @@ ${JSON.stringify(data)}`;
   if (!text) throw new Error(`제미나이 호출 실패: ${lastError}`);
   const parsed = JSON.parse(text.replace(/^```json\s*|```\s*$/g, ''));
   const arr = (v: unknown) => (Array.isArray(v) ? v.map(String).filter(Boolean).slice(0, 6) : []);
+
+  // 아이디어마다 "연결할 우리 옛 기사"를 서버가 붙임 — 키워드 집계에 있으면 그 결과, 없으면 제목 검색
+  const ideas: ArticleIdea[] = await Promise.all(
+    (Array.isArray(parsed.ideas) ? parsed.ideas : []).slice(0, 8).map(async (i: any) => {
+      const keyword = String(i.keyword ?? '').trim();
+      const row = media?.keywords.find((k) => k.word === keyword);
+      const related =
+        row?.related ??
+        (keyword.length >= 2
+          ? (
+              await prisma.article.findMany({
+                where: { status: 'PUBLISHED', title: { contains: keyword } },
+                orderBy: { publishedAt: 'desc' },
+                take: 2,
+                select: { id: true, title: true, publishedAt: true },
+              })
+            ).map((r) => ({ id: r.id, title: r.title, date: r.publishedAt?.toISOString().slice(0, 10) ?? null }))
+          : []);
+      return {
+        priority: Math.min(3, Math.max(1, Number(i.priority) || 3)),
+        keyword,
+        issue: String(i.issue ?? ''),
+        headline: String(i.headline ?? ''),
+        angle: String(i.angle ?? ''),
+        evidence: String(i.evidence ?? ''),
+        reporter: String(i.reporter ?? ''),
+        related,
+      };
+    }),
+  );
+  ideas.sort((a, b) => a.priority - b.priority);
+
   return {
     headline: String(parsed.headline ?? ''),
+    ideas,
+    outletComparison: arr(parsed.outletComparison),
     whatWorked: arr(parsed.whatWorked),
     whatDidnt: arr(parsed.whatDidnt),
-    topicStrategy: arr(parsed.topicStrategy),
     scheduleStrategy: arr(parsed.scheduleStrategy),
     channelStrategy: arr(parsed.channelStrategy),
     reporterNotes: arr(parsed.reporterNotes),

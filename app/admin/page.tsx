@@ -209,9 +209,16 @@ export default function AdminHome() {
                 <p className="text-[11px] text-gray-900/50 mb-1">제미나이 분석</p>
                 <p className="text-sm font-semibold mb-2">{analysis.report.ai.headline}</p>
                 <ul className="space-y-1 list-disc pl-4">
-                  {analysis.report.ai.nextWeekActions.slice(0, 3).map((t: string, i: number) => (
-                    <li key={i} className="text-sm text-gray-900/80">{t}</li>
-                  ))}
+                  {/* 2026-10-09: 기사 아이디어가 있으면 그것(순위·제목 예시), 없으면 옛 보고서의 할 일 */}
+                  {analysis.report.ai.ideas?.length
+                    ? analysis.report.ai.ideas.slice(0, 3).map((it: any, i: number) => (
+                        <li key={i} className="text-sm text-gray-900/80">
+                          <b>{it.priority}순위</b> {it.headline}
+                        </li>
+                      ))
+                    : analysis.report.ai.nextWeekActions.slice(0, 3).map((t: string, i: number) => (
+                        <li key={i} className="text-sm text-gray-900/80">{t}</li>
+                      ))}
                 </ul>
               </>
             ) : (

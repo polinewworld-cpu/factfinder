@@ -21,6 +21,9 @@ export type AnalyticsReport = {
   // 제미나이 전략·정성 분석 (lib/geminiAnalysis.ts) — 키가 없거나 실패하면 null + 사유
   ai?: import('@/lib/geminiAnalysis').GeminiAnalysis | null;
   aiError?: string | null;
+  // 매체 동향 (lib/mediaWatch.ts, 2026-10-09) — 조선·중앙·동아·매일·서울신문 1면·많이 본·댓글 많은 뉴스
+  media?: import('@/lib/mediaWatch').MediaWatch | null;
+  mediaError?: string | null;
 };
 
 type Totals = { users: number; newUsers: number; sessions: number; views: number; engagementSec: number };
