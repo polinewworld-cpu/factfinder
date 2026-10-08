@@ -17,6 +17,7 @@ const NAV: NavItem[] = [
   { href: '/admin/members?role=REPORTER', label: '기자관리' },
   { href: '/admin/reporter-applications', label: '기자 신청 대기함' },
   { href: '/admin/donations', label: '후원내역' },
+  { href: '/admin/legacy-images', label: '옛 사진 옮기기' }, // 도메인 전환 전 1회용 (2026-10-08)
   { href: '/admin/newsletter', label: '뉴스레터 발송' },
 ];
 
