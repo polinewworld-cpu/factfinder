@@ -198,7 +198,7 @@ export default async function ArticlePage({ params }: { params: { id: string } }
               <ShareButtons title={title.replace(/\s+/g, ' ').trim()} coverImageUrl={article.coverImageUrl} variant="large" />
             </div>
             <div className="donate-cta-row-item" style={{ flex: 2 }}>
-              <DonateButtonLarge reporterId={article.authorId} />
+              <DonateButtonLarge reporterId={article.authorId} articleId={article.id} />
             </div>
           </div>
           {activeArticleBanners[0] && (

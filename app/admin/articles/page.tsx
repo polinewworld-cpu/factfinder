@@ -102,6 +102,20 @@ export default function AdminArticlesPage() {
     setRows((prev) => prev.map((r) => (r.id === row.id ? { ...r, showOnMain: updated.showOnMain } : r)));
   }
 
+  // 기사 영구 삭제 — 댓글·본문사진·투표·저장(북마크)도 함께 지워짐. 되돌릴 수 없어 확인창을 거침 (2026-10-08 신설)
+  async function deleteArticle(row: Row) {
+    const title = toFrenchBrackets(row.title) || '(제목 없음)';
+    if (!confirm(`"${title}"
+
+이 기사를 삭제할까요? 댓글·사진까지 함께 지워지고 되돌릴 수 없습니다.`)) return;
+    const res = await fetch(`/api/articles/${row.id}`, { method: 'DELETE' });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      return alert(data.error ?? '삭제에 실패했습니다.');
+    }
+    setRows((prev) => prev.filter((r) => r.id !== row.id));
+  }
+
   function submitSearch() {
     setPage(1);
     setQuery(queryInput);
@@ -191,19 +205,20 @@ export default function AdminArticlesPage() {
               <SortTh field="commentCount" label="댓글수" className="pr-4" />
               <th className="py-2 pr-4 font-semibold">메인노출</th>
               <SortTh field="updatedAt" label="최종편집일" className="pr-4" />
+              <th className="py-2 pr-4 font-semibold">삭제</th>
             </tr>
           </thead>
           <tbody>
             {loading && (
               <tr>
-                <td colSpan={7} className="py-8 text-center text-gray-400">
+                <td colSpan={8} className="py-8 text-center text-gray-400">
                   불러오는 중…
                 </td>
               </tr>
             )}
             {!loading && rows.length === 0 && (
               <tr>
-                <td colSpan={7} className="py-8 text-center text-gray-400">
+                <td colSpan={8} className="py-8 text-center text-gray-400">
                   검색 결과가 없습니다.
                 </td>
               </tr>
@@ -246,6 +261,15 @@ export default function AdminArticlesPage() {
                     )}
                   </td>
                   <td className="py-2 pr-4 text-gray-400 text-xs">{fmtDateTime(r.updatedAt)}</td>
+                  <td className="py-2 pr-4">
+                    <button
+                      type="button"
+                      onClick={() => deleteArticle(r)}
+                      className="text-xs font-semibold border rounded-lg px-2 py-0.5 whitespace-nowrap text-gray-500 border-gray-200 hover:text-red-600 hover:border-red-300"
+                    >
+                      삭제
+                    </button>
+                  </td>
                 </tr>
               ))}
           </tbody>

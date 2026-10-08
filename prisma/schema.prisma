@@ -175,6 +175,7 @@ model Article {
   keywords Keyword[] // 관리자가 미리 만든 키워드 중 선택 (다대다)
   poll     Poll?
   savedBy  SavedArticle[]
+  donations Donation[] // 이 기사에서 들어온 후원 (2026-10-08)
 
   // 관련기사 — 작성자가 발행된 기사 중에서 직접 선택 (기능정의서 8.2). 방향성 있는 자기참조 다대다.
   relatedArticles Article[] @relation("RelatedArticles")
@@ -264,6 +265,8 @@ model Donation {
   userId      String? // 2026-10-08부터 비로그인 후원 허용(옛 사이트와 동일) — 로그인 상태로 후원하면 연결
   user        User?          @relation(fields: [userId], references: [id])
   donorName   String? // 후원자 이름 — 후원 폼에서 직접 입력 (2026-10-08 신설)
+  articleId   String? // 후원이 시작된 기사 — 관리자 후원내역의 "기사번호(기사확인)" (2026-10-08 신설)
+  article     Article?       @relation(fields: [articleId], references: [id], onDelete: SetNull)
   oid         String?        @unique // 이니시스 주문번호 — 결제 요청마다 새로 발급 (2026-10-08 신설)
   tid         String? // 이니시스 거래번호 — 승인 성공 시 기록 (취소·조회 시 필요)
   payMethod   String? // 결제수단 (Card, DirectBank 등)

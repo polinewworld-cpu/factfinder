@@ -91,7 +91,7 @@ export default function AdminHome() {
             </p>
           </RippleDotCard>
 
-          {/* 후원 — 오늘 금액/이번달 금액, 누르면 전체 후원리스트로 */}
+          {/* 후원 — 오늘 금액/이번달 금액, 누르면 후원내역으로 */}
           <RippleDotCard href="/admin/donations" className="h-[250px] hover:opacity-90">
             <p className="text-xs text-gray-900/60 mb-1">후원</p>
             <p className="text-5xl font-bold">

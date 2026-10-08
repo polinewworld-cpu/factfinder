@@ -5,7 +5,7 @@ import { CreditCardIcon } from './icons';
 import DonateModal from './DonateModal';
 
 // 기사 하단 "원고료로 응원하기" — 액센트 메인 버튼 (2026-09-18: 상단 액션바에서 분리해 여기로 이동)
-export default function DonateButtonLarge({ reporterId }: { reporterId: string }) {
+export default function DonateButtonLarge({ reporterId, articleId }: { reporterId: string; articleId?: string }) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -14,7 +14,7 @@ export default function DonateButtonLarge({ reporterId }: { reporterId: string }
         <CreditCardIcon />
         원고료로 응원하기
       </button>
-      {open && <DonateModal reporterId={reporterId} onClose={() => setOpen(false)} />}
+      {open && <DonateModal reporterId={reporterId} articleId={articleId} onClose={() => setOpen(false)} />}
     </>
   );
 }

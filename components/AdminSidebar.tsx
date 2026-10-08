@@ -16,7 +16,7 @@ const NAV: NavItem[] = [
   { href: '/admin/members', label: '전체 회원' },
   { href: '/admin/members?role=REPORTER', label: '기자관리' },
   { href: '/admin/reporter-applications', label: '기자 신청 대기함' },
-  { href: '/admin/donations', label: '전체 후원리스트' },
+  { href: '/admin/donations', label: '후원내역' },
   { href: '/admin/settlement', label: '후원 정산' },
   { href: '/admin/newsletter', label: '뉴스레터 발송' },
 ];

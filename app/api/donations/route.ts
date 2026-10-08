@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
   if (!inicisKeyStatus().matches) {
     return NextResponse.json({ error: '결제 준비 중입니다. 잠시 후 다시 시도해주세요.' }, { status: 503 });
   }
-  const { amount, reporterId, phone, name, mobile } = await req.json();
+  const { amount, reporterId, phone, name, mobile, articleId } = await req.json();
   const amt = Number(amount);
   if (!DONATION_AMOUNTS.includes(amt)) {
     return NextResponse.json({ error: '후원 금액을 선택해주세요' }, { status: 400 });
@@ -54,11 +54,16 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  // 어느 기사에서 후원했는지 — 관리자 후원내역의 기사 링크용. 없는 기사면 무시
+  const article = typeof articleId === 'string' && articleId
+    ? await prisma.article.findUnique({ where: { id: articleId }, select: { id: true } })
+    : null;
+
   const oid = newOrderId();
   await prisma.donation.create({
     data: {
       userId: user?.id ?? null, donorName, amount: amt, phone: cleanPhone, reporterId: reporterId || null,
-      status: 'PENDING', oid,
+      status: 'PENDING', oid, articleId: article?.id ?? null,
     },
   });
 

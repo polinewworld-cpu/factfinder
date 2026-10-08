@@ -47,7 +47,7 @@ function buildForm(id: string, fields: Record<string, string>, action?: string) 
   document.body.appendChild(form);
   return form;
 }
-export default function DonateForm({ initialReporterId = '' }: { initialReporterId?: string }) {
+export default function DonateForm({ initialReporterId = '', articleId = '' }: { initialReporterId?: string; articleId?: string }) {
   const [amount, setAmount] = useState(5000);
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
@@ -73,7 +73,7 @@ export default function DonateForm({ initialReporterId = '' }: { initialReporter
       const res = await fetch('/api/donations', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount, name: name.trim(), phone: phone.trim(), reporterId: initialReporterId || null, mobile }),
+        body: JSON.stringify({ amount, name: name.trim(), phone: phone.trim(), reporterId: initialReporterId || null, articleId: articleId || null, mobile }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error ?? '후원 신청에 실패했습니다. 잠시 후 다시 시도해주세요.');
