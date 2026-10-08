@@ -6,6 +6,7 @@ import { ROLES } from '@/lib/roles';
 import { ensureVideoCardsFresh } from '@/lib/youtube';
 import { Prisma, type ArticleStatus } from '@prisma/client';
 import type { Metadata } from 'next';
+import { SITE_URL } from '@/lib/siteTags';
 import Pagination from '@/components/Pagination';
 import { permanentRedirect } from 'next/navigation';
 
@@ -21,7 +22,8 @@ export async function generateMetadata({ searchParams }: { searchParams: { categ
   const params = new URLSearchParams();
   if (category) params.set('category', category);
   if (page > 1) params.set('page', String(page));
-  const canonical = params.toString() ? `/?${params}` : '/';
+  // 상대주소로 주면 Next가 ?category= 부분을 떼어 홈 주소가 돼 버려서 전체 주소로 지정
+  const canonical = new URL(params.toString() ? `/?${params}` : '/', SITE_URL).toString();
   const pageSuffix = page > 1 ? ` ${page}페이지` : '';
   const title = category ? `${category} 뉴스${pageSuffix} - ${SITE_TITLE}` : page > 1 ? `최신 뉴스${pageSuffix} - ${SITE_TITLE}` : `${SITE_TITLE} - 중도의 시선으로 보는 정치·사회 뉴스`;
   const description = category ? `팩트파인더 ${category} 기사 모음. ${SITE_DESC}` : SITE_DESC;
