@@ -27,7 +27,22 @@ export async function generateMetadata({ searchParams }: { searchParams: { categ
   const pageSuffix = page > 1 ? ` ${page}페이지` : '';
   const title = category ? `${category} 뉴스${pageSuffix} - ${SITE_TITLE}` : page > 1 ? `최신 뉴스${pageSuffix} - ${SITE_TITLE}` : `${SITE_TITLE} - 중도의 시선으로 보는 정치·사회 뉴스`;
   const description = category ? `팩트파인더 ${category} 기사 모음. ${SITE_DESC}` : SITE_DESC;
-  return { title, description, alternates: { canonical }, openGraph: { title, description, url: canonical } };
+  // metadataBase: null — Next 14는 경로가 '/'인 주소에서 ?category= 를 떼어 버림(resolve-url.js). 이 페이지는 전부 절대주소로 직접 지정
+  return {
+    metadataBase: null,
+    title,
+    description,
+    alternates: { canonical },
+    openGraph: {
+      type: 'website',
+      siteName: SITE_TITLE,
+      locale: 'ko_KR',
+      title,
+      description,
+      url: canonical,
+      images: [new URL('/og-default.png', SITE_URL).toString()],
+    },
+  };
 }
 
 // 목록 한 페이지 크기 — 하단 페이지 번호로 넘김 (2026-10-08, 옛 기사 3천여 건 이관 대비)
