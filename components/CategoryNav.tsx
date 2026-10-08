@@ -41,12 +41,11 @@ export default function CategoryNav({ account = null }: { account?: CategoryAcco
           );
         })}
       </div>
-      {/* 저장한 기사는 우측 계정 메뉴에 있으므로 이 자리는 후원하기로 (2026-10-08) */}
-      {account ? (
-        <a className={`chip category-aux${donateActive ? ' is-active' : ''}`} href="/donate">
-          후원하기
-        </a>
-      ) : (
+      {/* 저장한 기사는 우측 계정 메뉴에 있으므로 이 자리는 후원하기로 — 로그인 여부와 무관하게 노출 (2026-10-08) */}
+      <a className={`chip category-aux${donateActive ? ' is-active' : ''}`} href="/donate">
+        후원하기
+      </a>
+      {!account && (
         <a className="chip category-aux" href="/api/auth/signin">
           로그인
         </a>
