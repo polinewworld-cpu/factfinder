@@ -6,13 +6,29 @@ import { ROLES } from '@/lib/roles';
 import { ensureVideoCardsFresh } from '@/lib/youtube';
 import { Prisma, type ArticleStatus } from '@prisma/client';
 import Pagination from '@/components/Pagination';
+import { permanentRedirect } from 'next/navigation';
 
 export const dynamic = 'force-dynamic';
 
 // 목록 한 페이지 크기 — 하단 페이지 번호로 넘김 (2026-10-08, 옛 기사 3천여 건 이관 대비)
 const PAGE_SIZE = 60;
 
-export default async function Home({ searchParams }: { searchParams: { category?: string; page?: string } }) {
+// 옛 사이트 메뉴 코드(list.php?mcode=…) → 새 카테고리. 2026-10-08 확정한 이관 규칙(legacy-import/category-map.json)과 같음
+const LEGACY_MCODE: Record<string, string | null> = {
+  m84xb1v: null, m85ny3r: null, // 전체기사
+  m247tk9: '정치', m322ycu: '정치', m331evx: '정치', m35cu9n: '정치', m750cy4: '정치', // 정치·사회, 대통령실, 정당·국회, 정부, 사법리스크
+  m867ykr: '정치', m916pna: '정치', m8359b8: '정치', // 경제, 법률, 뉴스 브리핑
+  m730mv1: '국제',
+  m69n9ns: '사회', m77aapm: '사회', // 사건사고, 과학-IT
+  m37525y: '문화', m72gfuh: '문화', m71efgg: '문화', m78mj32: '문화', m81yw2r: '문화', m82zu84: '문화', m92ouz2: '문화',
+  m878ope: '후원하기', m889qdv: '후원하기',
+};
+
+export default async function Home({ searchParams }: { searchParams: { category?: string; page?: string; mcode?: string } }) {
+  if (searchParams.mcode !== undefined) {
+    const mapped = LEGACY_MCODE[searchParams.mcode];
+    permanentRedirect(mapped ? `/?category=${encodeURIComponent(mapped)}` : '/');
+  }
   const category = searchParams.category;
   const page = Math.max(1, Math.floor(Number(searchParams.page)) || 1);
 
