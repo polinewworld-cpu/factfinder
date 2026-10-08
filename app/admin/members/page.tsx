@@ -49,6 +49,20 @@ export default function MembersAdminPage() {
     setBusyId(null);
   }
 
+  // 회원 삭제 — 확인창 한 번 후 삭제. 쓴 기사가 있으면 서버가 막고 이유를 알려줌 (2026-10-08 신설)
+  async function deleteUser(u: any) {
+    if (!confirm(`${u.name} (${u.email}) 회원을 삭제할까요?`)) return;
+    setBusyId(u.id);
+    const res = await fetch(`/api/users/${u.id}`, { method: 'DELETE' });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      alert(data.error ?? '삭제에 실패했습니다.');
+    } else {
+      setUsers((prev) => prev.filter((x) => x.id !== u.id));
+    }
+    setBusyId(null);
+  }
+
   if (me === 'loading') return <main className="max-w-3xl mx-auto px-4 py-10 text-gray-500">불러오는 중…</main>;
   if (!me || me.role !== 'CHIEF_EDITOR') {
     return (
@@ -71,16 +85,16 @@ export default function MembersAdminPage() {
             <tr className="text-left text-gray-400 border-b border-gray-200">
               <th className="py-2 pr-4">이름</th>
               <th className="py-2 pr-4">이메일</th>
-              <th className="py-2 pr-4">등급</th>
-              <th className="py-2">변경</th>
+              <th className="py-2 pr-4 whitespace-nowrap">등급</th>
+              <th className="py-2 whitespace-nowrap">변경</th>
             </tr>
           </thead>
           <tbody>
             {shownUsers.map((u) => (
               <tr key={u.id} className="border-b border-gray-100">
-                <td className="py-2 pr-4 text-gray-900 font-medium">{u.name}</td>
-                <td className="py-2 pr-4 text-gray-500">{u.email}</td>
-                <td className="py-2 pr-4 text-gray-700">
+                <td className="py-2 pr-4 text-gray-900 font-medium whitespace-nowrap">{u.name}</td>
+                <td className="py-2 pr-4 text-gray-500 break-all">{u.email}</td>
+                <td className="py-2 pr-4 text-gray-700 whitespace-nowrap">
                   {ROLE_LABELS[u.role] ?? u.role}
                   {u.reporterApplicationStatus === 'PENDING' && (
                     <span className="ml-1.5 text-xs font-semibold text-brand">(기자신청중)</span>
@@ -89,7 +103,7 @@ export default function MembersAdminPage() {
                     <span className="ml-1.5 text-xs text-gray-400">(신청반려)</span>
                   )}
                 </td>
-                <td className="py-2">
+                <td className="py-2 whitespace-nowrap">
                   <select
                     value={u.role}
                     disabled={busyId === u.id}
@@ -102,6 +116,14 @@ export default function MembersAdminPage() {
                       </option>
                     ))}
                   </select>
+                  <button
+                    type="button"
+                    disabled={busyId === u.id || u.id === me.id}
+                    onClick={() => deleteUser(u)}
+                    className="ml-2 border border-gray-200 rounded-lg px-2 py-1 text-xs text-gray-500 hover:text-red-600 hover:border-red-300 disabled:opacity-40"
+                  >
+                    삭제
+                  </button>
                 </td>
               </tr>
             ))}
