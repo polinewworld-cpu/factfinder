@@ -5,6 +5,7 @@ import { getCurrentUser } from '@/lib/session';
 import type { ArticleStatus } from '@prisma/client';
 import { deriveExcerpt } from '@/lib/excerpt';
 import { sanitizeArticleContent } from '@/lib/sanitizeArticle';
+import { resolveAuthorByName } from '@/lib/authorResolve';
 import { clampFocal } from '@/lib/cardImage';
 import { toFrenchBrackets } from '@/lib/frenchBrackets';
 
@@ -54,7 +55,7 @@ export async function POST(req: NextRequest) {
   const {
     title, content, hoverText, themeTags, coverImageUrl, categoryId, images,
     subtitle1, subtitle2, subtitle3, relatedArticleIds,
-    keywordIds, isFrontpageTop, intent, poll, // intent: 'autosave' | 'submit' (기본값 submit) / poll: { question, options: string[] } | null
+    keywordIds, isFrontpageTop, intent, poll, authorName, // intent: 'autosave' | 'submit' (기본값 submit) / poll: { question, options: string[] } | null
     coverFocalX, coverFocalY, coverFeatureFocalX, coverFeatureFocalY, coverSecondFocalX, coverSecondFocalY,
   } = body;
   // 저장 전 항상 새니타이즈 — 렌더링(app/article/[id]/page.tsx)이 dangerouslySetInnerHTML로
@@ -62,7 +63,9 @@ export async function POST(req: NextRequest) {
   const safeContent = sanitizeArticleContent(content ?? '');
   // 요약문은 별도 입력을 받지 않고 본문에서 자동 추출 — 화면에는 노출하지 않고 RSS용으로만 사용 (2026-09-11)
   const excerpt = deriveExcerpt(safeContent);
-  const authorId = user.id; // 클라이언트가 임의로 다른 사람 행세 못하도록 세션에서만 가져옴
+  // 기본은 세션 본인. 편집장만 "글쓴이" 칸으로 다른 이름(외부 기고자 등)을 지정할 수 있음 (2026-10-08)
+  const authorId =
+    (user.role === ROLES.CHIEF_EDITOR && (await resolveAuthorByName(authorName))) || user.id;
 
   // intent='autosave' -> 작성중 임시저장(AUTOSAVE), 'submit' -> 기자=DRAFT(승인대기)/논설위원·편집장=PUBLISHED(즉시발행)
   const status = initialStatusForRole(user.role, intent === 'autosave' ? 'autosave' : 'submit');

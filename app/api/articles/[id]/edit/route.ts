@@ -12,7 +12,7 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
   const article = await prisma.article.findUnique({
     where: { id: params.id },
     include: {
-      author: { select: { id: true, name: true } },
+      author: { select: { id: true, name: true, nickname: true } },
       category: true,
       images: { orderBy: { order: 'asc' } },
       keywords: true,

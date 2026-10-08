@@ -3081,3 +3081,30 @@ body:has(.zb-admin) .site-footer {
 .donate-callout-btn:hover {
   background: var(--accent-pressed);
 }
+
+/* 글쓰기 — 글쓴이 칸(편집장 전용, 외부 기고자 이름) (2026-10-08) */
+.composer-author {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-right: 8px;
+  font-size: 13px;
+  color: var(--body);
+}
+.composer-author span {
+  font-weight: 600;
+  white-space: nowrap;
+}
+.composer-author input {
+  width: 120px;
+  height: 32px;
+  padding: 0 8px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  background: transparent;
+  font-size: 13px;
+}
+.composer-author input:focus {
+  outline: none;
+  border-color: var(--accent);
+}

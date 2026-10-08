@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { getCurrentUser } from '@/lib/session';
 import { ROLES, WRITER_ROLES, initialStatusForRole } from '@/lib/roles';
 import { deriveExcerpt } from '@/lib/excerpt';
+import { resolveAuthorByName } from '@/lib/authorResolve';
 import { sanitizeArticleContent } from '@/lib/sanitizeArticle';
 import { clampFocal } from '@/lib/cardImage';
 import { toFrenchBrackets } from '@/lib/frenchBrackets';
@@ -27,8 +28,17 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
 
 export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
   const body = await req.json();
-  const { keywordIds, relatedArticleIds, intent, images, poll, themeTags, ...rest } = body; // intent: 'autosave' | 'submit' (글쓰기 화면 전용, 그 외 편집은 기존 방식 그대로) / poll: { question, options: string[] } | null
+  const { keywordIds, relatedArticleIds, intent, images, poll, themeTags, authorName, ...rest } = body; // intent: 'autosave' | 'submit' (글쓰기 화면 전용, 그 외 편집은 기존 방식 그대로) / poll: { question, options: string[] } | null
   delete (rest as { cardTitle?: unknown }).cardTitle;
+  // 글쓴이는 요청 본문으로 직접 못 바꿈 — 편집장의 "글쓴이" 칸(authorName)으로만 (2026-10-08)
+  delete (rest as { authorId?: unknown }).authorId;
+  if (authorName !== undefined) {
+    const me = await getCurrentUser();
+    if (me?.role === ROLES.CHIEF_EDITOR) {
+      const id = await resolveAuthorByName(authorName);
+      if (id) (rest as { authorId?: string }).authorId = id;
+    }
+  }
 
   if (rest.coverFocalX !== undefined) rest.coverFocalX = clampFocal(rest.coverFocalX);
   if (rest.coverFocalY !== undefined) rest.coverFocalY = clampFocal(rest.coverFocalY);

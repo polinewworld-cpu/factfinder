@@ -14,7 +14,7 @@ import { ComposerFormatTools, ComposerSelectionToolbar } from '@/components/Comp
 import { cardImageRatio, FEATURED_CARD_RATIO, WIDE_CARD_RATIO, isSquareAssignedCrop } from '@/lib/cardImage';
 import { toFrenchBrackets, replaceFrenchBracketsInTree } from '@/lib/frenchBrackets';
 
-type Me = { id: string; role: string; name?: string; email?: string };
+type Me = { id: string; role: string; name?: string; nickname?: string | null; email?: string };
 type Category = { id: string; name: string; slug: string };
 type Keyword = { id: string; name: string };
 type ArticleSearchResult = { id: string; title: string; author: { name: string }; updatedAt: string };
@@ -29,6 +29,7 @@ function getEditIdFromUrl(): string | null {
 
 export default function WritePage() {
   const [me, setMe] = useState<Me | null | 'loading'>('loading');
+  const meRef = useRef<Me | null>(null); // 자동저장(타이머)에서도 최신 로그인 정보를 보도록
   const [categories, setCategories] = useState<Category[]>([]);
   const [keywords, setKeywords] = useState<Keyword[]>([]);
 
@@ -38,6 +39,10 @@ export default function WritePage() {
   const [subtitle3, setSubtitle3] = useState('');
   const [hoverText, setHoverText] = useState(''); // 카드 이미지 마우스 오버 시 dimmed 배경 위에 흰색으로 표시되는 문구 (2026-09-11 신설)
   const [categoryId, setCategoryId] = useState('');
+  // 글쓴이 — 편집장만 바꿀 수 있음. 외부 기고자 이름을 적으면 그 사람 이름으로 발행되고 후원·정산도 그 사람 앞으로 (2026-10-08)
+  const [authorName, setAuthorName] = useState('');
+  const [reporterNames, setReporterNames] = useState<string[]>([]);
+  const originalAuthorRef = useRef(''); // 수정 화면에서 불러온 원래 글쓴이 — 바꾸지 않았으면 글쓴이를 다시 지정하지 않음
   const [keywordIds, setKeywordIds] = useState<string[]>([]);
   // 커버이미지 — 본문에 삽입된 이미지 중 고름 (첫 번째 삽입 이미지가 기본값, 2026-09-11 개편)
   const [coverImageUrl, setCoverImageUrl] = useState('');
@@ -97,14 +102,14 @@ export default function WritePage() {
 
   const stateRef = useRef({
     title, subtitle1, subtitle2, subtitle3, hoverText, themeTags, categoryId, keywordIds, coverImageUrl, coverFocalX, coverFocalY, coverFeatureFocalX, coverFeatureFocalY, coverSecondFocalX, coverSecondFocalY, isFrontpageTop, cardImages,
-    pollEnabled, pollQuestion, pollOptions, relatedSelected,
+    pollEnabled, pollQuestion, pollOptions, relatedSelected, authorName,
   });
   useEffect(() => {
     stateRef.current = {
       title, subtitle1, subtitle2, subtitle3, hoverText, themeTags, categoryId, keywordIds, coverImageUrl, coverFocalX, coverFocalY, coverFeatureFocalX, coverFeatureFocalY, coverSecondFocalX, coverSecondFocalY, isFrontpageTop, cardImages,
-      pollEnabled, pollQuestion, pollOptions, relatedSelected,
+      pollEnabled, pollQuestion, pollOptions, relatedSelected, authorName,
     };
-  }, [title, subtitle1, subtitle2, subtitle3, hoverText, themeTags, categoryId, keywordIds, coverImageUrl, coverFocalX, coverFocalY, coverFeatureFocalX, coverFeatureFocalY, coverSecondFocalX, coverSecondFocalY, isFrontpageTop, cardImages, pollEnabled, pollQuestion, pollOptions, relatedSelected]);
+  }, [title, subtitle1, subtitle2, subtitle3, hoverText, themeTags, categoryId, keywordIds, coverImageUrl, coverFocalX, coverFocalY, coverFeatureFocalX, coverFeatureFocalY, coverSecondFocalX, coverSecondFocalY, isFrontpageTop, cardImages, pollEnabled, pollQuestion, pollOptions, relatedSelected, authorName]);
 
   useLayoutEffect(() => {
     const el = titleRef.current;
@@ -150,7 +155,19 @@ export default function WritePage() {
   useEffect(() => {
     (async () => {
       const meRes = await fetch('/api/me');
-      setMe(meRes.ok ? await meRes.json() : null);
+      const meData: Me | null = meRes.ok ? await meRes.json() : null;
+      meRef.current = meData;
+      setMe(meData);
+      if (meData?.role === 'CHIEF_EDITOR') {
+        // 새 글의 글쓴이 기본값 = 본인 (수정 화면이면 기사 불러올 때 원래 글쓴이로 덮어씀)
+        setAuthorName((prev) => prev || meData.nickname || meData.name || '');
+        fetch('/api/reporters')
+          .then((r) => (r.ok ? r.json() : []))
+          .then((list: { name: string; nickname: string | null }[]) =>
+            setReporterNames([...new Set(list.map((r) => r.nickname || r.name))].sort((a, b) => a.localeCompare(b, 'ko'))),
+          )
+          .catch(() => {});
+      }
       const [catRes, kwRes, themeRes] = await Promise.all([
         fetch('/api/categories'),
         fetch('/api/keywords'),
@@ -189,6 +206,8 @@ export default function WritePage() {
         setHoverText(toFrenchBrackets(data.hoverText ?? ''));
         setThemeTags((data.themeTags ?? '').split(',').map((t: string) => t.trim()).filter(Boolean));
         setCategoryId(data.categoryId ?? '');
+        setAuthorName(data.author?.nickname || data.author?.name || '');
+        originalAuthorRef.current = data.author?.nickname || data.author?.name || '';
         setKeywordIds((data.keywords ?? []).map((k: { id: string }) => k.id));
         setCoverImageUrl(data.coverImageUrl ?? '');
         setCoverFocalX(typeof data.coverFocalX === 'number' ? data.coverFocalX : 50);
@@ -283,6 +302,9 @@ export default function WritePage() {
       poll: pollPayload(s),
       intent: 'autosave',
     };
+    if (meRef.current?.role === 'CHIEF_EDITOR' && s.authorName.trim() && s.authorName.trim() !== originalAuthorRef.current) {
+      payload.authorName = s.authorName.trim();
+    }
     if (s.categoryId) payload.categoryId = s.categoryId;
 
     try {
@@ -731,6 +753,9 @@ export default function WritePage() {
       isFrontpageTop: s.isFrontpageTop,
       intent: 'submit',
     };
+    if (meRef.current?.role === 'CHIEF_EDITOR' && s.authorName.trim() && s.authorName.trim() !== originalAuthorRef.current) {
+      payload.authorName = s.authorName.trim();
+    }
 
     try {
       let res: Response;
@@ -1105,6 +1130,26 @@ export default function WritePage() {
 
       <div className="composer-actions">
         <div className="composer-actions-left">
+          {me.role === 'CHIEF_EDITOR' && (
+            <label className="composer-author" title="외부 기고 등 다른 사람 이름으로 낼 때 바꾸세요. 그 사람 앞으로 후원·정산이 기록됩니다.">
+              <span>글쓴이</span>
+              <input
+                list="composer-author-options"
+                value={authorName}
+                onChange={(e) => {
+                  setAuthorName(e.target.value);
+                  markDirty();
+                }}
+                placeholder="이름"
+                maxLength={30}
+              />
+              <datalist id="composer-author-options">
+                {reporterNames.map((n) => (
+                  <option key={n} value={n} />
+                ))}
+              </datalist>
+            </label>
+          )}
           {me.role !== 'REPORTER' ? (
             <button
               type="button"
