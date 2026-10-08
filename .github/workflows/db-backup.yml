@@ -9,6 +9,9 @@ on:
   schedule:
     - cron: '0 18 * * *' # UTC 18:00 = 한국 03:00 (GitHub 사정으로 늦게 돌 수 있음)
   workflow_dispatch: # Actions 화면에서 [Run workflow]로 바로 실행 가능
+  push: # 이 백업 설정 파일을 고쳐서 올리면 곧바로 한 번 실행 (설정 확인용)
+    branches: [main]
+    paths: ['.github/workflows/db-backup.yml']
 
 jobs:
   backup:
