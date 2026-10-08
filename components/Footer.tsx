@@ -45,7 +45,15 @@ export default function Footer() {
           </div>
           <p className="footer-copyright">팩트파인더 © www.factfinder.tv All rights reserved.</p>
           <p className="footer-copyright">
-            팩트파인더의 모든 콘텐츠(기사 등)는 저작권법의 보호를 받은바, 무단 전재, 복사, 배포 등을 금합니다.
+            팩트파인더의 모든 콘텐츠(기사 등)는 저작권법의 보호를 받은바, 무단 전재, 복사, 배포 등을 금합니다.{' '}
+            {/* 옛 사이트와 같은 주황 RSS 버튼 (2026-10-08) */}
+            <a href="/rss.xml" className="footer-rss" title="RSS 구독" target="_blank" rel="noopener noreferrer">
+              <svg viewBox="0 0 16 16" width="11" height="11" aria-hidden="true">
+                <circle cx="3" cy="13" r="2" fill="currentColor" />
+                <path d="M1 7.5a7.5 7.5 0 0 1 7.5 7.5M1 2.5A12.5 12.5 0 0 1 13.5 15" stroke="currentColor" strokeWidth="2.2" fill="none" />
+              </svg>
+              RSS
+            </a>
           </p>
         </div>
       </div>
