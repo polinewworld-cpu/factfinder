@@ -91,12 +91,11 @@ export default function AdminHome() {
             </p>
           </RippleDotCard>
 
-          {/* 후원 — 오늘 금액/이번달 금액, 누르면 후원내역으로 */}
+          {/* 후원 — 실제 결제된 후원 누적 총액(큰 숫자) + 오늘 금액, 누르면 후원내역으로 (2026-10-08) */}
           <RippleDotCard href="/admin/donations" className="h-[250px] hover:opacity-90">
-            <p className="text-xs text-gray-900/60 mb-1">후원</p>
-            <p className="text-5xl font-bold">
-              {stats.donationAmountToday.toLocaleString()}/{stats.donationAmountMonth.toLocaleString()}
-            </p>
+            <p className="text-xs text-gray-900/60 mb-1">후원 누적</p>
+            <p className="text-5xl font-bold">{stats.donationAmountMonth.toLocaleString()}원</p>
+            <p className="text-sm text-gray-900/60 mt-2">오늘 {stats.donationAmountToday.toLocaleString()}원</p>
           </RippleDotCard>
         </div>
       )}

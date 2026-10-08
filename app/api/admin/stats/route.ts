@@ -3,6 +3,9 @@ import { prisma } from '@/lib/prisma';
 import { ROLES } from '@/lib/roles';
 import { getCurrentUser } from '@/lib/session';
 
+// 후원 집계는 실제 이니시스 결제가 확인된 건(거래번호 tid 있음)만 — 결제 없이 생긴 옛 시험 기록 제외 (2026-10-08)
+const PAID = { status: 'ACTIVE' as const, tid: { not: null } };
+
 export async function GET() {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: '로그인이 필요합니다' }, { status: 401 });
@@ -31,12 +34,12 @@ export async function GET() {
     prisma.user.count({ where: { createdAt: { gte: todayStart } } }),
     prisma.article.count({ where: { status: 'DRAFT' } }),
     prisma.article.count({ where: { status: 'PUBLISHED' } }),
-    prisma.donation.count({ where: { status: 'ACTIVE' } }),
-    prisma.donation.count({ where: { status: 'ACTIVE', startedAt: { gte: todayStart } } }), // 결제 완료 건만 (2026-10-08)
+    prisma.donation.count({ where: PAID }),
+    prisma.donation.count({ where: { ...PAID, startedAt: { gte: todayStart } } }),
     prisma.user.count({ where: { reporterApplicationStatus: 'PENDING' } }),
     prisma.user.count({ where: { role: 'REPORTER' } }),
-    prisma.donation.aggregate({ _sum: { amount: true }, where: { status: 'ACTIVE', startedAt: { gte: todayStart } } }),
-    prisma.donation.aggregate({ _sum: { amount: true }, where: { status: 'ACTIVE' } }),
+    prisma.donation.aggregate({ _sum: { amount: true }, where: { ...PAID, startedAt: { gte: todayStart } } }),
+    prisma.donation.aggregate({ _sum: { amount: true }, where: PAID }), // 누적 총액
   ]);
 
   return NextResponse.json({
