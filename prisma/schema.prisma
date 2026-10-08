@@ -371,3 +371,10 @@ model Comment {
   content   String
   createdAt DateTime @default(now())
 }
+
+// 방문 분석(GA) 하루치 보고서 — 매일 한 번 자동 생성해 저장, 관리자 "방문 분석" 화면이 읽음 (2026-10-08)
+model AnalyticsSnapshot {
+  id        String   @id // 한국 날짜 YYYY-MM-DD
+  data      Json
+  createdAt DateTime @default(now())
+}

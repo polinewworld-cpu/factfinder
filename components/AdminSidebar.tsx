@@ -8,6 +8,7 @@ type NavItem = { href: string; label: string };
 // 관리자 메뉴 — 전부 플랫 링크 (2026-09-11: 불필요한 '콘텐츠' 그룹 제거, 그룹 아코디언 구조 폐지)
 const NAV: NavItem[] = [
   { href: '/admin', label: '대시보드' },
+  { href: '/admin/analytics', label: '방문 분석' }, // GA 자동 분석 (2026-10-08)
   { href: '/write', label: '기사 작성' },
   { href: '/admin/articles', label: '전체 기사' },
   { href: '/admin/pending', label: '승인 대기함' },
