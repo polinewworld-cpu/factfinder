@@ -8,6 +8,8 @@ import { usableAvatarUrl } from '@/lib/avatarGradient';
 // 첫 가입 직후(닉네임 미설정 회원) 사이트 어느 페이지로 들어오든 본문 대신 이 화면을 보여줌.
 // 닉네임(필수·중복불가) + 프로필사진(구글 사진 기본값) 설정 → 저장하면 새로고침되어 원래 보던 페이지로 복귀.
 // 이후 수정은 /profile(내 프로필)에서.
+// 2026-10-08: 마지막 단계에서 [독자회원가입] / [기자회원가입] 선택 —
+//   독자 = 토요일 아침 뉴스레터 수신(newsletterOptIn) / 기자 = 기자 신청(편집장 승인 대기, 기존 /api/reporter-application)
 export default function WelcomeSetup({
   defaultImage,
   name,
@@ -37,7 +39,7 @@ export default function WelcomeSetup({
     setUploading(false);
   }
 
-  async function submit(e: React.FormEvent) {
+  async function submit(e: React.FormEvent, kind: 'reader' | 'reporter' = 'reader') {
     e.preventDefault();
     setErrorMsg('');
     if (!nickname.trim()) {
@@ -48,10 +50,18 @@ export default function WelcomeSetup({
     const res = await fetch('/api/me', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nickname, image }),
+      body: JSON.stringify({ nickname, image, ...(kind === 'reader' ? { newsletterOptIn: true } : {}) }),
     });
     const data = await res.json().catch(() => null);
     if (res.ok) {
+      if (kind === 'reporter') {
+        const apply = await fetch('/api/reporter-application', { method: 'POST' });
+        if (!apply.ok) {
+          const err = await apply.json().catch(() => null);
+          // 프로필은 저장됐으니 가입은 진행 — 기자 신청만 실패한 경우 알리고 넘어감
+          alert(err?.error ?? '기자 신청에 실패했습니다. 내 프로필에서 다시 신청할 수 있습니다.');
+        }
+      }
       window.location.reload();
       return;
     }
@@ -103,13 +113,30 @@ export default function WelcomeSetup({
         />
         {errorMsg && <p className="text-sm text-red-500 mb-2">{errorMsg}</p>}
 
-        <button
-          type="submit"
-          disabled={saving || uploading}
-          className="w-full mt-4 bg-brand text-white font-semibold rounded-lg py-2.5 disabled:opacity-50"
-        >
-          {saving ? '저장 중…' : '시작하기'}
-        </button>
+        <div className="grid grid-cols-2 gap-2 mt-4">
+          <button
+            type="submit"
+            disabled={saving || uploading}
+            className="bg-brand text-white font-semibold rounded-lg py-2.5 disabled:opacity-50"
+          >
+            {saving ? '저장 중…' : '독자회원가입'}
+          </button>
+          <button
+            type="button"
+            disabled={saving || uploading}
+            onClick={(e) => submit(e, 'reporter')}
+            className="border border-brand text-brand font-semibold rounded-lg py-2.5 disabled:opacity-50"
+          >
+            기자회원가입
+          </button>
+        </div>
+        <ul className="mt-4 space-y-1.5 text-sm text-gray-600 list-disc pl-5">
+          <li>독자회원으로 가입하면 토요일 아침마다 가입한 이메일로 뉴스레터를 보내드립니다.</li>
+          <li>로그인해서 보시면 맘에 드는 기사를 저장하실 수 있습니다.</li>
+        </ul>
+        <p className="mt-3 text-xs text-gray-400">
+          기자회원은 편집장 승인 후 기사를 쓸 수 있습니다. 승인 전까지는 독자회원과 같이 이용하실 수 있습니다.
+        </p>
       </form>
 
       <a href="/api/auth/signout" className="block text-center text-xs text-gray-400 mt-6 hover:text-gray-600">
