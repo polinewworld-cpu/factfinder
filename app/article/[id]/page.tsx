@@ -22,6 +22,8 @@ import { getCurrentUser } from '@/lib/session';
 import { EditIcon, ThinArrowIcon } from '@/components/icons';
 import { ROLES } from '@/lib/roles';
 import ArticleHeadline from '@/components/ArticleHeadline';
+import { enhanceArticleImages } from '@/lib/articleHtml';
+import { SITE_URL } from '@/lib/siteTags';
 
 // 옛 사이트(다다미디어 CMS) 기사 번호는 숫자 — /article/3377 같은 옛 주소 판별용 (2026-10-08)
 const isLegacyId = (id: string) => /^\d{1,9}$/.test(id);
@@ -141,14 +143,33 @@ export default async function ArticlePage({
     .filter(Boolean)
     .map((s) => toFrenchBrackets(s as string));
   const title = toFrenchBrackets(article.title);
-  const content = toFrenchBrackets(stripYoutubeComposerControls(article.content));
+  const content = enhanceArticleImages(toFrenchBrackets(stripYoutubeComposerControls(article.content)), title);
   const activeArticleBanners = articleBanners.slice(0, siteConfig?.articleBannerCount ?? 0);
+
+  // 구글 등 검색엔진용 "뉴스 기사" 구조화 데이터(NewsArticle) — 날짜·기자·사진을 검색 결과에 표시 (2026-10-08 SEO)
+  const abs = (u: string) => new URL(u, SITE_URL).toString();
+  const firstImage = article.coverImageUrl || article.content.match(/<img[^>]+src="([^"]+)"/i)?.[1];
+  const newsJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'NewsArticle',
+    headline: title.slice(0, 110),
+    description: (subtitles[0] || article.excerpt || '').slice(0, 200) || undefined,
+    image: firstImage ? [abs(firstImage)] : [abs('/og-default.png')],
+    datePublished: (article.publishedAt ?? article.createdAt).toISOString(),
+    dateModified: article.updatedAt.toISOString(),
+    author: [{ '@type': 'Person', name: article.author.name }],
+    publisher: { '@type': 'Organization', name: '팩트파인더', logo: { '@type': 'ImageObject', url: abs('/og-default.png') } },
+    mainEntityOfPage: abs(`/article/${article.id}`),
+    articleSection: article.category?.name,
+    keywords: article.keywords.map((k) => k.name).join(', ') || undefined,
+  };
 
   // ?popup=1 — 관리자 대시보드에서 띄우는 기사 전용 창: 사이트 머리·메뉴·바닥글을 숨기고 기사만 (2026-10-08)
   const popup = searchParams?.popup === '1';
 
   return (
     <div className="article-layout">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(newsJsonLd).replace(/</g, '\\u003c') }} />
       {popup && <style>{'.site-header,.category-bar,.site-footer,.article-rail{display:none!important}.article-layout{display:block!important;max-width:760px;margin:0 auto}'}</style>}
       <article className="article-main">
         {/* 기사 상단 1면 이미지 노출 제거 — coverImageUrl은 이제 본문(article-figure)에서만 보이면 되므로

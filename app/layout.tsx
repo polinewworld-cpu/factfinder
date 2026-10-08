@@ -85,6 +85,34 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           </AdminNavProvider>
         </div>
         <SiteAnalytics />
+        {/* 사이트 정보 구조화 데이터 — 언론사명·로고·사이트 내 검색 (2026-10-08 SEO) */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify([
+              {
+                '@context': 'https://schema.org',
+                '@type': 'NewsMediaOrganization',
+                name: '팩트파인더',
+                url: SITE_URL,
+                logo: new URL('/og-default.png', SITE_URL).toString(),
+                email: 'polinewworld@gmail.com',
+                telephone: '070-8028-2438',
+              },
+              {
+                '@context': 'https://schema.org',
+                '@type': 'WebSite',
+                name: '팩트파인더',
+                url: SITE_URL,
+                potentialAction: {
+                  '@type': 'SearchAction',
+                  target: `${new URL('/search', SITE_URL)}?q={search_term_string}`,
+                  'query-input': 'required name=search_term_string',
+                },
+              },
+            ]),
+          }}
+        />
       </body>
     </html>
   );

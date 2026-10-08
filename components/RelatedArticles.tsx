@@ -30,6 +30,7 @@ function RailCard({ article }: { article: Item }) {
         {article.coverImageUrl ? (
           <CoverHoverImage
             src={article.coverImageUrl}
+            alt={title}
             aspectRatio={`1 / ${imageRatio}`}
             focalX={article.coverFocalX}
             focalY={article.coverFocalY}

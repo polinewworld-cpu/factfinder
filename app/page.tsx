@@ -5,10 +5,28 @@ import { getCurrentUser } from '@/lib/session';
 import { ROLES } from '@/lib/roles';
 import { ensureVideoCardsFresh } from '@/lib/youtube';
 import { Prisma, type ArticleStatus } from '@prisma/client';
+import type { Metadata } from 'next';
 import Pagination from '@/components/Pagination';
 import { permanentRedirect } from 'next/navigation';
 
 export const dynamic = 'force-dynamic';
+
+const SITE_TITLE = '팩트파인더';
+const SITE_DESC = '팩트파인더는 진영주의를 벗어나 중도주의 관점으로 정치와 사회를 봅니다.';
+
+// 홈·카테고리·페이지마다 다른 제목과 대표 주소 — 전부 "팩트파인더"로 같던 것 개선 (2026-10-08 SEO)
+export async function generateMetadata({ searchParams }: { searchParams: { category?: string; page?: string } }): Promise<Metadata> {
+  const category = searchParams.category;
+  const page = Math.max(1, Math.floor(Number(searchParams.page)) || 1);
+  const params = new URLSearchParams();
+  if (category) params.set('category', category);
+  if (page > 1) params.set('page', String(page));
+  const canonical = params.toString() ? `/?${params}` : '/';
+  const pageSuffix = page > 1 ? ` ${page}페이지` : '';
+  const title = category ? `${category} 뉴스${pageSuffix} - ${SITE_TITLE}` : page > 1 ? `최신 뉴스${pageSuffix} - ${SITE_TITLE}` : `${SITE_TITLE} - 중도의 시선으로 보는 정치·사회 뉴스`;
+  const description = category ? `팩트파인더 ${category} 기사 모음. ${SITE_DESC}` : SITE_DESC;
+  return { title, description, alternates: { canonical }, openGraph: { title, description, url: canonical } };
+}
 
 // 목록 한 페이지 크기 — 하단 페이지 번호로 넘김 (2026-10-08, 옛 기사 3천여 건 이관 대비)
 const PAGE_SIZE = 60;
@@ -121,6 +139,8 @@ export default async function Home({ searchParams }: { searchParams: { category?
 
   return (
     <>
+      {/* 검색엔진용 페이지 제목(h1) — 화면에는 안 보임 */}
+      <h1 className="sr-only">{category ? `팩트파인더 ${category} 뉴스` : '팩트파인더 최신 뉴스'}</h1>
       <Masonry top={page === 1 ? (top as any) : null} articles={feedItems as any} banners={banners} />
       <Pagination page={page} totalPages={totalPages} category={category} />
     </>

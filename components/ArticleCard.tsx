@@ -153,6 +153,8 @@ export default function ArticleCard({
         {article.coverImageUrl ? (
           <CoverHoverImage
             src={article.coverImageUrl}
+            alt={toFrenchBrackets(article.title)}
+            lazy={!featured}
             aspectRatio={`1 / ${imageRatio}`}
             focalX={focalX}
             focalY={focalY}

@@ -23,6 +23,7 @@ type Drawn = { width: number; height: number; left: number; top: number };
 export default function CoverHoverImage({
   src,
   alt = '',
+  lazy = true, // 화면 밖 카드 사진은 나중에 불러옴 (SEO·속도, 2026-10-08)
   aspectRatio,
   focalX,
   focalY,
@@ -37,6 +38,7 @@ export default function CoverHoverImage({
 }: {
   src: string;
   alt?: string;
+  lazy?: boolean;
   aspectRatio?: string;
   focalX?: number | null;
   focalY?: number | null;
@@ -237,6 +239,8 @@ export default function CoverHoverImage({
         ref={imgRef}
         src={currentSrc}
         alt={alt}
+        loading={lazy ? 'lazy' : undefined}
+        decoding="async"
         draggable={false}
         onLoad={applyLayout}
         onError={() => {
