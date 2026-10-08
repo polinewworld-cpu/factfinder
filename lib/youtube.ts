@@ -2,7 +2,7 @@ import { prisma } from '@/lib/prisma';
 import { toFrenchBrackets } from '@/lib/frenchBrackets';
 import { preserveTitleBreaks } from '@/lib/titleLineBreak';
 
-// 정치신세계 자동 영상 카드 — 유튜브 채널 @polinewworld에서 쇼츠/영상/라이브를 가져와 VideoCard로 저장 (기능정의서 4.2.1)
+// 정치신세계 자동 영상 카드 — 유튜브 채널 @polinewworld의 라이브 방송만 VideoCard로 저장 (기능정의서 4.2.1, 2026-10-08부터 라이브 전용)
 // 민트데스크 프로젝트에서 검증된 방식 재사용: forHandle -> 실패 시 search 폴백, 업로드 재생목록(UC->UU)으로 목록 조회.
 // 실제 동작에는 YOUTUBE_API_KEY 환경변수가 필요함 (서버사이드 전용 — 클라이언트에 노출 금지).
 const CHANNEL_HANDLE = 'polinewworld';
@@ -57,33 +57,51 @@ const MIN_SYNC_INTERVAL_MS = 5 * 60 * 1000; // 5분
 let lastSyncedAt = 0;
 let inFlightSync: Promise<SyncResult> | null = null;
 
+// 2026-10-08 규칙 변경(사장님 지시): 정치신세계는 "라이브 방송"만 가져온다 — 진행 중·예정 라이브 + 끝난 라이브 다시보기.
+// 쇼츠·일반 업로드 영상은 저장하지 않고, 예전에 저장된 것도 동기화 때 정리(삭제)한다.
+// 판별: 유튜브 videos API의 liveStreamingDetails는 라이브로 방송된(될) 영상에만 붙는다.
+const isLiveBroadcast = (video: any) => !!video.liveStreamingDetails || ['live', 'upcoming'].includes(video.snippet?.liveBroadcastContent);
+const UPLOAD_PAGES = 2; // 최근 업로드 100개(50×2)까지 훑어 라이브를 찾음 — 쇼츠가 많아도 라이브가 묻히지 않게
+
+async function fetchVideoDetails(ids: string[]): Promise<any[]> {
+  const out: any[] = [];
+  for (let i = 0; i < ids.length; i += 50) {
+    const data = await ytFetch('videos', { part: 'snippet,contentDetails,liveStreamingDetails', id: ids.slice(i, i + 50).join(',') });
+    out.push(...(data.items ?? []));
+  }
+  return out;
+}
+
 export async function syncVideoCards(): Promise<SyncResult> {
   lastSyncedAt = Date.now();
   const channelId = await resolveChannelId();
   const playlistId = uploadsPlaylistId(channelId);
 
-  const playlistData = await ytFetch('playlistItems', {
-    part: 'snippet,contentDetails',
-    playlistId,
-    maxResults: '20',
-  });
-
-  const videoIds: string[] = (playlistData.items ?? [])
-    .map((item: any) => item.contentDetails?.videoId)
-    .filter(Boolean);
+  const videoIds: string[] = [];
+  let pageToken: string | undefined;
+  for (let page = 0; page < UPLOAD_PAGES; page++) {
+    const playlistData = await ytFetch('playlistItems', {
+      part: 'contentDetails',
+      playlistId,
+      maxResults: '50',
+      ...(pageToken ? { pageToken } : {}),
+    });
+    videoIds.push(...(playlistData.items ?? []).map((item: any) => item.contentDetails?.videoId).filter(Boolean));
+    pageToken = playlistData.nextPageToken;
+    if (!pageToken) break;
+  }
 
   let synced = 0;
   let skipped = 0;
 
   if (videoIds.length > 0) {
-    const detailsData = await ytFetch('videos', {
-      part: 'snippet,contentDetails,liveStreamingDetails',
-      id: videoIds.join(','),
-    });
+    const details = await fetchVideoDetails(videoIds);
+    const nonLiveIds = details.filter((v) => !isLiveBroadcast(v)).map((v) => v.id);
+    if (nonLiveIds.length) await prisma.videoCard.deleteMany({ where: { youtubeId: { in: nonLiveIds } } });
 
-    for (const video of detailsData.items ?? []) {
+    for (const video of details.filter(isLiveBroadcast)) {
       try {
-        const kind = classifyVideo(video);
+        const kind = 'LIVE' as const;
         const existing = await prisma.videoCard.findUnique({ where: { youtubeId: video.id } });
         const title = preserveTitleBreaks(existing?.title, toFrenchBrackets(video.snippet.title));
         await prisma.videoCard.upsert({
@@ -145,6 +163,15 @@ export async function syncVideoCards(): Promise<SyncResult> {
     /* 라이브 확인 실패는 전체 동기화를 막지 않음 */
   }
 
+  // 규칙 변경 전에 저장된 쇼츠·일반 영상 정리 — 최근 100개 밖의 옛 카드도 유튜브에 라이브 여부를 물어 확인한 뒤 처리
+  const legacyCards = await prisma.videoCard.findMany({ where: { kind: { not: 'LIVE' } }, select: { youtubeId: true } });
+  if (legacyCards.length) {
+    const details = await fetchVideoDetails(legacyCards.map((c) => c.youtubeId));
+    const liveIds = details.filter(isLiveBroadcast).map((v) => v.id);
+    if (liveIds.length) await prisma.videoCard.updateMany({ where: { youtubeId: { in: liveIds } }, data: { kind: 'LIVE' } });
+    await prisma.videoCard.deleteMany({ where: { kind: { not: 'LIVE' } } }); // 남은 것 = 라이브 아님(또는 유튜브에서 삭제된 영상)
+  }
+
   return { synced, skipped };
 }
 
@@ -162,21 +189,4 @@ export async function ensureVideoCardsFresh(force = false): Promise<void> {
       });
   }
   await inFlightSync;
-}
-
-function classifyVideo(video: any): 'SHORT' | 'VIDEO' | 'LIVE' {
-  const liveStatus = video.snippet?.liveBroadcastContent;
-  if (liveStatus === 'live' || liveStatus === 'upcoming') return 'LIVE';
-
-  // 쇼츠 판별은 유튜브 API가 직접 알려주지 않아 재생시간으로 추정 — 알려진 업계 관행상의 근사치.
-  // 2024년 10월부터 유튜브 쇼츠 최대 길이가 60초 -> 3분(180초)으로 늘어남 — 기준도 맞춰서 조정 (2026-09-22)
-  const duration = video.contentDetails?.duration as string | undefined; // ISO 8601, 예: PT45S
-  if (duration) {
-    const match = duration.match(/PT(?:(\d+)M)?(?:(\d+)S)?/);
-    const minutes = match?.[1] ? parseInt(match[1], 10) : 0;
-    const seconds = match?.[2] ? parseInt(match[2], 10) : 0;
-    const totalSeconds = minutes * 60 + seconds;
-    if (totalSeconds > 0 && totalSeconds <= 180) return 'SHORT';
-  }
-  return 'VIDEO';
 }
