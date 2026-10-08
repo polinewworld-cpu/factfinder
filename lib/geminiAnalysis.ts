@@ -76,19 +76,37 @@ export async function analyzeWithGemini(report: AnalyticsReport): Promise<Gemini
 데이터:
 ${JSON.stringify(data)}`;
 
-  const model = process.env.GEMINI_MODEL || 'gemini-3.6-flash';
-  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': process.env.GEMINI_API_KEY ?? '' },
-    body: JSON.stringify({
-      contents: [{ role: 'user', parts: [{ text: prompt }] }],
-      generationConfig: { temperature: 0.5, responseMimeType: 'application/json' },
-    }),
-    signal: AbortSignal.timeout(90_000),
-  });
-  const body = await res.json();
-  if (!res.ok) throw new Error(`제미나이 호출 실패: ${body.error?.message ?? res.status}`);
-  const text: string = body.candidates?.[0]?.content?.parts?.map((p: any) => p.text ?? '').join('') ?? '';
+  // 제미나이가 붐빌 때("high demand" 등) 잠깐 쉬고 재시도, 그래도 안 되면 가벼운 모델로 자동 전환 (2026-10-08)
+  const models = [...new Set([process.env.GEMINI_MODEL || 'gemini-3.6-flash', 'gemini-3.5-flash-lite'])];
+  let text = '';
+  let lastError = '';
+  outer: for (const model of models) {
+    for (let attempt = 0; attempt < 2; attempt++) {
+      if (attempt) await new Promise((r) => setTimeout(r, 8000));
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': process.env.GEMINI_API_KEY ?? '' },
+        body: JSON.stringify({
+          contents: [{ role: 'user', parts: [{ text: prompt }] }],
+          generationConfig: { temperature: 0.5, responseMimeType: 'application/json' },
+        }),
+        signal: AbortSignal.timeout(90_000),
+      }).catch((e) => {
+        lastError = e instanceof Error ? e.message : String(e);
+        return null;
+      });
+      if (!res) continue;
+      const body = await res.json().catch(() => ({}));
+      if (res.ok) {
+        text = body.candidates?.[0]?.content?.parts?.map((p: any) => p.text ?? '').join('') ?? '';
+        if (text) break outer;
+      }
+      lastError = body.error?.message ?? `HTTP ${res.status}`;
+      // 붐빔·일시 오류(429·500·503)만 재시도, 키 오류 등은 바로 중단
+      if (![429, 500, 503].includes(res.status)) break outer;
+    }
+  }
+  if (!text) throw new Error(`제미나이 호출 실패: ${lastError}`);
   const parsed = JSON.parse(text.replace(/^```json\s*|```\s*$/g, ''));
   const arr = (v: unknown) => (Array.isArray(v) ? v.map(String).filter(Boolean).slice(0, 6) : []);
   return {
