@@ -117,7 +117,7 @@ const STOP = new Set(
     '아니 그리고 하지만 이유 결국 다시 모두 기자 칼럼 사설 오피니언 포토 영상 인터뷰 논란 가능 여부 우리 정부 대통령 국회 의원 사람 이후 이전 ' +
     '이상 이하 가운데 그런데 이런 그런 어떻게 무슨 이제 아직 지금 바로 더는 계속 처음 마지막 하루 시간 오전 오후 주년 만에 가장 앞두고 앞서 ' +
     '발표 공개 확인 추진 검토 강조 주장 지적 비판 반발 촉구 요구 제기 언급 밝혀 밝혔다 말했다 전망 우려 예정 시작 진행 결정 기준 사실 문제 상황 ' +
-    '한글날 기념 행사 개최 축제 특집 연재 기획 시론 포럼 사람들 이야기 세상 한국 국민 여야 여당 야당'
+    '한글날 기념 행사 개최 축제 특집 연재 기획 시론 포럼 사람들 이야기 세상 한국 국민 여야 여당 야당 세계 서울 물러선 새로운 모든'
   ).split(/\s+/),
 );
 const JOSA_LONG = ['에서는', '으로는', '에게서', '이라고', '이라며', '에서도', '으로도', '에서', '으로', '에게', '까지', '부터', '처럼', '보다', '이라', '라고', '하고', '이나', '에는', '와의', '과의', '에도', '이며', '이자'];
@@ -160,15 +160,27 @@ export async function buildMediaWatch(): Promise<MediaWatch> {
     for (const it of o.commented) for (const w of titleKeywords(it.title)) add(w, o.name, it.title, 'commented');
   }
 
-  const scored = [...acc.entries()]
+  const candidates = [...acc.entries()]
     .map(([word, a]) => ({
       word,
       a,
       score: a.outlets.size * 3 + a.front.size * 3 + a.popular.size * 2 + a.commented.size * 2 + a.titles.size,
     }))
     .filter((x) => x.a.outlets.size >= 2 || x.a.front.size || x.a.popular.size + x.a.commented.size >= 2)
-    .sort((x, y) => y.score - x.score)
-    .slice(0, 15);
+    .sort((x, y) => y.score - x.score);
+  const scored = candidates
+    // 같은 기사들에서 나온 곁가지 단어는 뺌 — 예) "정청래" 뒤의 "비자·발급·보류" (기사 70% 이상 겹치면 같은 이슈)
+    .reduce<typeof candidates>((picked, c) => {
+      if (picked.length >= 15) return picked;
+      const dup = picked.some((p) => {
+        let common = 0;
+        for (const t of c.a.titles) if (p.a.titles.has(t)) common++;
+        // 넓은 단어(미국·북한)가 구체적인 단어(정청래)를 삼키지 않게 양쪽 다 많이 겹칠 때만
+        return common / c.a.titles.size >= 0.7 && common / p.a.titles.size >= 0.5;
+      });
+      if (!dup) picked.push(c);
+      return picked;
+    }, []);
 
   // 팩트파인더 기사와 대조 — 최근 7일 몇 건, 전체 몇 건, 연결할 옛 기사 2건
   const since = new Date(Date.now() - 7 * 86400_000);

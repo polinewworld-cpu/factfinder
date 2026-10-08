@@ -2,9 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/session';
 import { ROLES } from '@/lib/roles';
 import { gaConfigured } from '@/lib/ga';
-import { buildAndSaveToday, latestSnapshot } from '@/lib/analyticsSnapshot';
+import { buildAndSaveToday, latestSnapshot, refreshMediaToday } from '@/lib/analyticsSnapshot';
 
 // 관리자 "방문 분석" 데이터 (2026-10-08) — 저장된 최신 보고서를 주고, ?refresh=1 이면 지금 GA에서 새로 만든다.
+// ?media=1 이면 매체 동향·기사 아이디어만 새로.
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
@@ -14,6 +15,10 @@ export async function GET(req: NextRequest) {
   if (!gaConfigured()) return NextResponse.json({ configured: false });
 
   try {
+    // ?media=1 — 오늘의 키워드·지면·기사 아이디어만 지금 새로 (2026-10-09)
+    if (req.nextUrl.searchParams.get('media') === '1') {
+      return NextResponse.json({ configured: true, report: await refreshMediaToday() });
+    }
     const latest = await latestSnapshot();
     if (req.nextUrl.searchParams.get('refresh') === '1' || !latest) {
       const report = await buildAndSaveToday();

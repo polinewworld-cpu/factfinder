@@ -206,7 +206,7 @@ export default function AdminHome() {
               <p className="text-sm text-gray-900/60">불러오는 중…</p>
             ) : analysis.report?.ai ? (
               <>
-                <p className="text-[11px] text-gray-900/50 mb-1">제미나이 분석</p>
+                <p className="text-[11px] text-gray-900/50 mb-1">오늘의 기사 아이디어</p>
                 <p className="text-sm font-semibold mb-2">{analysis.report.ai.headline}</p>
                 <ul className="space-y-1 list-disc pl-4">
                   {/* 2026-10-09: 기사 아이디어가 있으면 그것(순위·제목 예시), 없으면 옛 보고서의 할 일 */}
@@ -223,7 +223,7 @@ export default function AdminHome() {
               </>
             ) : (
               <p className="text-sm text-gray-900/60">
-                {analysis.error ?? analysis.report?.aiError ?? (analysis.configured === false ? '구글 애널리틱스 연결 전입니다.' : '제미나이 분석이 아직 없습니다.')}
+                {analysis.error ?? analysis.report?.aiError ?? (analysis.configured === false ? '구글 애널리틱스 연결 전입니다.' : '분석이 아직 없습니다.')}
               </p>
             )}
           </RippleDotCard>

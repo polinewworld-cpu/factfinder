@@ -167,7 +167,6 @@ function Columns({ rows, highlightMax = true }: { rows: { label: string; value: 
 }
 
 // ── 매체 동향·기사 아이디어 (2026-10-09) ──
-const SHORT: Record<string, string> = { 조선일보: '조선', 중앙일보: '중앙', 동아일보: '동아', 매일신문: '매일', 서울신문: '서울' };
 
 function Ideas({ ideas }: { ideas: NonNullable<NonNullable<AnalyticsReport['ai']>['ideas']> }) {
   return (
@@ -179,7 +178,6 @@ function Ideas({ ideas }: { ideas: NonNullable<NonNullable<AnalyticsReport['ai']
               {it.priority}순위
             </span>
             <span className="rounded border px-1.5 py-0.5 text-[11px] font-semibold">{it.keyword}</span>
-            {it.reporter && <span className="text-[11px] text-gray-500">추천 기자 {it.reporter}</span>}
           </p>
           <p className="font-bold text-[15px] leading-snug mb-1">{it.headline}</p>
           <p className="text-gray-600 mb-2">{it.issue}</p>
@@ -205,38 +203,49 @@ function Ideas({ ideas }: { ideas: NonNullable<NonNullable<AnalyticsReport['ai']
   );
 }
 
-function KeywordTable({ rows }: { rows: NonNullable<AnalyticsReport['media']>['keywords'] }) {
+// 오늘의 키워드 — 순서대로 단어만 (사장님 지시 2026-10-09: 매체 수·순위 등 숫자는 빼고 단순하게)
+function KeywordList({ rows }: { rows: NonNullable<AnalyticsReport['media']>['keywords'] }) {
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="text-xs text-gray-500 text-left border-b">
-            <th className="py-1.5 pr-2 font-semibold">키워드</th>
-            <th className="py-1.5 pr-2 font-semibold">다룬 매체</th>
-            <th className="py-1.5 pr-2 font-semibold text-right">1면</th>
-            <th className="py-1.5 pr-2 font-semibold text-right">많이 본</th>
-            <th className="py-1.5 pr-2 font-semibold text-right">댓글 많은</th>
-            <th className="py-1.5 font-semibold text-right whitespace-nowrap">팩트파인더 7일 / 전체</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((k) => (
-            <tr key={k.word} className="border-b last:border-0">
-              <td className="py-1.5 pr-2 font-semibold whitespace-nowrap">{k.word}</td>
-              <td className="py-1.5 pr-2 text-xs whitespace-nowrap">{k.outlets.map((o) => SHORT[o] ?? o).join(' · ')}</td>
-              <td className="py-1.5 pr-2 text-right tabular-nums">{k.front || ''}</td>
-              <td className="py-1.5 pr-2 text-right tabular-nums">{k.popular || ''}</td>
-              <td className="py-1.5 pr-2 text-right tabular-nums">{k.commented || ''}</td>
-              <td className="py-1.5 text-right tabular-nums whitespace-nowrap">
-                {k.oursWeek === 0 ? <b style={{ color: MARK }}>안 씀</b> : k.oursWeek} <span className="text-gray-400">/ {n(k.oursAll)}</span>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      <p className="text-[11px] text-gray-400 mt-2">
-        1면 = 그 키워드를 1면에 올린 매체 수 · 많이 본/댓글 많은 = 네이버 매체별 순위 20위 안에 든 기사 수 · &quot;안 씀&quot; = 팩트파인더 최근 7일 기사 없음
-      </p>
+    <ol className="flex flex-wrap gap-x-4 gap-y-2">
+      {rows.map((k, i) => (
+        <li key={k.word} className="text-[15px]">
+          <span className="text-xs text-gray-400 tabular-nums mr-1">{i + 1}</span>
+          <b>{k.word}</b>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+// 매체 지면 — 5개 매체 탭
+function OutletTabs({ outlets }: { outlets: NonNullable<AnalyticsReport['media']>['outlets'] }) {
+  const [tab, setTab] = useState(0);
+  const o = outlets[Math.min(tab, outlets.length - 1)];
+  if (!o) return null;
+  return (
+    <div>
+      <div className="flex flex-wrap gap-1 border-b mb-3" role="tablist">
+        {outlets.map((x, i) => (
+          <button
+            key={x.oid}
+            type="button"
+            role="tab"
+            aria-selected={i === tab}
+            onClick={() => setTab(i)}
+            className={`px-3 py-1.5 text-sm -mb-px border-b-2 ${i === tab ? 'font-bold' : 'text-gray-500 border-transparent'}`}
+            style={i === tab ? { borderColor: MARK, color: MARK } : undefined}
+          >
+            {x.name}
+          </button>
+        ))}
+      </div>
+      {o.paperDate && <p className="text-xs text-gray-500 mb-2">{o.paperDate.slice(5).replace('-', '/')} 지면</p>}
+      <div className="grid md:grid-cols-3 gap-4">
+        <OutletList title="1면" items={o.newspaper.filter((i) => /^A?1면$/.test(i.page ?? ''))} />
+        <OutletList title="많이 본 뉴스" items={o.popular.slice(0, 10)} />
+        <OutletList title="댓글 많은 뉴스" items={o.commented.slice(0, 10)} />
+      </div>
+      {o.error && <p className="text-[11px] text-gray-400 mt-2">일부 못 받음: {o.error}</p>}
     </div>
   );
 }
@@ -263,6 +272,16 @@ function OutletList({ title, items }: { title: string; items: { title: string; u
 export default function AnalyticsPage() {
   const [state, setState] = useState<{ configured?: boolean; report?: AnalyticsReport; error?: string } | null>(null);
   const [busy, setBusy] = useState(false);
+  const [mediaBusy, setMediaBusy] = useState(false);
+
+  // 오늘의 키워드·지면·기사 아이디어만 지금 새로 받기 (자동은 3시간마다)
+  async function reloadMedia() {
+    setMediaBusy(true);
+    const res = await fetch('/api/admin/analytics?media=1');
+    const data = await res.json().catch(() => null);
+    if (data?.report) setState(data);
+    setMediaBusy(false);
+  }
 
   async function load(refresh = false) {
     setBusy(true);
@@ -314,40 +333,49 @@ export default function AnalyticsPage() {
       {r && (
         <>
           {r.ai?.ideas && r.ai.ideas.length > 0 && (
-            <Card title="오늘의 기사 아이디어 (제미나이 · 조선·중앙·동아·매일·서울신문 동향 기준)">
+            <Card title="오늘의 기사 아이디어">
               <p className="text-base font-semibold mb-3">{r.ai.headline}</p>
               <Ideas ideas={r.ai.ideas} />
             </Card>
           )}
 
-          {r.media ? (
-            <>
-              <Card title="오늘의 키워드 — 5개 매체 1면·많이 본·댓글 많은 뉴스">
-                <KeywordTable rows={r.media.keywords} />
-              </Card>
-              {r.ai?.outletComparison && r.ai.outletComparison.length > 0 && (
-                <Card title="매체 비교 (제미나이)">
-                  <ul className="list-disc pl-4 space-y-1 text-sm">
-                    {r.ai.outletComparison.map((t, i) => (
-                      <li key={i}>{t}</li>
-                    ))}
-                  </ul>
-                </Card>
-              )}
-              <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
-                {r.media.outlets.map((o) => (
-                  <Card key={o.oid} title={`${o.name}${o.paperDate ? ` · ${o.paperDate.slice(5).replace('-', '/')} 지면` : ''}`}>
-                    <OutletList title="1면" items={o.newspaper.filter((i) => /^A?1면$/.test(i.page ?? ''))} />
-                    <OutletList title="많이 본 뉴스" items={o.popular.slice(0, 5)} />
-                    <OutletList title="댓글 많은 뉴스" items={o.commented.slice(0, 5)} />
-                    {o.error && <p className="text-[11px] text-gray-400">일부 못 받음: {o.error}</p>}
-                  </Card>
+          <section className="border rounded-xl p-4">
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+              <h2 className="text-xs font-semibold text-gray-500 tracking-wide">
+                오늘의 키워드
+                {r.media && (
+                  <span className="font-normal text-gray-400">
+                    {' '}
+                    · {new Date(r.media.generatedAt).toLocaleTimeString('ko-KR', { timeZone: 'Asia/Seoul', hour: '2-digit', minute: '2-digit' })} 기준 · 3시간마다 자동 갱신
+                  </span>
+                )}
+              </h2>
+              <button type="button" onClick={reloadMedia} disabled={mediaBusy} className="border rounded-lg px-3 py-1 text-xs disabled:opacity-40">
+                {mediaBusy ? '새로 받는 중… (1분쯤)' : '새로고침'}
+              </button>
+            </div>
+            {r.media ? (
+              <KeywordList rows={r.media.keywords} />
+            ) : (
+              <p className="text-sm text-gray-500">키워드를 받지 못했습니다{r.mediaError ? `: ${r.mediaError}` : ''}</p>
+            )}
+          </section>
+
+          {r.ai?.outletComparison && r.ai.outletComparison.length > 0 && (
+            <Card title="주요 언론 보도 동향">
+              <ul className="list-disc pl-4 space-y-1 text-sm">
+                {r.ai.outletComparison.map((t, i) => (
+                  <li key={i}>{t}</li>
                 ))}
-              </div>
-            </>
-          ) : r.mediaError ? (
-            <p className="text-xs text-gray-500">매체 동향을 받지 못했습니다: {r.mediaError}</p>
-          ) : null}
+              </ul>
+            </Card>
+          )}
+
+          {r.media && (
+            <Card title="주요 언론 지면">
+              <OutletTabs outlets={r.media.outlets} />
+            </Card>
+          )}
 
           <Card title="이번 주 인사이트">
             <ul className="space-y-2 text-sm">
@@ -363,7 +391,7 @@ export default function AnalyticsPage() {
           </Card>
 
           {r.ai ? (
-            <Card title="제미나이 전략 분석">
+            <Card title="분석 메모">
               {!r.ai.ideas?.length && <p className="text-base font-semibold mb-3">{r.ai.headline}</p>}
               <div className="grid md:grid-cols-2 gap-x-6 gap-y-4 text-sm">
                 {(
@@ -398,10 +426,9 @@ export default function AnalyticsPage() {
                   </ul>
                 </div>
               )}
-              <p className="text-[11px] text-gray-400 mt-3">제미나이가 집계 수치와 기사 제목을 보고 쓴 해석입니다. 판단은 편집국이 합니다.</p>
             </Card>
           ) : r.aiError ? (
-            <p className="text-xs text-gray-500">제미나이 전략 분석을 만들지 못했습니다: {r.aiError}</p>
+            <p className="text-xs text-gray-500">기사 아이디어를 만들지 못했습니다: {r.aiError}</p>
           ) : null}
 
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
