@@ -43,6 +43,9 @@ function DailyChart({ data }: { data: AnalyticsReport['daily'] }) {
   const path = data.map((d, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(d.users).toFixed(1)}`).join('');
   const ticks = [0, Math.round(max / 2), max];
 
+  // 방문 기록이 하나도 없을 때(도메인 전환 전) — 빈 그래프 위로 마우스가 지나가면 화면이 죽던 문제 (2026-10-09)
+  if (data.length === 0) return <p className="text-sm text-gray-400 py-10 text-center">아직 방문 기록이 없습니다.</p>;
+
   function onMove(e: React.PointerEvent) {
     const rect = ref.current!.getBoundingClientRect();
     const px = ((e.clientX - rect.left) / rect.width) * W;
@@ -50,7 +53,7 @@ function DailyChart({ data }: { data: AnalyticsReport['daily'] }) {
     setHover(Math.max(0, Math.min(data.length - 1, i)));
   }
 
-  const h = hover !== null ? data[hover] : null;
+  const h = hover !== null ? data[hover] ?? null : null;
   return (
     <div className="relative">
       <svg
@@ -78,10 +81,10 @@ function DailyChart({ data }: { data: AnalyticsReport['daily'] }) {
           ) : null,
         )}
         <path d={path} fill="none" stroke={MARK} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
-        {hover !== null && (
+        {h && (
           <>
-            <line x1={x(hover)} x2={x(hover)} y1={pad.t} y2={H - pad.b} stroke="#6d7a78" strokeWidth="1" />
-            <circle cx={x(hover)} cy={y(data[hover].users)} r="4" fill={MARK} stroke="#efe8dc" strokeWidth="2" />
+            <line x1={x(hover!)} x2={x(hover!)} y1={pad.t} y2={H - pad.b} stroke="#6d7a78" strokeWidth="1" />
+            <circle cx={x(hover!)} cy={y(h.users)} r="4" fill={MARK} stroke="#efe8dc" strokeWidth="2" />
           </>
         )}
       </svg>

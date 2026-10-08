@@ -158,11 +158,13 @@ export async function buildAnalyticsReport(): Promise<AnalyticsReport> {
     .sort((x, y) => y.users - x.users);
   const hours = Array.from({ length: 24 }, (_, h) => ({ hour: h, views: hourRows.find((r) => Number(r.dims[0]) === h)?.mets[0] ?? 0 }));
   const weekdays = Array.from({ length: 7 }, (_, d) => ({ day: d, views: weekdayRows.find((r) => Number(r.dims[0]) === d)?.mets[0] ?? 0 }));
-  const daily = dailyRows.map((r) => ({
-    date: `${r.dims[0].slice(0, 4)}-${r.dims[0].slice(4, 6)}-${r.dims[0].slice(6, 8)}`,
-    users: r.mets[0],
-    views: r.mets[1],
-  }));
+  // GA는 방문 0인 날을 빼고 주므로 28일(한국시간 기준 28일 전~어제)을 0으로 채운다 (2026-10-09)
+  const dailyMap = new Map(dailyRows.map((r) => [r.dims[0], r.mets]));
+  const daily = Array.from({ length: 28 }, (_, k) => {
+    const d = new Date(Date.now() + 9 * 3600_000 - (28 - k) * 86400_000).toISOString().slice(0, 10);
+    const m = dailyMap.get(d.replace(/-/g, ''));
+    return { date: d, users: m?.[0] ?? 0, views: m?.[1] ?? 0 };
+  });
 
   // ── 인사이트 (규칙 기반, 매일 자동) ──
   const insights: AnalyticsReport['insights'] = [];
