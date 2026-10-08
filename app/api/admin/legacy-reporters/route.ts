@@ -26,7 +26,14 @@ export async function GET() {
       orderBy: { articles: { _count: 'desc' } },
     }),
     prisma.user.findMany({
-      where: { NOT: { email: LEGACY } },
+      // 연결 대상에서 빼는 계정 — 더미(김기자·이논설·박편집장·최독자 @factfinder.test)와 운영 계정 saeminjoo2028 (2026-10-08 사장님 지시)
+      where: {
+        AND: [
+          { NOT: { email: LEGACY } },
+          { NOT: { email: { endsWith: '@factfinder.test' } } },
+          { NOT: { email: 'saeminjoo2028@gmail.com' } },
+        ],
+      },
       select: { id: true, name: true, nickname: true, email: true, role: true },
       orderBy: { name: 'asc' },
     }),
