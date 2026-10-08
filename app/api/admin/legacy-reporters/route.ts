@@ -59,3 +59,22 @@ export async function POST(req: NextRequest) {
   ]);
   return NextResponse.json({ ok: true, moved: articles.count });
 }
+
+// 옛 기자 임시 계정 삭제 — 쓴 기사가 0건일 때만 (기사가 있으면 연결하거나 기사부터 정리) (2026-10-08)
+export async function DELETE(req: NextRequest) {
+  const denied = await requireChief();
+  if (denied) return denied;
+  const id = req.nextUrl.searchParams.get('id') ?? '';
+  const legacy = await prisma.user.findUnique({ where: { id }, select: { email: true, _count: { select: { articles: true } } } });
+  if (!legacy || !legacy.email.endsWith('@legacy.invalid')) {
+    return NextResponse.json({ error: '옛 기자 임시 계정이 아닙니다' }, { status: 400 });
+  }
+  if (legacy._count.articles > 0) {
+    return NextResponse.json({ error: `쓴 기사가 ${legacy._count.articles}건 있어 삭제할 수 없습니다` }, { status: 409 });
+  }
+  await prisma.$transaction([
+    prisma.donation.updateMany({ where: { reporterId: id }, data: { reporterId: null } }),
+    prisma.user.delete({ where: { id } }),
+  ]);
+  return NextResponse.json({ ok: true });
+}

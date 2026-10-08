@@ -37,6 +37,16 @@ export default function LegacyReportersPage() {
     if (res.ok) await load();
   }
 
+  async function remove(l: Legacy) {
+    if (!confirm(`옛 기자 "${l.name}"을(를) 삭제할까요?`)) return;
+    setBusy(l.id);
+    const res = await fetch(`/api/admin/legacy-reporters?id=${l.id}`, { method: 'DELETE' });
+    const r = await res.json().catch(() => ({}));
+    setBusy(null);
+    setMessage(res.ok ? `${l.name}을(를) 삭제했습니다.` : r.error ?? '삭제에 실패했습니다.');
+    if (res.ok) await load();
+  }
+
   return (
     <main className="max-w-3xl mx-auto px-4 py-8">
       <h1 className="text-xl font-bold text-gray-900 mb-2">옛 기자 계정 연결</h1>
@@ -57,7 +67,7 @@ export default function LegacyReportersPage() {
                 <th className="py-2 pl-4 pr-4 font-semibold">옛 기자</th>
                 <th className="py-2 pr-4 font-semibold text-right">기사</th>
                 <th className="py-2 pr-4 font-semibold">연결할 실제 계정</th>
-                <th className="py-2 pr-4" />
+                <th className="py-2 pr-4 whitespace-nowrap" />
               </tr>
             </thead>
             <tbody>
@@ -79,7 +89,7 @@ export default function LegacyReportersPage() {
                       ))}
                     </select>
                   </td>
-                  <td className="py-2 pr-4">
+                  <td className="py-2 pr-4 whitespace-nowrap">
                     <button
                       type="button"
                       disabled={!pick[l.id] || busy === l.id}
@@ -87,6 +97,16 @@ export default function LegacyReportersPage() {
                       className="rounded-lg px-3 py-1 text-xs font-semibold text-white bg-brand disabled:opacity-40"
                     >
                       연결
+                    </button>
+                    {/* 기사가 0건인 임시 기자만 삭제 가능 (2026-10-08) */}
+                    <button
+                      type="button"
+                      disabled={l.articleCount > 0 || busy === l.id}
+                      onClick={() => remove(l)}
+                      title={l.articleCount > 0 ? '기사가 있어 삭제할 수 없습니다 — 먼저 연결하세요' : '삭제'}
+                      className="ml-2 border border-gray-200 rounded-lg px-2 py-1 text-xs text-gray-500 hover:text-red-600 hover:border-red-300 disabled:opacity-40"
+                    >
+                      삭제
                     </button>
                   </td>
                 </tr>
