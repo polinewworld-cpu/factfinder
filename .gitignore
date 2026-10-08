@@ -18,3 +18,5 @@ add-youtube-key.bat
 # 옛 사이트 이관 작업 폴더(원본 HTML·사진 백업, 용량 큼)
 legacy-import/
 이니시스-이관요청-메일.md
+.env.before-2.0-switch
+2.0DB로 전환.bat

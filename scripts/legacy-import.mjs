@@ -216,13 +216,45 @@ async function importArticles() {
   const commit = flag('commit');
   const limit = Number(opt('limit', Infinity));
   const imageBase = opt('image-base', null);
-  const articles = JSON.parse(await fs.readFile(ARTICLES_JSON, 'utf8')).slice(0, limit);
-  const readJson = async (f, def) => (existsSync(path.join(ROOT, f)) ? JSON.parse(await fs.readFile(path.join(ROOT, f), 'utf8')) : def);
-  const categoryMap = await readJson('category-map.json', {});
-  const reporterMap = await readJson('reporters.json', {});
+  const articles = JSON.parse(await fs.readFile(opt('data', ARTICLES_JSON), 'utf8')).slice(0, limit);
+  const readJson = async (f, def) => (existsSync(f) ? JSON.parse(await fs.readFile(f, 'utf8')) : def);
+  const categoryMap = await readJson(opt('category-map', path.join(ROOT, 'category-map.json')), {});
+  const reporterMap = await readJson(path.join(ROOT, 'reporters.json'), {});
 
   const { PrismaClient } = await import('@prisma/client');
   const prisma = new PrismaClient();
+
+  // --once: 이관된 기사가 하나라도 있으면 아무것도 안 함 — 빌드(배포)마다 실행돼도 최초 1회만 동작하게
+  if (flag('once') && (await prisma.article.count({ where: { legacyId: { not: null } } })) > 0) {
+    console.log('[legacy-import] 이미 이관된 기사가 있어 건너뜀(--once)');
+    await prisma.$disconnect();
+    return;
+  }
+
+  // --hide-others: 기존(이관 아닌) 발행 기사를 전부 임시저장(DRAFT)으로 숨김 — 삭제 아님, 되돌릴 수 있음.
+  // 숨긴 기사 목록은 Supabase Storage(uploads 버킷)에 backup-hidden-articles-<시각>.json으로 남긴다.
+  if (!commit && flag('hide-others')) {
+    const n = await prisma.article.count({ where: { legacyId: null, status: 'PUBLISHED' } });
+    console.log(`[리허설] 숨김 예정: 기존 발행 기사 ${n}건`);
+  }
+  if (commit && flag('hide-others')) {
+    const toHide = await prisma.article.findMany({
+      where: { legacyId: null, status: 'PUBLISHED' },
+      select: { id: true, title: true, isFrontpageTop: true },
+    });
+    if (process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      const { createClient } = await import('@supabase/supabase-js');
+      const sb = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+      const name = `backup-hidden-articles-${new Date().toISOString().replace(/[:.]/g, '-')}.json`;
+      const { error } = await sb.storage.from('uploads').upload(name, Buffer.from(JSON.stringify(toHide, null, 1)), { contentType: 'application/json' });
+      console.log(error ? `[legacy-import] 숨김 목록 백업 실패: ${error.message}` : `[legacy-import] 숨김 목록 백업: ${name}`);
+    }
+    const { count } = await prisma.article.updateMany({
+      where: { id: { in: toHide.map((a) => a.id) } },
+      data: { status: 'DRAFT', isFrontpageTop: false },
+    });
+    console.log(`[legacy-import] 기존 발행 기사 ${count}건 숨김(DRAFT)`);
+  }
   let supabase = null;
   if (commit && !imageBase) {
     if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) throw new Error('SUPABASE_URL/SUPABASE_SERVICE_ROLE_KEY 필요 (또는 --image-base 지정)');
