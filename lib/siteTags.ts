@@ -7,7 +7,9 @@ export const SITE_URL = process.env.NEXTAUTH_URL || 'http://localhost:3411';
 export const IS_LIVE_DOMAIN = /(^|\.)factfinder\.tv/.test(new URL(SITE_URL).hostname);
 
 export const ADSENSE_CLIENT = 'ca-pub-1922059581667762'; // public/ads.txt와 반드시 같은 값
-export const GA4_IDS = ['G-57MDTF7LV5', 'G-VKYG8L5SWC'];
+// 2026-10-08: 사장님 계정에 새로 만든 GA4(계정·속성 "팩트파인더", 속성 번호 558113690)로 교체.
+// 옛 사이트의 G-57MDTF7LV5·G-VKYG8L5SWC는 사장님 계정에 없어(다다미디어 쪽 추정) 제거.
+export const GA4_IDS = ['G-HBX6WJSHM5'];
 export const NAVER_ANALYTICS_ID = '120fe082e5228c0';
 export const CLARITY_IDS = ['ob6v080n9r', 's439iuqb0u'];
 
