@@ -65,11 +65,12 @@ export default function DonationsAdminPage() {
                       <UserAvatar
                         image={d.user?.image}
                         seed={d.user?.id || d.user?.email || d.user?.name || 'user'}
-                        name={d.user?.nickname ?? d.user?.name}
+                        name={d.donorName ?? d.user?.nickname ?? d.user?.name}
                         className="w-7 h-7 text-xs rounded-full object-cover shrink-0"
                       />
                       <span>
-                        {d.user?.nickname ?? d.user?.name ?? '-'}
+                        {d.donorName ?? d.user?.nickname ?? d.user?.name ?? '-'}
+                        {!d.user && <span className="ml-1 text-xs text-gray-400 font-normal">(비회원)</span>}
                         <span className="block text-xs text-gray-400 font-normal">{d.user?.email}</span>
                       </span>
                     </div>

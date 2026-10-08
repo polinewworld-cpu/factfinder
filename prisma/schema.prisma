@@ -259,8 +259,9 @@ model ArticleImage {
 // PG(결제대행)사 계약정보가 아직 없어 실제 카드결제 연동은 보류 상태 — 지금은 구독 상태/왕관뱃지 로직만 구현.
 model Donation {
   id          String         @id @default(cuid())
-  userId      String
-  user        User           @relation(fields: [userId], references: [id])
+  userId      String? // 2026-10-08부터 비로그인 후원 허용(옛 사이트와 동일) — 로그인 상태로 후원하면 연결
+  user        User?          @relation(fields: [userId], references: [id])
+  donorName   String? // 후원자 이름 — 후원 폼에서 직접 입력 (2026-10-08 신설)
   amount      Int // 후원금액(원), 자유입력 — 2026-10-08부터 일시 후원(1건=1회 결제)
   phone       String? // 후원 신청 시 입력한 연락처 — 관리자 후원리스트에서 닉네임/프로필사진/이메일과 함께 노출 (2026-09-12 신설)
   status      DonationStatus @default(ACTIVE)
