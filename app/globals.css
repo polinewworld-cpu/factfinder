@@ -2886,3 +2886,142 @@ img {
   color: var(--hairline);
   pointer-events: none;
 }
+/* ───────── 관리자 화면 = Z-Board(zboard-kr.web.app) 디자인 (2026-10-08 사장님 지시) ─────────
+   베이지 바탕 + 진청록 액센트, 박스(카드·표)만 뉴모피즘 그림자, 박스 안은 평면 미니멀.
+   Pretendard 단일, 기본 13px, 굵기 400 본문 / 500 메타 / 600 제목·버튼. 반경 작게(최대 6px).
+   공개 사이트에는 영향 없도록 관리자 레이아웃의 .zb-admin 범위에서만 적용. */
+.zb-admin {
+  --zb-base: #efe8dc;
+  --zb-ink: #1f3033;
+  --zb-ink-sub: #6d7a78;
+  --zb-ink-dis: #a9a699;
+  --zb-teal: #0d4f55;
+  --zb-teal-hi: #14656c;
+  --zb-teal-soft: #d6e4e2;
+  --zb-err: #b83a3a;
+  --zb-line: #d8cebb;
+  --zb-e3: 6px 6px 14px rgba(163, 142, 108, 0.42), -6px -6px 14px rgba(255, 255, 255, 0.85);
+  /* tailwind bg-brand/text-brand 등이 이 변수를 씀 → 진청록으로 */
+  --accent: #0d4f55;
+  --accent-pressed: #14656c;
+  --brand-rgb: 13 79 85;
+  --brand-dark-rgb: 20 101 108;
+  font-family: "Pretendard Variable", Pretendard, "Malgun Gothic", system-ui, sans-serif;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--zb-ink);
+  -webkit-font-smoothing: antialiased;
+}
+html:has(.zb-admin),
+body:has(.zb-admin) {
+  background: #efe8dc;
+}
+body:has(.zb-admin) .site-header,
+body:has(.zb-admin) .site-footer {
+  background: transparent;
+}
+
+/* 글자 */
+.zb-admin h1 { font-size: 18px; font-weight: 600; letter-spacing: -0.01em; color: var(--zb-ink); }
+.zb-admin .text-xl { font-size: 18px; }
+.zb-admin .text-sm { font-size: 13px; }
+.zb-admin .text-xs { font-size: 11px; }
+.zb-admin .font-bold { font-weight: 600; }
+.zb-admin .text-gray-900, .zb-admin .text-gray-800, .zb-admin .text-gray-700 { color: var(--zb-ink); }
+.zb-admin .text-gray-600, .zb-admin .text-gray-500 { color: var(--zb-ink-sub); }
+.zb-admin .text-gray-400, .zb-admin .text-gray-300 { color: var(--zb-ink-dis); }
+.zb-admin .text-red-600, .zb-admin .text-red-500 { color: var(--zb-err); }
+.zb-admin .bg-brand { color: #fff; }
+.zb-admin .bg-brand .text-white, .zb-admin .text-white { color: #fff; }
+
+/* 박스 = 뉴모피즘 (테두리 대신 그림자) */
+.zb-admin .rounded-xl.border,
+.zb-admin .border.rounded-xl,
+.zb-admin .zb-card {
+  background: var(--zb-base);
+  border: 0 !important;
+  border-radius: 6px;
+  box-shadow: var(--zb-e3);
+}
+.zb-admin .rounded-xl, .zb-admin .rounded-lg { border-radius: 4px; }
+.zb-admin .bg-white { background: var(--zb-base); }
+.zb-admin .bg-gray-50, .zb-admin .bg-gray-100 { background: transparent; }
+.zb-admin .hover\:bg-gray-50:hover { background: rgba(216, 206, 187, 0.25); }
+.zb-admin .border-gray-200, .zb-admin .border-gray-100, .zb-admin .border-gray-300 { border-color: var(--zb-line); }
+
+/* 표 — 머리는 작은 회청색 라벨, 줄은 헤어라인 */
+.zb-admin table { font-size: 13px; }
+.zb-admin thead tr { background: transparent !important; }
+.zb-admin th { font-size: 11px; font-weight: 600; letter-spacing: 0.04em; color: var(--zb-ink-sub); }
+.zb-admin tbody tr { border-color: rgba(216, 206, 187, 0.5) !important; }
+.zb-admin tbody tr.bg-gray-100 { background: rgba(216, 206, 187, 0.35); color: var(--zb-ink-dis); }
+
+/* 입력칸 — 평면, 밑줄만 */
+.zb-admin input[type="text"],
+.zb-admin input[type="date"],
+.zb-admin input[type="search"],
+.zb-admin input:not([type]),
+.zb-admin select {
+  height: 28px;
+  border: 0 !important;
+  border-bottom: 1px solid var(--zb-line) !important;
+  border-radius: 0 !important;
+  background: transparent;
+  padding: 4px 2px;
+  font-size: 13px;
+  color: var(--zb-ink);
+}
+.zb-admin input[type="date"] { font-size: 12px; color: var(--zb-ink-sub); }
+.zb-admin input::placeholder { color: var(--zb-ink-dis); }
+.zb-admin input:focus, .zb-admin select:focus {
+  outline: none;
+  border-bottom: 2px solid var(--zb-teal) !important;
+  padding-bottom: 3px;
+}
+.zb-admin textarea {
+  border: 1px solid var(--zb-line);
+  border-radius: 4px;
+  background: transparent;
+}
+.zb-admin input[type="checkbox"] { accent-color: var(--zb-teal); }
+
+/* 버튼 — 높이 28, 반경 4, 선 버튼 기본 / 채운 버튼은 진청록 */
+.zb-admin button.border,
+.zb-admin a.border,
+.zb-admin button.rounded-lg {
+  border-color: var(--zb-line);
+  border-radius: 4px;
+  font-weight: 600;
+}
+.zb-admin button.border:hover,
+.zb-admin a.border:hover { border-color: var(--zb-teal); color: var(--zb-teal); }
+.zb-admin button.bg-brand,
+.zb-admin a.bg-brand { background: var(--zb-teal); border-color: var(--zb-teal); color: #fff; border-radius: 4px; }
+.zb-admin button.bg-brand:hover:not(:disabled),
+.zb-admin a.bg-brand:hover { background: var(--zb-teal-hi); }
+
+/* 상태 배지 — brand/10 계열을 청록 연한색으로 */
+.zb-admin .bg-brand\/10, .zb-admin .bg-brand\/5 { background: var(--zb-teal-soft); }
+.zb-admin .border-brand\/30 { border-color: rgba(13, 79, 85, 0.3); }
+
+/* 탭 */
+.zb-admin [role="tab"] { font-size: 13px; font-weight: 500; }
+.zb-admin [role="tab"][aria-selected="true"] { font-weight: 600; color: var(--zb-teal); border-color: var(--zb-teal); }
+
+/* 왼쪽 메뉴 */
+.zb-admin .admin-sidebar a { border-radius: 4px; font-weight: 500; color: var(--zb-ink); }
+.zb-admin .admin-sidebar a:hover { background: transparent; color: var(--zb-teal); }
+.zb-admin .admin-sidebar a.bg-brand { background: var(--zb-teal-soft); color: var(--zb-teal); font-weight: 600; }
+.zb-admin .admin-sidebar p { color: var(--zb-ink-sub); font-weight: 600; font-size: 11px; letter-spacing: 0.04em; }
+
+/* 대시보드 카드(RippleDotCard) — 핫핑크 면 대신 Z-Board 박스 */
+.zb-admin .zb-dot-card {
+  background: var(--zb-base);
+  color: var(--zb-ink);
+  border-radius: 6px;
+  box-shadow: var(--zb-e3);
+}
+.zb-admin .zb-dot-card .text-gray-900\/60,
+.zb-admin .zb-dot-card .text-gray-900\/50,
+.zb-admin .zb-dot-card .text-gray-900\/70 { color: var(--zb-ink-sub); }
+.zb-admin .zb-dot-card a:hover, .zb-admin .zb-dot-card button:hover { color: var(--zb-teal); }

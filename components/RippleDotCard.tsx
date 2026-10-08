@@ -59,7 +59,7 @@ export default function RippleDotCard({
     let raf = 0;
     const render = () => {
       ctx.clearRect(0, 0, width, height);
-      ctx.fillStyle = 'rgba(26, 26, 26, 0.2)';
+      ctx.fillStyle = 'rgba(13, 79, 85, 0.16)'; // Z-Board 청록 점 (2026-10-08)
       for (const dot of dots) {
         const dist = Math.hypot(mouse.x - dot.x, mouse.y - dot.y);
         const target = dist < maxDist ? baseRadius + (1 - dist / maxDist) * 4 : baseRadius;
@@ -85,7 +85,7 @@ export default function RippleDotCard({
     };
   }, []);
 
-  const cls = `relative block overflow-hidden rounded-xl bg-brand text-gray-900 ${className}`;
+  const cls = `zb-dot-card relative block overflow-hidden rounded-xl bg-brand text-gray-900 ${className}`;
   const inner = (
     <>
       <canvas ref={canvasRef} className="pointer-events-none absolute inset-0 h-full w-full" aria-hidden="true" />
