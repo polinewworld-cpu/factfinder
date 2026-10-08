@@ -3,7 +3,7 @@
 import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
-const categories = ['정치', '국제', '사회', '문화'];
+const categories = ['정치', '국제', '사회', '문화', '후원하기']; // 후원하기 = 후원 안내 기사 카테고리 (2026-10-08)
 for (let i = 0; i < categories.length; i++) {
   const name = categories[i];
   await prisma.category.upsert({

@@ -5,7 +5,8 @@ import AccountMenu from './AccountMenu';
 import HeaderSearch from './HeaderSearch';
 
 // 정치신세계 탭은 2026-10-08 사장님 지시로 제거 — 라이브 방송 카드는 '전체' 피드에만 섞여 나옴
-const CATEGORIES = ['전체', '정치', '국제', '사회', '문화'];
+// '후원하기'도 기사 카테고리(옛 사이트와 동일, 후원 안내 기사 모음) — 2026-10-08
+const CATEGORIES = ['전체', '정치', '국제', '사회', '문화', '후원하기'];
 
 export type CategoryAccount = {
   name: string;
@@ -22,7 +23,6 @@ export default function CategoryNav({ account = null }: { account?: CategoryAcco
   if (pathname?.startsWith('/admin') || pathname === '/write') return null;
 
   const currentCategory = pathname === '/' ? searchParams.get('category') ?? '전체' : null;
-  const donateActive = pathname === '/donate';
 
   return (
     <div className="category-bar">
@@ -42,10 +42,6 @@ export default function CategoryNav({ account = null }: { account?: CategoryAcco
           );
         })}
       </div>
-      {/* 저장한 기사는 우측 계정 메뉴에 있으므로 이 자리는 후원하기로 — 로그인 여부와 무관하게 노출 (2026-10-08) */}
-      <a className={`chip category-aux${donateActive ? ' is-active' : ''}`} href="/donate">
-        후원하기
-      </a>
       {!account && (
         <a className="chip category-aux" href="/api/auth/signin">
           로그인
