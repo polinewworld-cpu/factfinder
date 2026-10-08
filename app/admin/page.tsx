@@ -74,6 +74,7 @@ function PeopleGrid({ people }: { people: Person[] }) {
 export default function AdminHome() {
   const [me, setMe] = useState<any>('loading');
   const [stats, setStats] = useState<Stats | null>(null);
+  const [analysis, setAnalysis] = useState<any>(null);
 
   useEffect(() => {
     (async () => {
@@ -83,6 +84,11 @@ export default function AdminHome() {
       if (meData?.role === 'CHIEF_EDITOR') {
         const s = await fetch('/api/admin/stats');
         if (s.ok) setStats(await s.json());
+        // 방문 분석(매일 아침 자동 생성) 요약 — 실패해도 대시보드는 그대로
+        fetch('/api/admin/analytics')
+          .then((r) => r.json())
+          .then(setAnalysis)
+          .catch(() => setAnalysis({ error: '불러오지 못했습니다' }));
       }
     })();
   }, []);
@@ -185,6 +191,33 @@ export default function AdminHome() {
                   </li>
                 ))}
               </ul>
+            )}
+          </RippleDotCard>
+
+          {/* 방문 분석 — 제미나이 한 줄 요약 + 다음 주 할 일 (2026-10-09) */}
+          <RippleDotCard className="min-h-[250px]">
+            <CardHead
+              label="방문자 (최근 7일)"
+              value={analysis?.report ? analysis.report.summary.users.toLocaleString() : '-'}
+              href="/admin/analytics"
+              linkText="방문 분석 보기"
+            />
+            {!analysis ? (
+              <p className="text-sm text-gray-900/60">불러오는 중…</p>
+            ) : analysis.report?.ai ? (
+              <>
+                <p className="text-[11px] text-gray-900/50 mb-1">제미나이 분석</p>
+                <p className="text-sm font-semibold mb-2">{analysis.report.ai.headline}</p>
+                <ul className="space-y-1 list-disc pl-4">
+                  {analysis.report.ai.nextWeekActions.slice(0, 3).map((t: string, i: number) => (
+                    <li key={i} className="text-sm text-gray-900/80">{t}</li>
+                  ))}
+                </ul>
+              </>
+            ) : (
+              <p className="text-sm text-gray-900/60">
+                {analysis.error ?? analysis.report?.aiError ?? (analysis.configured === false ? '구글 애널리틱스 연결 전입니다.' : '제미나이 분석이 아직 없습니다.')}
+              </p>
             )}
           </RippleDotCard>
         </div>
