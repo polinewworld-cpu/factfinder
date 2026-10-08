@@ -4,6 +4,7 @@ import CredentialsProvider from 'next-auth/providers/credentials';
 import { PrismaAdapter } from '@next-auth/prisma-adapter';
 import { prisma } from '@/lib/prisma';
 import { usableAvatarUrl } from '@/lib/avatarGradient';
+import { claimLegacyReporterOnLogin } from '@/lib/legacyReporter';
 
 const providers = [
   GoogleProvider({
@@ -46,6 +47,10 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.id = (user as any).id;
         token.role = (user as any).role;
+        // 옛 사이트 기자가 미리 등록된 구글 이메일로 로그인하면 옛 기사·기자 등급 자동 승계 (2026-10-08)
+        // 실패해도 로그인은 막지 않음
+        const claimedRole = await claimLegacyReporterOnLogin((user as any).id, user.email).catch(() => null);
+        if (claimedRole) token.role = claimedRole;
       }
       return token;
     },

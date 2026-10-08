@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { ROLES } from '@/lib/roles';
 import { getCurrentUser } from '@/lib/session';
+import { mergeLegacyReporter } from '@/lib/legacyReporter';
 
 // 옛 기자 계정 연결 (2026-10-08) — 옛 사이트 기사를 옮길 때 만든 "로그인 불가 임시 기자 계정"(…@legacy.invalid)을
 // 실제로 구글 가입한 기자 계정에 합침: 기사·후원 지정을 실제 계정으로 옮기고 빈 임시 계정은 정리.
@@ -21,7 +22,7 @@ export async function GET() {
   const [legacy, members] = await Promise.all([
     prisma.user.findMany({
       where: { email: LEGACY },
-      select: { id: true, name: true, _count: { select: { articles: true } } },
+      select: { id: true, name: true, legacyClaimEmail: true, _count: { select: { articles: true } } },
       orderBy: { articles: { _count: 'desc' } },
     }),
     prisma.user.findMany({
@@ -31,7 +32,7 @@ export async function GET() {
     }),
   ]);
   return NextResponse.json({
-    legacy: legacy.map((u) => ({ id: u.id, name: u.name, articleCount: u._count.articles })),
+    legacy: legacy.map((u) => ({ id: u.id, name: u.name, claimEmail: u.legacyClaimEmail, articleCount: u._count.articles })),
     members,
   });
 }
@@ -52,12 +53,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: '연결할 실제 회원을 골라주세요' }, { status: 400 });
   }
 
-  const [articles] = await prisma.$transaction([
-    prisma.article.updateMany({ where: { authorId: legacy.id }, data: { authorId: target.id } }),
-    prisma.donation.updateMany({ where: { reporterId: legacy.id }, data: { reporterId: target.id } }),
-    prisma.user.delete({ where: { id: legacy.id } }),
-  ]);
-  return NextResponse.json({ ok: true, moved: articles.count });
+  const moved = await mergeLegacyReporter(legacy.id, target.id); // 독자 등급이면 기자로 승계
+  return NextResponse.json({ ok: true, moved });
 }
 
 // 옛 기자 임시 계정 삭제 — 쓴 기사가 0건일 때만 (기사가 있으면 연결하거나 기사부터 정리) (2026-10-08)
@@ -77,4 +74,31 @@ export async function DELETE(req: NextRequest) {
     prisma.user.delete({ where: { id } }),
   ]);
   return NextResponse.json({ ok: true });
+}
+
+// 구글 이메일 미리 등록 — body: { id, claimEmail } (빈 값이면 해제).
+// 그 이메일로 이미 가입한 회원이 있으면 바로 연결, 없으면 나중에 그 이메일로 처음 로그인할 때 자동 연결 (2026-10-08)
+export async function PATCH(req: NextRequest) {
+  const denied = await requireChief();
+  if (denied) return denied;
+  const { id, claimEmail } = await req.json().catch(() => ({}));
+  const legacy = await prisma.user.findUnique({ where: { id: String(id) }, select: { id: true, email: true } });
+  if (!legacy || !legacy.email.endsWith('@legacy.invalid')) {
+    return NextResponse.json({ error: '옛 기자 임시 계정이 아닙니다' }, { status: 400 });
+  }
+  const email = typeof claimEmail === 'string' ? claimEmail.trim().toLowerCase() : '';
+  if (email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+    return NextResponse.json({ error: '이메일 형식이 올바르지 않습니다' }, { status: 400 });
+  }
+  const existing = email ? await prisma.user.findUnique({ where: { email }, select: { id: true } }) : null;
+  if (existing) {
+    const moved = await mergeLegacyReporter(legacy.id, existing.id);
+    return NextResponse.json({ ok: true, linkedNow: true, moved });
+  }
+  try {
+    await prisma.user.update({ where: { id: legacy.id }, data: { legacyClaimEmail: email || null } });
+  } catch {
+    return NextResponse.json({ error: '이미 다른 옛 기자에게 등록된 이메일입니다' }, { status: 409 });
+  }
+  return NextResponse.json({ ok: true, linkedNow: false });
 }

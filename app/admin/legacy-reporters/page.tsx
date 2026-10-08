@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 
-type Legacy = { id: string; name: string; articleCount: number };
+type Legacy = { id: string; name: string; claimEmail: string | null; articleCount: number };
 type Member = { id: string; name: string; nickname: string | null; email: string; role: string };
 
 // 옛 기자 계정 연결 (2026-10-08) — 옛 사이트 기자가 2.0에 구글로 가입하면, 여기서 그 사람의 옛 기사를 새 계정으로 옮김
@@ -11,10 +11,40 @@ export default function LegacyReportersPage() {
   const [pick, setPick] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState<string | null>(null);
   const [message, setMessage] = useState('');
+  const [emails, setEmails] = useState<Record<string, string>>({});
 
   async function load() {
     const res = await fetch('/api/admin/legacy-reporters');
-    if (res.ok) setData(await res.json());
+    if (!res.ok) return;
+    const d: { legacy: Legacy[]; members: Member[] } = await res.json();
+    setData(d);
+    setEmails(Object.fromEntries(d.legacy.map((l) => [l.id, l.claimEmail ?? ''])));
+    // 이름이 같은 가입 회원이 딱 한 명이면 미리 골라 둠 — 자동 연결은 하지 않음(동명이인 가능)
+    setPick((prev) => {
+      const next = { ...prev };
+      for (const l of d.legacy) {
+        if (next[l.id]) continue;
+        const same = d.members.filter((m) => (m.nickname ?? '').trim() === l.name || m.name.trim() === l.name);
+        if (same.length === 1) next[l.id] = same[0].id;
+      }
+      return next;
+    });
+  }
+
+  // 구글 이메일 미리 등록 — 그 이메일로 처음 로그인하면 옛 기사·기자 등급이 자동 승계됨
+  async function saveEmail(l: Legacy) {
+    setBusy(l.id);
+    const res = await fetch('/api/admin/legacy-reporters', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: l.id, claimEmail: emails[l.id] ?? '' }),
+    });
+    const r = await res.json().catch(() => ({}));
+    setBusy(null);
+    if (!res.ok) setMessage(r.error ?? '저장에 실패했습니다.');
+    else if (r.linkedNow) setMessage(`${l.name}: 이미 가입한 회원이라 바로 연결했습니다 (기사 ${r.moved}건).`);
+    else setMessage(emails[l.id] ? `${l.name}: ${emails[l.id]} 로 로그인하면 자동으로 승계됩니다.` : `${l.name}: 등록 이메일을 지웠습니다.`);
+    await load();
   }
   useEffect(() => {
     load();
@@ -48,11 +78,12 @@ export default function LegacyReportersPage() {
   }
 
   return (
-    <main className="max-w-3xl mx-auto px-4 py-8">
+    <main className="max-w-5xl mx-auto px-4 py-8">
       <h1 className="text-xl font-bold text-gray-900 mb-2">옛 기자 계정 연결</h1>
       <p className="text-sm text-gray-500 mb-5">
-        옛 사이트 기사는 로그인할 수 없는 임시 기자 이름으로 들어와 있습니다. 해당 기자가 2.0에 구글로 가입하면, 여기서 실제 계정을
-        골라 [연결]을 누르세요. 그 기자의 옛 기사가 모두 새 계정으로 옮겨집니다.
+        옛 사이트 기사는 로그인할 수 없는 임시 기자 이름으로 들어와 있습니다. <b>기자의 구글 이메일을 미리 등록</b>해 두면 그 사람이
+        처음 로그인할 때 옛 기사와 기자 등급이 자동으로 이어집니다. 이미 가입한 사람은 계정을 골라 [연결]을 누르세요(이름이 같은 회원은
+        미리 골라 둡니다). 연결하면 독자 등급은 기자로 올라갑니다.
       </p>
       {message && <p className="text-sm text-brand mb-3">{message}</p>}
       {!data ? (
@@ -66,7 +97,8 @@ export default function LegacyReportersPage() {
               <tr className="text-left text-gray-400 border-b border-gray-200 bg-gray-50 whitespace-nowrap">
                 <th className="py-2 pl-4 pr-4 font-semibold">옛 기자</th>
                 <th className="py-2 pr-4 font-semibold text-right">기사</th>
-                <th className="py-2 pr-4 font-semibold">연결할 실제 계정</th>
+                <th className="py-2 pr-4 font-semibold">구글 이메일 미리 등록</th>
+                <th className="py-2 pr-4 font-semibold">이미 가입했으면 계정 선택</th>
                 <th className="py-2 pr-4 whitespace-nowrap" />
               </tr>
             </thead>
@@ -75,6 +107,26 @@ export default function LegacyReportersPage() {
                 <tr key={l.id} className="border-b border-gray-100">
                   <td className="py-2 pl-4 pr-4 font-medium text-gray-900 whitespace-nowrap">{l.name}</td>
                   <td className="py-2 pr-4 text-right text-gray-600">{l.articleCount.toLocaleString()}</td>
+                  <td className="py-2 pr-4">
+                    <div className="flex items-center gap-1">
+                      <input
+                        type="text"
+                        value={emails[l.id] ?? ''}
+                        onChange={(e) => setEmails((p) => ({ ...p, [l.id]: e.target.value }))}
+                        placeholder="example@gmail.com"
+                        className="w-44 border border-gray-200 rounded-lg px-2 py-1 text-sm"
+                      />
+                      <button
+                        type="button"
+                        disabled={busy === l.id || (emails[l.id] ?? '') === (l.claimEmail ?? '')}
+                        onClick={() => saveEmail(l)}
+                        className="border border-gray-200 rounded-lg px-2 py-1 text-xs whitespace-nowrap disabled:opacity-40"
+                      >
+                        저장
+                      </button>
+                    </div>
+                    {l.claimEmail && <p className="text-[11px] text-gray-400 mt-0.5">로그인 대기 중</p>}
+                  </td>
                   <td className="py-2 pr-4">
                     <select
                       value={pick[l.id] ?? ''}
