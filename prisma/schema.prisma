@@ -66,6 +66,7 @@ model User {
   newsletterOptIn Boolean @default(false) // 뉴스레터 구독 여부 — 후원 여부와 무관한 별도 옵트인 (기능정의서 6)
   isDonor       Boolean   @default(false)
   legacyClaimEmail String? @unique // 옛 기자 임시 계정에만 — 이 구글 이메일로 로그인하면 옛 기사·기자 등급 자동 승계 (2026-10-08)
+  ghost         Boolean   @default(false) // 유령 계정 — 관리자가 [삭제]한 옛 기자: 목록에선 숨기고 옛 기사·이름은 그대로 (2026-10-08)
   createdAt     DateTime  @default(now())
 
   articles      Article[]

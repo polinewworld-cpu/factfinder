@@ -21,7 +21,7 @@ export async function GET() {
   if (denied) return denied;
   const [legacy, members] = await Promise.all([
     prisma.user.findMany({
-      where: { email: LEGACY },
+      where: { email: LEGACY, ghost: false }, // 유령 계정(삭제한 옛 기자)은 목록에서 숨김
       select: { id: true, name: true, legacyClaimEmail: true, _count: { select: { articles: true } } },
       orderBy: { articles: { _count: 'desc' } },
     }),
@@ -64,22 +64,17 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ ok: true, moved });
 }
 
-// 옛 기자 임시 계정 삭제 — 쓴 기사가 0건일 때만 (기사가 있으면 연결하거나 기사부터 정리) (2026-10-08)
+// 옛 기자 삭제 = 유령 계정 처리 (2026-10-08 사장님 지시) — 관리자 목록에서만 사라지고 옛 기사·바이라인은 그대로.
+// 자동 승계 이메일도 해제해 더는 연결되지 않게 함.
 export async function DELETE(req: NextRequest) {
   const denied = await requireChief();
   if (denied) return denied;
   const id = req.nextUrl.searchParams.get('id') ?? '';
-  const legacy = await prisma.user.findUnique({ where: { id }, select: { email: true, _count: { select: { articles: true } } } });
+  const legacy = await prisma.user.findUnique({ where: { id }, select: { email: true } });
   if (!legacy || !legacy.email.endsWith('@legacy.invalid')) {
     return NextResponse.json({ error: '옛 기자 임시 계정이 아닙니다' }, { status: 400 });
   }
-  if (legacy._count.articles > 0) {
-    return NextResponse.json({ error: `쓴 기사가 ${legacy._count.articles}건 있어 삭제할 수 없습니다` }, { status: 409 });
-  }
-  await prisma.$transaction([
-    prisma.donation.updateMany({ where: { reporterId: id }, data: { reporterId: null } }),
-    prisma.user.delete({ where: { id } }),
-  ]);
+  await prisma.user.update({ where: { id }, data: { ghost: true, legacyClaimEmail: null } });
   return NextResponse.json({ ok: true });
 }
 

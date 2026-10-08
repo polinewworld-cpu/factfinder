@@ -68,7 +68,9 @@ export default function LegacyReportersPage() {
   }
 
   async function remove(l: Legacy) {
-    if (!confirm(`옛 기자 "${l.name}"을(를) 삭제할까요?`)) return;
+    if (!confirm(`옛 기자 "${l.name}"을(를) 삭제할까요?
+
+관리자 목록에서만 사라지고, 옛 기사 ${l.articleCount.toLocaleString()}건과 기자 이름은 사이트에 그대로 남습니다(유령 계정).`)) return;
     setBusy(l.id);
     const res = await fetch(`/api/admin/legacy-reporters?id=${l.id}`, { method: 'DELETE' });
     const r = await res.json().catch(() => ({}));
@@ -150,12 +152,12 @@ export default function LegacyReportersPage() {
                     >
                       연결
                     </button>
-                    {/* 기사가 0건인 임시 기자만 삭제 가능 (2026-10-08) */}
+                    {/* 삭제 = 유령 계정: 목록에서만 숨기고 옛 기사·이름은 유지 (2026-10-08) */}
                     <button
                       type="button"
-                      disabled={l.articleCount > 0 || busy === l.id}
+                      disabled={busy === l.id}
                       onClick={() => remove(l)}
-                      title={l.articleCount > 0 ? '기사가 있어 삭제할 수 없습니다 — 먼저 연결하세요' : '삭제'}
+                      title="목록에서 숨김 — 옛 기사와 이름은 그대로 남음"
                       className="ml-2 border border-gray-200 rounded-lg px-2 py-1 text-xs text-gray-500 hover:text-red-600 hover:border-red-300 disabled:opacity-40"
                     >
                       삭제
