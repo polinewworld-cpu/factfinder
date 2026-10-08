@@ -8,8 +8,8 @@ const legacyRedirects = [
   { source: '/m/view.php', has: [{ type: 'query', key: 'idx', value: '(?<idx>\\d+)' }], destination: '/article/:idx' },
   // 목록·검색·모바일 홈·회원
   // 옛 '후원하기' 메뉴(mcode 두 개) → 새 '후원하기' 카테고리 (2026-10-08)
-  { source: '/news/list.php', has: [{ type: 'query', key: 'mcode', value: 'm878ope' }], destination: '/?category=후원하기' },
-  { source: '/news/list.php', has: [{ type: 'query', key: 'mcode', value: 'm889qdv' }], destination: '/?category=후원하기' },
+  { source: '/news/list.php', has: [{ type: 'query', key: 'mcode', value: 'm878ope' }], destination: '/?category=%ED%9B%84%EC%9B%90%ED%95%98%EA%B8%B0' },
+  { source: '/news/list.php', has: [{ type: 'query', key: 'mcode', value: 'm889qdv' }], destination: '/?category=%ED%9B%84%EC%9B%90%ED%95%98%EA%B8%B0' },
   { source: '/news/list.php', destination: '/' },
   { source: '/news/index.php', destination: '/' },
   { source: '/news/search.php', destination: '/search' },
