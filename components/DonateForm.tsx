@@ -6,10 +6,11 @@ const PRESETS = [1000, 5000, 10000, 30000];
 
 type Reporter = { id: string; name: string; nickname: string | null };
 
-// 정기후원 신청 폼 — /donate 페이지와 기사 상단 "원고료로 응원하기" 레이어(DonateModal)가 공유하는 핵심 UI/로직 (2026-09-12 분리)
+// 후원(원고료 응원) 폼 — /donate 페이지와 기사 상단 "원고료로 응원하기" 레이어(DonateModal)가 공유하는 핵심 UI/로직 (2026-09-12 분리)
+// 2026-10-08: 정기(매월) 후원 개념 폐지 → 한 번 결제하는 일시 후원 (사장님 지시: "매달 후원받는 개념 자체가 없다")
 export default function DonateForm({ initialReporterId = '' }: { initialReporterId?: string }) {
   const [me, setMe] = useState<any>('loading');
-  const [active, setActive] = useState<any>(null);
+  const [done, setDone] = useState<{ amount: number } | null>(null); // 방금 후원 완료한 금액 — 감사 화면 표시용
   const [amount, setAmount] = useState<number | ''>(5000);
   const [custom, setCustom] = useState('');
   const [phone, setPhone] = useState('');
@@ -22,8 +23,6 @@ export default function DonateForm({ initialReporterId = '' }: { initialReporter
     const meRes = await fetch('/api/me');
     if (!meRes.ok) return setMe(null);
     setMe(await meRes.json());
-    const dRes = await fetch('/api/donations');
-    if (dRes.ok) setActive(await dRes.json());
     const rRes = await fetch('/api/reporters');
     if (rRes.ok) setReporters(await rRes.json());
   }
@@ -37,7 +36,7 @@ export default function DonateForm({ initialReporterId = '' }: { initialReporter
     if (initialReporterId) setReporterId(initialReporterId);
   }, [initialReporterId]);
 
-  async function subscribe() {
+  async function donate() {
     setErrorMsg('');
     const finalAmount = custom ? Number(custom) : amount;
     if (!finalAmount || finalAmount < 1000) return setErrorMsg('최소 1,000원부터 후원할 수 있습니다.');
@@ -50,15 +49,7 @@ export default function DonateForm({ initialReporterId = '' }: { initialReporter
     });
     const data = await res.json();
     if (!res.ok) setErrorMsg(data.error);
-    else await load();
-    setBusy(false);
-  }
-
-  async function cancel() {
-    if (!active) return;
-    setBusy(true);
-    await fetch(`/api/donations/${active.id}/cancel`, { method: 'POST' });
-    await load();
+    else setDone({ amount: finalAmount });
     setBusy(false);
   }
 
@@ -77,26 +68,18 @@ export default function DonateForm({ initialReporterId = '' }: { initialReporter
   return (
     <div>
       <p className="text-xs text-gray-400 mb-6">
-        세제혜택(기부금영수증) 없는 단순 후원 구독입니다. 언제든 해지할 수 있습니다.
+        세제혜택(기부금영수증) 없는 단순 후원입니다.
       </p>
 
-      {active ? (
-        <div className="border border-gray-200 rounded-xl p-5">
-          <p className="text-sm text-gray-500 mb-1">현재 후원 중</p>
-          <p className="text-2xl font-bold text-gray-900 mb-1">
-            👑 월 {active.amount.toLocaleString()}원
-          </p>
-          <p className="text-xs text-gray-400 mb-1">{new Date(active.startedAt).toLocaleDateString('ko-KR')}부터</p>
-          {active.reporter && (
-            <p className="text-xs text-gray-400 mb-4">{active.reporter.nickname ?? active.reporter.name} 기자 응원 중</p>
-          )}
-          {!active.reporter && <div className="mb-4" />}
+      {done ? (
+        <div className="border border-gray-200 rounded-xl p-5 text-center">
+          <p className="text-2xl font-bold text-gray-900 mb-1">{done.amount.toLocaleString()}원</p>
+          <p className="text-sm text-gray-500 mb-4">후원해주셔서 감사합니다.</p>
           <button
-            onClick={cancel}
-            disabled={busy}
-            className="text-sm text-gray-500 border border-gray-200 rounded-lg px-4 py-2 hover:border-red-400 hover:text-red-500"
+            onClick={() => setDone(null)}
+            className="text-sm text-gray-500 border border-gray-200 rounded-lg px-4 py-2 hover:border-brand hover:text-brand"
           >
-            후원 해지
+            한 번 더 후원하기
           </button>
         </div>
       ) : (
@@ -151,14 +134,14 @@ export default function DonateForm({ initialReporterId = '' }: { initialReporter
             </div>
           )}
           <button
-            onClick={subscribe}
+            onClick={donate}
             disabled={busy}
             className="w-full text-sm font-bold text-white bg-brand rounded-lg py-3 disabled:opacity-50"
           >
-            매월 {(custom ? Number(custom) : amount || 0).toLocaleString()}원 정기후원 시작하기
+            {(custom ? Number(custom) : amount || 0).toLocaleString()}원 후원하기
           </button>
           <p className="text-xs text-gray-300 mt-3 text-center">
-            ※ 결제대행사(PG) 연동 준비 중 — 지금은 결제 없이 후원 상태만 시작됩니다.
+            ※ 결제(KG이니시스) 연동 준비 중 — 지금은 실제 결제 없이 후원 신청만 기록됩니다.
           </p>
         </div>
       )}

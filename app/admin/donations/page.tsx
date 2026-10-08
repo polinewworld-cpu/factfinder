@@ -4,8 +4,8 @@ import { useEffect, useState } from 'react';
 import { UserAvatar } from '@/components/InitialAvatar';
 
 const STATUS_LABELS: Record<string, string> = {
-  ACTIVE: '후원중',
-  CANCELLED: '해지',
+  ACTIVE: '정상',
+  CANCELLED: '취소',
 };
 
 // 전체 후원리스트 — 대시보드 "후원" 숫자에서 진입 (기자별 정산·집계 화면인 /admin/settlement 와는 별개, 2026-09-11 신설)

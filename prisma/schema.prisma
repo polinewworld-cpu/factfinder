@@ -261,7 +261,7 @@ model Donation {
   id          String         @id @default(cuid())
   userId      String
   user        User           @relation(fields: [userId], references: [id])
-  amount      Int // 월 후원금액(원), 자유입력
+  amount      Int // 후원금액(원), 자유입력 — 2026-10-08부터 일시 후원(1건=1회 결제)
   phone       String? // 후원 신청 시 입력한 연락처 — 관리자 후원리스트에서 닉네임/프로필사진/이메일과 함께 노출 (2026-09-12 신설)
   status      DonationStatus @default(ACTIVE)
   // 특정 기자를 지정한 후원인 경우 (기능정의서 7 "기자별 정산") — null이면 사이트 전체 후원(정산 시 미지정으로 집계)

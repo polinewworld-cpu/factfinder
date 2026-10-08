@@ -3,8 +3,8 @@ import { prisma } from '@/lib/prisma';
 import { getCurrentUser } from '@/lib/session';
 import { WRITER_ROLES } from '@/lib/roles';
 
-// 정기후원 신청 — PG 계약정보 미확정 상태라 실제 카드결제는 없음(결제 없이 구독 상태만 생성).
-// 카드 등록/결제 연동은 KG이니시스 등 계약 확정 시 이 라우트 안에서만 교체하면 되도록 분리해둠.
+// 후원 신청 — 2026-10-08부터 정기(매월) 개념 없이 한 번 결제하는 일시 후원. 신청할 때마다 Donation 1건.
+// KG이니시스(MID factfind38) 결제 연동 전이라 아직 실제 결제는 없음 — 연동 시 이 라우트 안에서 교체.
 export async function GET() {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: '로그인이 필요합니다' }, { status: 401 });
@@ -37,11 +37,6 @@ export async function POST(req: NextRequest) {
     if (!target || !(WRITER_ROLES as readonly string[]).includes(target.role)) {
       return NextResponse.json({ error: '유효하지 않은 기자입니다' }, { status: 400 });
     }
-  }
-
-  const existing = await prisma.donation.findFirst({ where: { userId: user.id, status: 'ACTIVE' } });
-  if (existing) {
-    return NextResponse.json({ error: '이미 진행중인 정기후원이 있습니다' }, { status: 400 });
   }
 
   // 후원 여부는 isDonor 플래그로만 표시 — 회원 등급(role)에는 영향 없음 (2026-09-22: 회원/후원회원 구별 폐지)

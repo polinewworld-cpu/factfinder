@@ -9,7 +9,7 @@ export default function DonatePage() {
 
   return (
     <main className="max-w-md mx-auto px-4 py-10">
-      <h1 className="text-xl font-bold text-gray-900 mb-2">팩트파인더 정기후원</h1>
+      <h1 className="text-xl font-bold text-gray-900 mb-2">팩트파인더 후원하기</h1>
       <DonateForm initialReporterId={reporterId} />
     </main>
   );
