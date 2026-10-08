@@ -21,7 +21,7 @@ export default function CategoryNav({ account = null }: { account?: CategoryAcco
   if (pathname?.startsWith('/admin') || pathname === '/write') return null;
 
   const currentCategory = pathname === '/' ? searchParams.get('category') ?? '전체' : null;
-  const savedActive = pathname === '/saved';
+  const donateActive = pathname === '/donate';
 
   return (
     <div className="category-bar">
@@ -41,9 +41,10 @@ export default function CategoryNav({ account = null }: { account?: CategoryAcco
           );
         })}
       </div>
+      {/* 저장한 기사는 우측 계정 메뉴에 있으므로 이 자리는 후원하기로 (2026-10-08) */}
       {account ? (
-        <a className={`chip category-aux${savedActive ? ' is-active' : ''}`} href="/saved">
-          저장한 기사
+        <a className={`chip category-aux${donateActive ? ' is-active' : ''}`} href="/donate">
+          후원하기
         </a>
       ) : (
         <a className="chip category-aux" href="/api/auth/signin">
