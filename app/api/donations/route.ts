@@ -3,12 +3,13 @@ import { prisma } from '@/lib/prisma';
 import { getCurrentUser } from '@/lib/session';
 import { WRITER_ROLES } from '@/lib/roles';
 import { allowRequest, clientIp } from '@/lib/rateLimit';
+import { inicisKeyStatus, mobilePayParams, newOrderId, pcPayParams } from '@/lib/inicis';
 
 // 후원 금액은 5종 고정 (2026-10-08 사장님 확정) — components/DonateForm.tsx의 PRESETS와 같은 값
 const DONATION_AMOUNTS = [3000, 5000, 10000, 20000, 30000];
 
 // 후원 신청 — 2026-10-08부터 정기(매월) 개념 없이 한 번 결제하는 일시 후원. 신청할 때마다 Donation 1건.
-// KG이니시스(MID factfind38) 결제 연동 전이라 아직 실제 결제는 없음 — 연동 시 이 라우트 안에서 교체.
+// POST는 결제 대기(PENDING) 건을 만들고 이니시스 결제창 요청값을 돌려준다 → 결제 승인은 /api/donations/inicis/* 에서 ACTIVE로 확정.
 export async function GET() {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: '로그인이 필요합니다' }, { status: 401 });
@@ -28,7 +29,10 @@ export async function POST(req: NextRequest) {
   }
   const user = await getCurrentUser();
 
-  const { amount, reporterId, phone, name } = await req.json();
+  if (!inicisKeyStatus().matches) {
+    return NextResponse.json({ error: '결제 준비 중입니다. 잠시 후 다시 시도해주세요.' }, { status: 503 });
+  }
+  const { amount, reporterId, phone, name, mobile } = await req.json();
   const amt = Number(amount);
   if (!DONATION_AMOUNTS.includes(amt)) {
     return NextResponse.json({ error: '후원 금액을 선택해주세요' }, { status: 400 });
@@ -50,11 +54,19 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  const donation = await prisma.donation.create({
-    data: { userId: user?.id ?? null, donorName, amount: amt, phone: cleanPhone, reporterId: reporterId || null },
+  const oid = newOrderId();
+  await prisma.donation.create({
+    data: {
+      userId: user?.id ?? null, donorName, amount: amt, phone: cleanPhone, reporterId: reporterId || null,
+      status: 'PENDING', oid,
+    },
   });
-  // 후원 여부는 isDonor 플래그로만 표시 — 회원 등급(role)에는 영향 없음 (2026-09-22: 회원/후원회원 구별 폐지)
-  if (user) await prisma.user.update({ where: { id: user.id }, data: { isDonor: true } });
 
-  return NextResponse.json(donation, { status: 201 });
+  const order = { oid, amount: amt, name: donorName, phone: cleanPhone };
+  return NextResponse.json(
+    mobile
+      ? { mode: 'mobile', action: 'https://mobile.inicis.com/smart/payment/', fields: mobilePayParams(order) }
+      : { mode: 'pc', fields: pcPayParams(order) },
+    { status: 201 },
+  );
 }

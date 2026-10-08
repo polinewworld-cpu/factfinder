@@ -32,10 +32,10 @@ export async function GET() {
     prisma.article.count({ where: { status: 'DRAFT' } }),
     prisma.article.count({ where: { status: 'PUBLISHED' } }),
     prisma.donation.count({ where: { status: 'ACTIVE' } }),
-    prisma.donation.count({ where: { startedAt: { gte: todayStart } } }),
+    prisma.donation.count({ where: { status: 'ACTIVE', startedAt: { gte: todayStart } } }), // 결제 완료 건만 (2026-10-08)
     prisma.user.count({ where: { reporterApplicationStatus: 'PENDING' } }),
     prisma.user.count({ where: { role: 'REPORTER' } }),
-    prisma.donation.aggregate({ _sum: { amount: true }, where: { startedAt: { gte: todayStart } } }),
+    prisma.donation.aggregate({ _sum: { amount: true }, where: { status: 'ACTIVE', startedAt: { gte: todayStart } } }),
     prisma.donation.aggregate({ _sum: { amount: true }, where: { status: 'ACTIVE' } }),
   ]);
 

@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
   }
 
   const result = await prisma.donation.updateMany({
-    where: { id: { in: donationIds }, settled: false },
+    where: { id: { in: donationIds }, settled: false, status: 'ACTIVE' },
     data: { settled: true, settledAt: new Date() },
   });
 

@@ -26,7 +26,7 @@ export async function GET(req: NextRequest) {
   }
 
   const donations = await prisma.donation.findMany({
-    where: { settled: false, startedAt: { gte: startDate, lte: endDate } },
+    where: { settled: false, status: 'ACTIVE', startedAt: { gte: startDate, lte: endDate } }, // 결제 완료 건만 정산 (2026-10-08)
     include: { reporter: true },
     orderBy: { startedAt: 'asc' },
   });

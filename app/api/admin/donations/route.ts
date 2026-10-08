@@ -12,6 +12,8 @@ export async function GET() {
   }
 
   const donations = await prisma.donation.findMany({
+    // 결제창만 열고 끝난 건(PENDING)·실패 건(FAILED)은 목록에서 제외 (2026-10-08 이니시스 연동)
+    where: { status: { in: ['ACTIVE', 'CANCELLED'] } },
     include: {
       // 후원리스트에 닉네임·프로필사진·이메일·연락처를 함께 노출하기 위해 확장 (2026-09-12)
       user: { select: { id: true, name: true, nickname: true, image: true, email: true } },
