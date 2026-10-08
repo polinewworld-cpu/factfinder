@@ -19,36 +19,34 @@ export default function Pagination({
     return qs ? `/?${qs}` : '/';
   };
 
-  // 현재 페이지 앞뒤 2개 + 처음·끝, 사이가 비면 "…"
-  const pages: (number | '…')[] = [];
-  for (let p = 1; p <= totalPages; p++) {
-    if (p === 1 || p === totalPages || Math.abs(p - page) <= 2) pages.push(p);
-    else if (pages[pages.length - 1] !== '…') pages.push('…');
-  }
+  // 10개 단위 묶음 (1~10, 11~20 …) — 이전/다음은 앞뒤 묶음의 첫·끝 페이지로 (2026-10-08 사장님 지시)
+  const BLOCK = 10;
+  const blockStart = Math.floor((page - 1) / BLOCK) * BLOCK + 1;
+  const blockEnd = Math.min(totalPages, blockStart + BLOCK - 1);
+  const pages: number[] = [];
+  for (let p = blockStart; p <= blockEnd; p++) pages.push(p);
+  const prevPage = blockStart > 1 ? blockStart - 1 : null;
+  const nextPage = blockEnd < totalPages ? blockEnd + 1 : null;
 
   return (
     <nav className="content pagination" aria-label="페이지">
-      {page > 1 ? (
-        <a className="pagination-step" href={href(page - 1)} rel="prev">‹ 이전</a>
+      {prevPage ? (
+        <a className="pagination-step" href={href(prevPage)} rel="prev">‹ 이전</a>
       ) : (
         <span className="pagination-step is-disabled">‹ 이전</span>
       )}
-      {pages.map((p, i) =>
-        p === '…' ? (
-          <span key={`gap-${i}`} className="pagination-gap">…</span>
-        ) : (
-          <a
-            key={p}
-            href={href(p)}
-            className={`pagination-num${p === page ? ' is-active' : ''}`}
-            aria-current={p === page ? 'page' : undefined}
-          >
-            {p}
-          </a>
-        )
-      )}
-      {page < totalPages ? (
-        <a className="pagination-step" href={href(page + 1)} rel="next">다음 ›</a>
+      {pages.map((p) => (
+        <a
+          key={p}
+          href={href(p)}
+          className={`pagination-num${p === page ? ' is-active' : ''}`}
+          aria-current={p === page ? 'page' : undefined}
+        >
+          {p}
+        </a>
+      ))}
+      {nextPage ? (
+        <a className="pagination-step" href={href(nextPage)} rel="next">다음 ›</a>
       ) : (
         <span className="pagination-step is-disabled">다음 ›</span>
       )}

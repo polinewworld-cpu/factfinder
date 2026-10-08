@@ -2861,8 +2861,7 @@ img {
   padding-bottom: 48px;
 }
 .pagination-num,
-.pagination-step,
-.pagination-gap {
+.pagination-step {
   min-width: 36px;
   height: 36px;
   padding: 0 10px;
@@ -2886,9 +2885,4 @@ img {
 .pagination-step.is-disabled {
   color: var(--hairline);
   pointer-events: none;
-}
-.pagination-gap {
-  min-width: 20px;
-  padding: 0;
-  color: var(--mute);
 }
