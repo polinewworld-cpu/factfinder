@@ -171,15 +171,18 @@ function HistoryTab() {
                   <td className="py-2 pr-4 text-gray-600 whitespace-nowrap">{d.reporter?.name ?? '미지정'}</td>
                   <td className="py-2 pr-4 text-gray-900 font-medium">
                     <div className="flex items-center gap-2">
+                      {/* 후원 폼에 입력한 이름 기준 표시 — 로그인 계정 사진을 쓰면 다른 사람처럼 보여 헷갈림 (2026-10-08) */}
                       <UserAvatar
-                        image={d.user?.image}
-                        seed={d.user?.id || d.user?.email || d.donorName || 'user'}
+                        image={d.donorName ? null : d.user?.image}
+                        seed={d.donorName || d.user?.id || 'user'}
                         name={d.donorName ?? d.user?.nickname ?? d.user?.name}
                         className="w-7 h-7 text-xs rounded-full object-cover shrink-0"
                       />
                       <span className="whitespace-nowrap">
                         {d.donorName ?? d.user?.nickname ?? d.user?.name ?? '-'}
-                        {!d.user && <span className="ml-1 text-xs text-gray-400 font-normal">(비회원)</span>}
+                        <span className="ml-1 text-xs text-gray-400 font-normal">
+                          {d.user ? `(로그인: ${d.user.nickname ?? d.user.name})` : '(비회원)'}
+                        </span>
                         <span className="block text-xs text-gray-400 font-normal">{d.phone ?? d.user?.email}</span>
                       </span>
                     </div>
