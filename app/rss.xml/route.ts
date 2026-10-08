@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import { stripHtml } from '@/lib/stripHtml';
 import { SITE_URL } from '@/lib/siteTags';
+import { authorName } from '@/lib/byline';
 
 // RSS 2.0 피드 — 최신 발행 기사 50건 (2026-10-08 신설). 옛 주소(/company/rss.php, /rss_view.php)는 next.config.js에서 여기로 이동.
 export const revalidate = 600; // 10분 캐시
@@ -34,7 +35,7 @@ export async function GET() {
         `<guid isPermaLink="true">${link}</guid>`,
         `<description>${cdata(description)}</description>`,
         `<content:encoded>${cdata(a.content)}</content:encoded>`,
-        `<dc:creator>${esc(a.author.nickname || a.author.name)}</dc:creator>`,
+        `<dc:creator>${esc(authorName(a.author))}</dc:creator>`,
         a.category ? `<category>${esc(a.category.name)}</category>` : '',
         a.coverImageUrl ? `<enclosure url="${esc(abs(a.coverImageUrl))}" type="image/jpeg" length="0" />` : '',
         `<pubDate>${(a.publishedAt ?? a.createdAt).toUTCString()}</pubDate>`,

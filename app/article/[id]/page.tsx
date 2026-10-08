@@ -23,6 +23,7 @@ import { EditIcon, ThinArrowIcon } from '@/components/icons';
 import { ROLES } from '@/lib/roles';
 import ArticleHeadline from '@/components/ArticleHeadline';
 import { enhanceArticleImages } from '@/lib/articleHtml';
+import { authorName, bylineOf, isLegacyEmail } from '@/lib/byline';
 import { SITE_URL } from '@/lib/siteTags';
 
 // 옛 사이트(다다미디어 CMS) 기사 번호는 숫자 — /article/3377 같은 옛 주소 판별용 (2026-10-08)
@@ -56,7 +57,7 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
       images: image ? [image] : undefined,
       publishedTime: article.publishedAt?.toISOString(),
       modifiedTime: article.updatedAt.toISOString(),
-      authors: [article.author.nickname || article.author.name],
+      authors: [authorName(article.author)],
     },
     twitter: { card: 'summary_large_image', title: article.title, description, images: image ? [image] : undefined },
   };
@@ -157,7 +158,7 @@ export default async function ArticlePage({
     image: firstImage ? [abs(firstImage)] : [abs('/og-default.png')],
     datePublished: (article.publishedAt ?? article.createdAt).toISOString(),
     dateModified: article.updatedAt.toISOString(),
-    author: [{ '@type': 'Person', name: article.author.name }],
+    author: [{ '@type': 'Person', name: authorName(article.author) }],
     publisher: { '@type': 'Organization', name: '팩트파인더', logo: { '@type': 'ImageObject', url: abs('/og-default.png') } },
     mainEntityOfPage: abs(`/article/${article.id}`),
     articleSection: article.category?.name,
@@ -198,7 +199,7 @@ export default async function ArticlePage({
           )}
           <div className="article-byline">
             <span style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-              {article.author.name} 기자
+              {bylineOf(article.author)}
             </span>
             <span className="icon-action-group">
               {canEdit && (
@@ -257,8 +258,9 @@ export default async function ArticlePage({
           )}
           <ReporterCard
             author={{
-              name: article.author.name,
-              email: article.author.email,
+              name: authorName(article.author),
+              byline: bylineOf(article.author),
+              email: isLegacyEmail(article.author.email) ? '' : article.author.email,
               image: article.author.image,
               snsLinks: article.author.snsLinks,
             }}
@@ -277,7 +279,7 @@ export default async function ArticlePage({
         manualRelated={article.relatedArticles.map((a) => ({
           id: a.id,
           title: toFrenchBrackets(a.title),
-          author: { name: a.author.name },
+          author: { name: authorName(a.author) },
           publishedAt: a.publishedAt as unknown as string,
           coverImageUrl: a.coverImageUrl,
           coverFocalX: a.coverFocalX,

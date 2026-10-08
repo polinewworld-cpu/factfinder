@@ -3045,3 +3045,39 @@ body:has(.zb-admin) .site-footer {
 .footer-rss:hover {
   background: #ee7d16;
 }
+
+/* 후원하기 카테고리 맨 위 후원 안내 (2026-10-08) */
+.donate-callout {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+  padding: 18px 20px;
+  border-radius: var(--radius);
+  background: rgb(var(--brand-rgb) / 0.08);
+}
+.donate-callout-title {
+  margin: 0 0 4px;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.donate-callout-desc {
+  margin: 0;
+  font-size: 14px;
+  color: var(--body);
+}
+.donate-callout-btn {
+  flex-shrink: 0;
+  padding: 10px 22px;
+  border-radius: var(--radius);
+  background: var(--accent);
+  color: #fff;
+  font-weight: 700;
+  text-decoration: none;
+}
+.donate-callout-btn:hover {
+  background: var(--accent-pressed);
+}

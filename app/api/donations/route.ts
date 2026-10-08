@@ -59,6 +59,12 @@ export async function POST(req: NextRequest) {
     ? await prisma.article.findUnique({ where: { id: articleId }, select: { id: true } })
     : null;
 
+  // 결제창만 열고 끝난 지 하루 넘은 대기 건은 실패로 정리 — 후원할 때마다 가볍게 같이 처리 (2026-10-08)
+  await prisma.donation.updateMany({
+    where: { status: 'PENDING', startedAt: { lt: new Date(Date.now() - 24 * 3600_000) } },
+    data: { status: 'FAILED' },
+  });
+
   const oid = newOrderId();
   await prisma.donation.create({
     data: {

@@ -12,6 +12,7 @@ export default async function SearchPage({ searchParams }: { searchParams: { q?:
             { title: { contains: q } },
             { content: { contains: q } },
             { author: { name: { contains: q } } },
+            { author: { nickname: { contains: q } } }, // 기자 표시 이름(닉네임)으로도 검색 (2026-10-08)
           ],
         },
         include: { author: true, category: true, keywords: true },

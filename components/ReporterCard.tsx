@@ -5,6 +5,7 @@ import { toFrenchBrackets } from '@/lib/frenchBrackets';
 
 type ReporterCardAuthor = {
   name: string;
+  byline?: string; // "홍길동 기자" / "김선 논설위원" / "인터넷뉴스팀" (lib/byline.ts)
   email: string;
   image: string | null;
   snsLinks: { url: string }[];
@@ -43,8 +44,8 @@ export default function ReporterCard({
           className="reporter-card-avatar reporter-card-avatar--fallback"
         />
         <div className="reporter-card-info">
-          <p className="reporter-card-name">{author.name} 기자</p>
-          <p className="reporter-card-email">{author.email}</p>
+          <p className="reporter-card-name">{author.byline ?? `${author.name} 기자`}</p>
+          {author.email && <p className="reporter-card-email">{author.email}</p>}
         </div>
         <SnsLinks links={author.snsLinks} />
       </div>

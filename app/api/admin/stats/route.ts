@@ -5,6 +5,8 @@ import { getCurrentUser } from '@/lib/session';
 
 // 후원 집계는 실제 이니시스 결제가 확인된 건(거래번호 tid 있음)만 — 결제 없이 생긴 옛 시험 기록 제외 (2026-10-08)
 const PAID = { status: 'ACTIVE' as const, tid: { not: null } };
+// 회원·기자 수에서 옛 기사 이관용 임시 기자 계정(로그인 불가) 제외 (2026-10-08)
+const REAL = { NOT: { email: { endsWith: '@legacy.invalid' } } };
 
 export async function GET() {
   const user = await getCurrentUser();
@@ -38,7 +40,7 @@ export async function GET() {
       select: { id: true, name: true, nickname: true, image: true, createdAt: true },
     }),
     prisma.user.findMany({
-      where: { role: { in: ['REPORTER', 'COLUMNIST'] } },
+      where: { ...REAL, role: { in: ['REPORTER', 'COLUMNIST'] } },
       orderBy: { createdAt: 'desc' },
       take: 12,
       select: { id: true, name: true, nickname: true, image: true, createdAt: true, email: true },
@@ -65,14 +67,14 @@ export async function GET() {
     donationAmountMonthAgg,
   ] = await Promise.all([
     prisma.article.count({ where: { status: 'PUBLISHED', publishedAt: { gte: todayStart } } }),
-    prisma.user.count(),
-    prisma.user.count({ where: { createdAt: { gte: todayStart } } }),
+    prisma.user.count({ where: REAL }),
+    prisma.user.count({ where: { ...REAL, createdAt: { gte: todayStart } } }),
     prisma.article.count({ where: { status: 'DRAFT' } }),
     prisma.article.count({ where: { status: 'PUBLISHED' } }),
     prisma.donation.count({ where: PAID }),
     prisma.donation.count({ where: { ...PAID, startedAt: { gte: todayStart } } }),
     prisma.user.count({ where: { reporterApplicationStatus: 'PENDING' } }),
-    prisma.user.count({ where: { role: 'REPORTER' } }),
+    prisma.user.count({ where: { ...REAL, role: { in: ['REPORTER', 'COLUMNIST'] } } }),
     prisma.donation.aggregate({ _sum: { amount: true }, where: { ...PAID, startedAt: { gte: todayStart } } }),
     prisma.donation.aggregate({ _sum: { amount: true }, where: PAID }), // 누적 총액
   ]);

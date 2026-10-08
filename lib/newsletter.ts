@@ -36,7 +36,7 @@ export async function buildWeeklyDigest(start: Date, end: Date) {
       <tr>
         <td style="padding:16px 0;border-bottom:1px solid #eee;">
           <a href="${base}/article/${a.id}" style="font-size:16px;font-weight:700;color:#111;text-decoration:none;">${toFrenchBrackets(a.title)}</a>
-          <p style="margin:6px 0 0;color:#666;font-size:13px;">${a.author.name}${a.category ? ` · ${a.category.name}` : ''}</p>
+          <p style="margin:6px 0 0;color:#666;font-size:13px;">${a.author.nickname || a.author.name}${a.category ? ` · ${a.category.name}` : ''}</p>
           ${a.excerpt ? `<p style="margin:8px 0 0;color:#444;font-size:14px;line-height:1.5;">${toFrenchBrackets(a.excerpt)}</p>` : ''}
         </td>
       </tr>`

@@ -158,6 +158,18 @@ export default async function Home({ searchParams }: { searchParams: { category?
     <>
       {/* 검색엔진용 페이지 제목(h1) — 화면에는 안 보임 */}
       <h1 className="sr-only">{category ? `팩트파인더 ${category} 뉴스` : '팩트파인더 최신 뉴스'}</h1>
+      {/* 후원하기 카테고리 맨 위 — 후원 결제 화면으로 가는 입구 (상단 메뉴가 카테고리가 되면서 생긴 공백 보완, 2026-10-08) */}
+      {category === '후원하기' && (
+        <div className="content donate-callout">
+          <div>
+            <p className="donate-callout-title">팩트파인더를 후원해 주세요</p>
+            <p className="donate-callout-desc">진영에 기대지 않는 저널리즘은 독자 여러분의 후원으로 지켜집니다.</p>
+          </div>
+          <a href="/donate" className="donate-callout-btn">
+            후원하기
+          </a>
+        </div>
+      )}
       <Masonry top={page === 1 ? (top as any) : null} articles={feedItems as any} banners={banners} />
       <Pagination page={page} totalPages={totalPages} category={category} />
     </>

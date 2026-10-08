@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { ROLES } from '@/lib/roles';
 import { getCurrentUser } from '@/lib/session';
 import { putBlob } from '@/lib/blobStorage';
-import { createHash } from 'crypto';
+import { legacyImageFilename } from '@/lib/legacyImage';
 
 // 옛 기사 사진 옮기기 (2026-10-08) — 이관된 옛 기사 본문·대표사진이 아직 다다미디어 서버(www.factfinder.tv/data/…)를
 // 가리키고 있어, 도메인 전환 전에 우리 저장소(Supabase, putBlob)로 옮기고 주소를 /api/blob/legacy-… 로 바꾼다.
@@ -37,13 +37,7 @@ export async function GET() {
 
 // 옛 주소 하나를 받아 저장소에 올리고 새 주소를 돌려줌. 옛 서버에서도 없는 사진(404 등)은 null
 async function moveImage(path: string): Promise<string | null> {
-  // 저장소 파일명은 영문·숫자만 안전 — 한글·공백이 섞인 옛 파일명은 원래 경로의 해시를 붙여 충돌 없이 변환
-  const rel = decodeURIComponent(path).replace(/^\/data\//, '');
-  const flat = rel.replace(/\//g, '-');
-  const safe = flat.replace(/[^A-Za-z0-9._-]/g, '_');
-  const ext = safe.match(/\.[A-Za-z0-9]{2,5}$/)?.[0] ?? '';
-  const hash = createHash('sha1').update(rel).digest('hex').slice(0, 8);
-  const filename = `legacy-${safe === flat ? safe : `${safe.slice(0, safe.length - ext.length)}-${hash}${ext}`}`;
+  const filename = legacyImageFilename(path);
   try {
     const res = await fetch(`https://www.factfinder.tv${path}`, { signal: AbortSignal.timeout(20_000) });
     if (!res.ok) return null;

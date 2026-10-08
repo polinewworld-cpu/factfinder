@@ -13,7 +13,7 @@ const RAIL_STORAGE_KEY = 'factfinder-article-rail';
 type Item = {
   id: string;
   title: string;
-  author: { name: string };
+  author: { name: string; nickname?: string | null };
   publishedAt: string;
   coverImageUrl?: string | null;
   coverFocalX?: number | null;
@@ -46,7 +46,7 @@ function RailCard({ article }: { article: Item }) {
           <a href={href}>{title}</a>
         </h2>
         <div className="pin-meta">
-          <span>{article.author.name}</span>
+          <span>{article.author.nickname || article.author.name}</span>
           <span className="dot" />
           <time>{timeAgo(article.publishedAt)}</time>
         </div>

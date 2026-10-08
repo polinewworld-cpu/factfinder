@@ -22,17 +22,13 @@ export default function CompanyPrivacyPage() {
           </section>
 
           <section>
-            <h2 className="font-bold text-gray-900 mb-2">2. 회원에게 요청하는 개인정보의 내용</h2>
-            <p className="mb-2">
-              팩트파인더에서 제공하는 여러가지 커뮤니티 서비스를 이용하시려면 회원가입 화면에서 다음과 같은 기본
-              필수 항목을 입력하셔야 합니다. 아래의 항목을 제외하고는 선택사항입니다. 팩트파인더는 이용자가
-              선택항목에 정보를 기입하지 않은 이유로 기본적인 서비스 제공을 거부하지 않습니다.
-            </p>
+            <h2 className="font-bold text-gray-900 mb-2">2. 수집하는 개인정보 항목</h2>
+            {/* 2026-10-08 개정: 2.0은 아이디·비밀번호 가입이 없고 구글 계정 로그인 + 비회원 후원 방식 */}
             <ul className="list-disc pl-5 space-y-1 mb-2">
-              <li>아이디(ID)</li>
-              <li>비밀번호</li>
-              <li>이름</li>
-              <li>E-mail주소</li>
+              <li>구글 계정으로 로그인할 때: 이름, 이메일 주소, 프로필 사진 (구글이 제공하는 정보)</li>
+              <li>회원이 직접 입력할 때: 닉네임, 성별(선택), 기자 신청 시 자기소개·SNS 주소</li>
+              <li>후원할 때: 후원자 이름, 연락처 — 카드번호 등 결제수단 정보는 결제대행사(KG이니시스)가 처리하며 팩트파인더는 저장하지 않습니다</li>
+              <li>서비스 이용 중 자동으로: 접속 기록, IP 주소, 쿠키, 방문 통계 정보</li>
             </ul>
             <p className="mb-2">
               팩트파인더는 이용자의 기본적 인권을 현저하게 침해할 우려가 있는 다음 항목의 내용을 포함하는
@@ -50,9 +46,8 @@ export default function CompanyPrivacyPage() {
           <section>
             <h2 className="font-bold text-gray-900 mb-2">3. 개인정보의 수집 동의 및 수집 방법</h2>
             <p>
-              회원가입시 팩트파인더의 이용약관 및 개인정보보호정책에 대해 [동의] 또는 [동의하지 않음] 버튼을
-              선택하여 클릭할 수 있습니다. [동의]를 클릭하면 개인정보 수집에 동의한 것으로 간주하고 가입양식에
-              입력한 사항을 바탕으로 개인정보를 수집합니다.
+              구글 계정 로그인 시 구글의 동의 화면을 통해, 후원 시 후원 신청 화면에 직접 입력하는 방식으로 수집하며,
+              로그인 또는 후원 신청을 진행하면 이 개인정보처리방침에 동의한 것으로 봅니다.
             </p>
           </section>
 
@@ -61,7 +56,9 @@ export default function CompanyPrivacyPage() {
             <p className="mb-2">팩트파인더가 수집한 개인정보는 다음과 같은 용도로 이용됩니다.</p>
             <ul className="list-disc pl-5 space-y-1">
               <li>회원의 서비스 이용 계약 및 이행</li>
-              <li>커뮤니티 서비스의 제공</li>
+              <li>커뮤니티 서비스(댓글·기사 저장 등)의 제공</li>
+              <li>후원 결제 처리, 후원 내역 관리 및 기자별 원고료 정산</li>
+              <li>서비스 개선을 위한 방문 통계 분석</li>
               <li>기타 새로운 서비스 또는 이벤트 정보 제공</li>
             </ul>
           </section>
@@ -79,6 +76,24 @@ export default function CompanyPrivacyPage() {
             </ul>
           </section>
 
+          <section>
+            {/* 2026-10-08 신설 — 자체 운영 전환에 따른 처리 위탁·국외 이전 고지 (개인정보 보호법 제26조·제28조의8) */}
+            <h2 className="font-bold text-gray-900 mb-2">5-1. 개인정보 처리 위탁 및 국외 이전</h2>
+            <p className="mb-2">팩트파인더는 서비스 제공을 위해 다음과 같이 개인정보 처리를 위탁하고 있습니다.</p>
+            <ul className="list-disc pl-5 space-y-1 mb-2">
+              <li>주식회사 케이지이니시스(대한민국): 후원 결제 처리</li>
+              <li>Render Services, Inc.(미국): 웹사이트 서버 운영</li>
+              <li>Supabase, Inc.(미국, 서버 위치 미국 오하이오): 데이터베이스 및 사진 파일 저장</li>
+              <li>Google LLC(미국): 구글 계정 로그인, 방문 통계(구글 애널리틱스)</li>
+              <li>Microsoft Corporation(미국): 방문 통계(Clarity)</li>
+              <li>네이버 주식회사(대한민국): 방문 통계(네이버 애널리틱스)</li>
+            </ul>
+            <p className="mb-2">
+              위 중 미국 소재 업체로는 서비스 이용 시 정보통신망을 통해 개인정보(위 2항의 항목)가 전송·보관되며,
+              각 업체와의 서비스 이용 계약이 끝나거나 회원 탈퇴·보유기간 경과 시까지 보관됩니다. 국외 이전을 원하지
+              않으시면 회원 가입(로그인)과 후원을 하지 않을 수 있으며, 이 경우 기사 열람 외 일부 기능을 이용할 수 없습니다.
+            </p>
+          </section>
           <section>
             <h2 className="font-bold text-gray-900 mb-2">6. 개인정보의 열람, 수정, 갱신 및 탈퇴</h2>
             <p>
@@ -140,6 +155,10 @@ export default function CompanyPrivacyPage() {
               수 있습니다. 이 기간의 개인정보 열람 및 이용은 해당 사유로 국한됩니다. 위 기간이 지난뒤에도 계속
               보유할 필요가 있을 경우 회원님께 고지하고 동의 절차를 거치겠습니다.
             </p>
+            <p className="mb-2">
+              후원 결제 기록(후원자 이름·연락처·금액·일시)은 전자상거래 등에서의 소비자보호에 관한 법률에 따라
+              5년간 보관합니다.
+            </p>
             <p>
               팩트파인더는 개인정보의 수집목적 또는 제공받은 목적을 달성한 이후에는 지체없이 재생불가능한
               기술적 방법을 사용하여 개인정보를 파기하고 있습니다.
@@ -197,6 +216,8 @@ export default function CompanyPrivacyPage() {
           </section>
 
           <p className="pt-4 border-t border-gray-100 text-gray-500">
+            이 개인정보처리방침은 2026년 10월 8일 개정되었습니다.
+            <br />
             팩트파인더
             <br />
             서울 마포구 와우산로32길 41 명인빌딩 B1

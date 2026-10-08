@@ -29,7 +29,7 @@ export type CardArticle = {
   coverSecondFocalX?: number | null;
   coverSecondFocalY?: number | null;
   publishedAt?: string | Date | null;
-  author: { name: string };
+  author: { name: string; nickname?: string | null };
   keywords: { name: string }[];
   category?: { name: string } | null;
 };
@@ -250,7 +250,7 @@ export default function ArticleCard({
         </h2>
         {excerpt ? <p className="pin-excerpt">{excerpt}</p> : null}
         <div className="pin-meta">
-          <span>{article.author.name}</span>
+          <span>{article.author.nickname || article.author.name}</span>
           <span className="dot" />
           <time>{article.publishedAt ? timeAgo(article.publishedAt) : ''}</time>
         </div>
