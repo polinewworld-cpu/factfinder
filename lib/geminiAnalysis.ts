@@ -18,6 +18,22 @@ export type GeminiAnalysis = {
   nextWeekActions: string[];
 };
 
+const LIST = { type: 'ARRAY', items: { type: 'STRING' } };
+const RESPONSE_SCHEMA = {
+  type: 'OBJECT',
+  properties: {
+    headline: { type: 'STRING' },
+    whatWorked: LIST,
+    whatDidnt: LIST,
+    topicStrategy: LIST,
+    scheduleStrategy: LIST,
+    channelStrategy: LIST,
+    reporterNotes: LIST,
+    nextWeekActions: LIST,
+  },
+  required: ['headline', 'whatWorked', 'whatDidnt', 'topicStrategy', 'scheduleStrategy', 'channelStrategy', 'reporterNotes', 'nextWeekActions'],
+};
+
 export function geminiConfigured() {
   return !!process.env.GEMINI_API_KEY;
 }
@@ -88,7 +104,8 @@ ${JSON.stringify(data)}`;
         headers: { 'Content-Type': 'application/json', 'x-goog-api-key': process.env.GEMINI_API_KEY ?? '' },
         body: JSON.stringify({
           contents: [{ role: 'user', parts: [{ text: prompt }] }],
-          generationConfig: { temperature: 0.5, responseMimeType: 'application/json' },
+          // responseSchema로 형식을 강제 — 문장 속 따옴표 등으로 JSON이 깨지는 것 방지
+          generationConfig: { temperature: 0.5, responseMimeType: 'application/json', responseSchema: RESPONSE_SCHEMA },
         }),
         signal: AbortSignal.timeout(90_000),
       }).catch((e) => {
@@ -99,7 +116,14 @@ ${JSON.stringify(data)}`;
       const body = await res.json().catch(() => ({}));
       if (res.ok) {
         text = body.candidates?.[0]?.content?.parts?.map((p: any) => p.text ?? '').join('') ?? '';
-        if (text) break outer;
+        try {
+          JSON.parse(text.replace(/^```json\s*|```\s*$/g, ''));
+          break outer;
+        } catch {
+          lastError = '제미나이 답변 형식 오류';
+          text = '';
+          continue; // 형식이 깨졌으면 다시 요청
+        }
       }
       lastError = body.error?.message ?? `HTTP ${res.status}`;
       // 붐빔·일시 오류(429·500·503)만 재시도, 키 오류 등은 바로 중단
