@@ -7,10 +7,32 @@ import { ROLES } from '@/lib/roles';
 import { prisma } from '@/lib/prisma';
 import WelcomeSetup from '@/components/WelcomeSetup';
 import { AdminNavProvider } from '@/components/AdminNav';
+import SiteAnalytics from '@/components/SiteAnalytics';
+import type { Metadata } from 'next';
+import {
+  SITE_URL, IS_LIVE_DOMAIN, ADSENSE_CLIENT, GOOGLE_SITE_VERIFICATION, NAVER_SITE_VERIFICATION,
+} from '@/lib/siteTags';
 
-export const metadata = {
+const SITE_DESCRIPTION = '팩트파인더는 진영주의를 벗어나 중도주의 관점으로 정치와 사회를 봅니다.';
+
+export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL), // 공유 이미지 등 상대경로를 절대주소로 바꾸는 기준
   title: '팩트파인더',
-  description: '팩트파인더는 진영주의를 벗어나 중도주의 관점으로 정치와 사회를 봅니다.',
+  description: SITE_DESCRIPTION,
+  openGraph: {
+    type: 'website',
+    siteName: '팩트파인더',
+    locale: 'ko_KR',
+    title: '팩트파인더',
+    description: SITE_DESCRIPTION,
+    images: ['/og-default.png'],
+  },
+  // 구글 서치콘솔·네이버 서치어드바이저 소유권 인증 — 옛 사이트 값 유지 (빠지면 검색 관리 권한이 끊김)
+  verification: {
+    google: GOOGLE_SITE_VERIFICATION,
+    other: { 'naver-site-verification': NAVER_SITE_VERIFICATION },
+  },
+  alternates: { types: { 'application/rss+xml': '/rss.xml' } },
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
@@ -22,6 +44,14 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="ko">
       <head>
+        {/* 구글 애드센스 자동광고 — 옛 사이트와 동일하게 스크립트만 넣고, 광고 위치는 애드센스 콘솔(자동광고 설정)이 결정 */}
+        {IS_LIVE_DOMAIN && (
+          <script
+            async
+            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT}`}
+            crossOrigin="anonymous"
+          />
+        )}
         <link
           rel="preload"
           href="/fonts/ibm-plex-sans/ibm-plex-sans-latin.woff2"
@@ -54,6 +84,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             <Footer />
           </AdminNavProvider>
         </div>
+        <SiteAnalytics />
       </body>
     </html>
   );

@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
-import { notFound } from 'next/navigation';
+import { notFound, permanentRedirect } from 'next/navigation';
+import type { Metadata } from 'next';
 import { timeAgo } from '@/lib/time';
 import RelatedArticles from '@/components/RelatedArticles';
 import CommentSection from '@/components/CommentSection';
@@ -22,7 +23,51 @@ import { EditIcon, ThinArrowIcon } from '@/components/icons';
 import { ROLES } from '@/lib/roles';
 import ArticleHeadline from '@/components/ArticleHeadline';
 
+// 옛 사이트(다다미디어 CMS) 기사 번호는 숫자 — /article/3377 같은 옛 주소 판별용 (2026-10-08)
+const isLegacyId = (id: string) => /^\d{1,9}$/.test(id);
+
+// 카톡·페북·X 공유 미리보기 + 검색엔진용 기사별 메타 태그 (2026-10-08 신설)
+export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
+  if (isLegacyId(params.id)) return {};
+  const article = await prisma.article.findUnique({
+    where: { id: params.id },
+    select: {
+      title: true, subtitle1: true, excerpt: true, content: true, coverImageUrl: true,
+      status: true, publishedAt: true, updatedAt: true, author: { select: { nickname: true, name: true } },
+    },
+  });
+  if (!article || article.status !== 'PUBLISHED') return {};
+  const description = (article.subtitle1 || article.excerpt || stripHtml(article.content)).trim().slice(0, 160);
+  const image = article.coverImageUrl || article.content.match(/<img[^>]+src="([^"]+)"/i)?.[1];
+  const url = `/article/${params.id}`;
+  return {
+    title: `${article.title} - 팩트파인더`,
+    description,
+    alternates: { canonical: url },
+    openGraph: {
+      type: 'article',
+      siteName: '팩트파인더',
+      locale: 'ko_KR',
+      url,
+      title: article.title,
+      description,
+      images: image ? [image] : undefined,
+      publishedTime: article.publishedAt?.toISOString(),
+      modifiedTime: article.updatedAt.toISOString(),
+      authors: [article.author.nickname || article.author.name],
+    },
+    twitter: { card: 'summary_large_image', title: article.title, description, images: image ? [image] : undefined },
+  };
+}
+
 export default async function ArticlePage({ params }: { params: { id: string } }) {
+  // 옛 기사 번호로 들어오면 이관된 새 기사 주소로 영구 이동(301 계열) — 검색엔진 순위·공유 링크 보존
+  if (isLegacyId(params.id)) {
+    const migrated = await prisma.article.findUnique({ where: { legacyId: Number(params.id) }, select: { id: true } });
+    if (!migrated) notFound();
+    permanentRedirect(`/article/${migrated.id}`);
+  }
+
   const [article, currentUser, siteConfig, articleBanners, lineAds] = await Promise.all([
     prisma.article.findUnique({
       where: { id: params.id },

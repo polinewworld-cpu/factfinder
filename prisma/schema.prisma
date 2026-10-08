@@ -138,6 +138,7 @@ model Category {
 
 model Article {
   id              String        @id @default(cuid())
+  legacyId        Int?          @unique // 옛 사이트(다다미디어 CMS) 기사 번호 — 옛 주소(/news/view.php?idx=N 등) 301 리다이렉트용 (2026-10-08 신설)
   title           String
   cardTitle       String? // 홈/카테고리 카드 전용 제목 줄바꿈 — 기사 페이지/컴포저 title과 분리
   subtitle1       String? // 부제목 3줄 (기능정의서 8.2) — 전부 선택 입력

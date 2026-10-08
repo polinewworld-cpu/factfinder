@@ -36,10 +36,13 @@ export function sanitizeArticleContent(html: string): string {
       'b', 'strong', 'i', 'em', 'u', 'mark',
       'a', 'img', 'blockquote', 'iframe',
       'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'h4',
+      // 본문 사진+캡션(<figure class="article-figure"><img><figcaption>) — 빠져 있어서 캡션이 사진 옆 맨글자로 깨지던 문제 수정 (2026-10-08)
+      'figure', 'figcaption',
     ],
     allowedAttributes: {
       a: ['href', 'target', 'rel'],
       img: ['src', 'alt'],
+      figure: ['class'],
       div: ['class', 'contenteditable', 'data-embed-url', 'data-link-text'],
       mark: ['class', 'style'],
       span: ['class', 'style'],
