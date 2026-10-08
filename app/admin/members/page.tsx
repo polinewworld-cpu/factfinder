@@ -49,9 +49,10 @@ export default function MembersAdminPage() {
     setBusyId(null);
   }
 
-  // 회원 삭제 — 확인창 한 번 후 삭제. 쓴 기사가 있으면 서버가 막고 이유를 알려줌 (2026-10-08 신설)
+  // 회원 삭제 — 확인창 한 번. 쓴 기사가 있으면 유령 계정(목록에서만 숨김, 기사·이름 유지) (2026-10-08)
   async function deleteUser(u: any) {
-    if (!confirm(`${u.name} (${u.email}) 회원을 삭제할까요?`)) return;
+    if (!confirm(`${u.name} 회원을 삭제할까요?
+쓴 기사가 있으면 목록에서만 사라지고 기사와 이름은 그대로 남습니다.`)) return;
     setBusyId(u.id);
     const res = await fetch(`/api/users/${u.id}`, { method: 'DELETE' });
     if (!res.ok) {

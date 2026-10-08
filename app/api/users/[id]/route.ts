@@ -21,7 +21,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 }
 
 // 편집장이 회원 삭제 (2026-10-08 신설, 관리자 회원·기자관리 화면의 [삭제])
-// 쓴 기사가 있는 회원은 삭제 불가 — 기사가 함께 사라지거나 작성자 없는 기사가 생기지 않도록.
+// 쓴 기사가 있는 회원은 유령 계정 처리(목록에서 숨김, 기사·이름 유지) — 2026-10-08 변경.
 // 댓글·투표 기록은 함께 삭제, 사진 라이브러리에 올린 사진은 삭제하는 편집장 소유로 넘겨 보존.
 // 로그인 연결(Account·Session)·SNS 링크·북마크는 DB 설정상 자동 삭제, 후원 기록은 회원 연결만 끊김.
 export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
@@ -34,12 +34,15 @@ export async function DELETE(_req: NextRequest, { params }: { params: { id: stri
     return NextResponse.json({ error: '본인 계정은 삭제할 수 없습니다' }, { status: 400 });
   }
 
+  // 쓴 기사가 있으면 유령 계정으로 — 목록에서 사라지고 로그인 연결도 끊지만 기사·바이라인은 그대로 (2026-10-08 사장님 지시)
   const articleCount = await prisma.article.count({ where: { authorId: params.id } });
   if (articleCount > 0) {
-    return NextResponse.json(
-      { error: `이 회원이 쓴 기사가 ${articleCount.toLocaleString()}건 있어 삭제할 수 없습니다. 기사를 먼저 삭제하거나 다른 기자에게 넘겨주세요.` },
-      { status: 409 },
-    );
+    await prisma.$transaction([
+      prisma.account.deleteMany({ where: { userId: params.id } }),
+      prisma.session.deleteMany({ where: { userId: params.id } }),
+      prisma.user.update({ where: { id: params.id }, data: { ghost: true, legacyClaimEmail: null } }),
+    ]);
+    return NextResponse.json({ ok: true, ghost: true, articleCount });
   }
 
   await prisma.$transaction([
