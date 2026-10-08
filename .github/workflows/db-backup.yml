@@ -1,0 +1,39 @@
+# 팩트파인더 DB 자동 백업 (2026-10-08)
+# 매일 새벽 3시(한국시간)쯤 운영 DB(Supabase, PostgreSQL 17)를 통째로 떠서, 암호(AES-256)를 걸어 GitHub에 30일 보관.
+# 저장소가 공개라 백업 파일은 반드시 암호화 — 암호(BACKUP_PASSPHRASE)를 잊으면 복구 불가.
+# 필요한 저장소 Secrets: BACKUP_DATABASE_URL(=Render의 DIRECT_URL 값), BACKUP_PASSPHRASE(사장님이 정한 암호)
+# 복구 방법은 factfinder-인수인계서.md "DB 백업" 항목 참고.
+name: DB backup
+
+on:
+  schedule:
+    - cron: '0 18 * * *' # UTC 18:00 = 한국 03:00 (GitHub 사정으로 늦게 돌 수 있음)
+  workflow_dispatch: # Actions 화면에서 [Run workflow]로 바로 실행 가능
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Dump and encrypt
+        env:
+          DB_URL: ${{ secrets.BACKUP_DATABASE_URL }}
+          PASS: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          set -euo pipefail
+          if [ -z "$DB_URL" ] || [ -z "$PASS" ]; then echo "Secrets BACKUP_DATABASE_URL / BACKUP_PASSPHRASE 가 없습니다"; exit 1; fi
+          stamp=$(TZ=Asia/Seoul date +%Y%m%d-%H%M)
+          docker run --rm -e PGCONNECT_TIMEOUT=30 postgres:17 \
+            pg_dump "$DB_URL" --format=custom --no-owner --no-privileges --schema=public > db.dump
+          test -s db.dump
+          echo "덤프 크기: $(du -h db.dump | cut -f1)"
+          openssl enc -aes-256-cbc -pbkdf2 -iter 200000 -salt -in db.dump -out "factfinder-db-$stamp.dump.enc" -pass env:PASS
+          rm db.dump
+          echo "BACKUP_FILE=factfinder-db-$stamp.dump.enc" >> "$GITHUB_ENV"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.BACKUP_FILE }}
+          path: ${{ env.BACKUP_FILE }}
+          retention-days: 30
+          if-no-files-found: error

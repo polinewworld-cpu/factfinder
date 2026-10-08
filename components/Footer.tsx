@@ -13,6 +13,7 @@ const FOOTER_LINKS = [
   { label: '회사소개', href: '/company/introduce' },
   { label: '기사제보', href: '/company/report' },
   { label: '광고 및 제휴문의', href: '/company/partnership' },
+  { label: '이용약관', href: '/company/terms' }, // 2026-10-08 신설
   { label: '개인정보취급방침', href: '/company/privacy' },
   { label: '청소년보호정책', href: '/company/youth-protection' },
   { label: '메일수집거부', href: '/company/mail-refusal' },

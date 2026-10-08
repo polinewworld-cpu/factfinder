@@ -54,3 +54,40 @@ export async function PATCH(req: NextRequest) {
     throw e;
   }
 }
+
+// 회원 탈퇴 (2026-10-08) — 본인 요청으로 계정 정리. 편집장은 사고 방지를 위해 탈퇴 불가(다른 편집장이 등급을 내린 뒤 가능).
+//  · 쓴 기사가 있으면 유령 계정: 로그인 연결·개인정보(이메일 외 사진·소개·SNS)를 지우고 목록에서 숨김, 기사·이름은 유지
+//  · 쓴 기사가 없으면 계정 삭제 (댓글·투표·저장 함께 삭제, 후원 기록은 회원 연결만 끊김 — 결제기록 5년 보관 의무)
+export async function DELETE() {
+  const user = await getCurrentUser();
+  if (!user) return NextResponse.json({ error: '로그인이 필요합니다' }, { status: 401 });
+  if (user.role === 'CHIEF_EDITOR') {
+    return NextResponse.json({ error: '편집장 계정은 탈퇴할 수 없습니다. 다른 편집장에게 등급 변경을 요청해주세요.' }, { status: 400 });
+  }
+
+  const articleCount = await prisma.article.count({ where: { authorId: user.id } });
+  const common = [
+    prisma.account.deleteMany({ where: { userId: user.id } }),
+    prisma.session.deleteMany({ where: { userId: user.id } }),
+    prisma.savedArticle.deleteMany({ where: { userId: user.id } }),
+    prisma.snsLink.deleteMany({ where: { userId: user.id } }),
+  ];
+  if (articleCount > 0) {
+    await prisma.$transaction([
+      ...common,
+      prisma.user.update({
+        where: { id: user.id },
+        data: { ghost: true, image: null, bio: null, newsletterOptIn: false, legacyClaimEmail: null },
+      }),
+    ]);
+  } else {
+    await prisma.$transaction([
+      ...common,
+      prisma.comment.deleteMany({ where: { userId: user.id } }),
+      prisma.pollVote.deleteMany({ where: { userId: user.id } }),
+      prisma.photo.deleteMany({ where: { uploaderId: user.id } }),
+      prisma.user.delete({ where: { id: user.id } }),
+    ]);
+  }
+  return NextResponse.json({ ok: true });
+}

@@ -292,6 +292,32 @@ export default function ProfilePage() {
           </ul>
         </div>
       )}
+
+      {/* 회원 탈퇴 (2026-10-08) — 쓴 기사가 있으면 기사·이름은 남고 계정만 정리됨 */}
+      <div className="mt-12 pt-6 border-t border-gray-200 text-right">
+        <button
+          type="button"
+          onClick={async () => {
+            if (
+              !confirm(
+                `정말 탈퇴하시겠습니까?
+
+저장한 기사·댓글 등 회원 정보가 삭제되며 되돌릴 수 없습니다.
+(쓴 기사가 있으면 기사와 이름은 사이트에 남습니다)`,
+              )
+            )
+              return;
+            const res = await fetch('/api/me', { method: 'DELETE' });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) return alert(data.error ?? '탈퇴 처리에 실패했습니다.');
+            alert('탈퇴가 완료되었습니다. 그동안 이용해 주셔서 감사합니다.');
+            window.location.href = '/api/auth/signout?callbackUrl=/';
+          }}
+          className="text-xs text-gray-400 hover:text-red-500 underline"
+        >
+          회원 탈퇴
+        </button>
+      </div>
     </main>
   );
 }
