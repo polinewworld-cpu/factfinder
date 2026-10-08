@@ -60,7 +60,13 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
   };
 }
 
-export default async function ArticlePage({ params }: { params: { id: string } }) {
+export default async function ArticlePage({
+  params,
+  searchParams,
+}: {
+  params: { id: string };
+  searchParams?: { popup?: string };
+}) {
   // 옛 기사 번호로 들어오면 이관된 새 기사 주소로 영구 이동(301 계열) — 검색엔진 순위·공유 링크 보존
   if (isLegacyId(params.id)) {
     const migrated = await prisma.article.findUnique({ where: { legacyId: Number(params.id) }, select: { id: true } });
@@ -138,8 +144,12 @@ export default async function ArticlePage({ params }: { params: { id: string } }
   const content = toFrenchBrackets(stripYoutubeComposerControls(article.content));
   const activeArticleBanners = articleBanners.slice(0, siteConfig?.articleBannerCount ?? 0);
 
+  // ?popup=1 — 관리자 대시보드에서 띄우는 기사 전용 창: 사이트 머리·메뉴·바닥글을 숨기고 기사만 (2026-10-08)
+  const popup = searchParams?.popup === '1';
+
   return (
     <div className="article-layout">
+      {popup && <style>{'.site-header,.category-bar,.site-footer,.article-rail{display:none!important}.article-layout{display:block!important;max-width:760px;margin:0 auto}'}</style>}
       <article className="article-main">
         {/* 기사 상단 1면 이미지 노출 제거 — coverImageUrl은 이제 본문(article-figure)에서만 보이면 되므로
             여기서는 렌더링하지 않음 (다른 곳: 메인 카드 썸네일, 공유 미리보기, 관련기사 카드 등은 계속 사용) (2026-09-12) */}

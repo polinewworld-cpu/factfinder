@@ -2,6 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import RippleDotCard from '@/components/RippleDotCard';
+import { UserAvatar } from '@/components/InitialAvatar';
+import { toFrenchBrackets } from '@/lib/frenchBrackets';
+
+type Person = { id: string; name: string; nickname: string | null; image: string | null; createdAt: string; legacy?: boolean };
 
 type Stats = {
   publishedToday: number;
@@ -14,11 +18,59 @@ type Stats = {
   pendingReporterCount: number;
   currentReporterCount: number;
   donationAmountToday: number;
-  donationAmountMonth: number;
+  donationAmountMonth: number; // 실제 결제된 후원 누적 총액
+  recentArticles: { id: string; title: string; publishedAt: string | null; author: { name: string } }[];
+  pendingArticles: { id: string; title: string; updatedAt: string; author: { name: string } }[];
+  recentMembers: Person[];
+  recentReporters: Person[];
+  recentDonations: { id: string; donorName: string | null; amount: number; startedAt: string; reporter: { name: string } | null }[];
 };
+
+const fmtDay = (d: string | null) =>
+  d ? new Date(d).toLocaleDateString('ko-KR', { timeZone: 'Asia/Seoul', month: 'numeric', day: 'numeric' }) : '';
+
+// 기사만 뜨는 작은 창 — 브라우저 주소창·탭 없이 (기사 화면의 ?popup=1 모드)
+function openArticlePopup(id: string) {
+  const w = 820;
+  const h = Math.min(960, window.screen.availHeight - 60);
+  const left = Math.max(0, (window.screen.availWidth - w) / 2);
+  window.open(`/article/${id}?popup=1`, 'ff-article-popup', `popup=yes,width=${w},height=${h},left=${left},top=30,scrollbars=yes,resizable=yes`);
+}
+
+function CardHead({ label, value, href, linkText = '전체 보기' }: { label: string; value: React.ReactNode; href?: string; linkText?: string }) {
+  return (
+    <div className="flex items-start justify-between gap-2 mb-3">
+      <div>
+        <p className="text-xs text-gray-900/60 mb-1">{label}</p>
+        <p className="text-4xl font-bold leading-none">{value}</p>
+      </div>
+      {href && (
+        <a href={href} className="text-xs font-semibold text-gray-900/70 hover:text-gray-900 hover:underline whitespace-nowrap">
+          {linkText} →
+        </a>
+      )}
+    </div>
+  );
+}
+
+function PeopleGrid({ people }: { people: Person[] }) {
+  if (people.length === 0) return <p className="text-sm text-gray-900/60">아직 없습니다.</p>;
+  return (
+    <ul className="grid grid-cols-2 gap-x-3 gap-y-2">
+      {people.map((u) => (
+        <li key={u.id} className="flex items-center gap-2 min-w-0">
+          <UserAvatar image={u.image} seed={u.id} name={u.nickname ?? u.name} className="w-6 h-6 text-[10px] rounded-full object-cover shrink-0" />
+          <span className="text-sm truncate">{u.nickname ?? u.name}</span>
+          <span className="text-[11px] text-gray-900/50 shrink-0">{u.legacy ? '이관' : fmtDay(u.createdAt)}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
 
 // 관리자 대시보드 — 전면 재설계: 빨간 면 박스 + 흰 글씨, 숫자를 누르면 해당 상세 탭으로 이동 (2026-09-11 개편)
 // 2026-09-24: 카드 높이·숫자 2배, 배경에 마우스 반응 점 격자(RippleDotCard)
+// 2026-10-08: 카드마다 목록 채움 — 최근 기사 7(누르면 기사만 뜨는 창), 승인을 기다리는 기사, 최근 회원·기자 12, 최근 후원
 export default function AdminHome() {
   const [me, setMe] = useState<any>('loading');
   const [stats, setStats] = useState<Stats | null>(null);
@@ -51,51 +103,89 @@ export default function AdminHome() {
       {!stats ? (
         <p className="text-sm text-gray-400">불러오는 중…</p>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-          {/* 발행기사 — 오늘/전체. 전체 숫자를 누르면 전체기사 탭으로 */}
-          <RippleDotCard className="h-[250px]">
-            <p className="text-xs text-gray-900/60 mb-1">발행기사</p>
-            <p className="text-5xl font-bold">
-              {stats.publishedToday}/
-              <a href="/admin/articles" className="hover:underline">
-                {stats.totalArticles}
-              </a>
-            </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {/* 발행기사 — 오늘 발행 수 / 전체, 최근 7개는 누르면 기사만 뜨는 창 */}
+          <RippleDotCard className="min-h-[250px]">
+            <CardHead
+              label="발행기사 (오늘 / 전체)"
+              value={`${stats.publishedToday}/${stats.totalArticles.toLocaleString()}`}
+              href="/admin/articles"
+            />
+            <ul className="space-y-1.5">
+              {stats.recentArticles.map((a) => (
+                <li key={a.id}>
+                  <button
+                    type="button"
+                    onClick={() => openArticlePopup(a.id)}
+                    className="w-full text-left flex items-baseline gap-2 hover:underline"
+                    title="기사만 따로 열기"
+                  >
+                    <span className="text-[11px] text-gray-900/50 shrink-0 w-9">{fmtDay(a.publishedAt)}</span>
+                    <span className="text-sm truncate">{toFrenchBrackets(a.title)}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
           </RippleDotCard>
 
-          {/* 승인대기 — 단일 지표, 누르면 승인대기함으로 */}
-          <RippleDotCard href="/admin/pending" className="h-[250px] hover:opacity-90">
-            <p className="text-xs text-gray-900/60 mb-1">승인대기</p>
-            <p className="text-5xl font-bold">{stats.pendingCount}</p>
+          {/* 승인을 기다리는 기사 */}
+          <RippleDotCard className="min-h-[250px]">
+            <CardHead label="승인을 기다리는 기사" value={stats.pendingCount} href="/admin/pending" linkText="승인하러 가기" />
+            {stats.pendingArticles.length === 0 ? (
+              <p className="text-sm text-gray-900/60">승인을 기다리는 기사가 없습니다.</p>
+            ) : (
+              <ul className="space-y-1.5">
+                {stats.pendingArticles.map((a) => (
+                  <li key={a.id}>
+                    <a href={`/write?id=${a.id}`} className="flex items-baseline gap-2 hover:underline">
+                      <span className="text-[11px] text-gray-900/50 shrink-0 w-12 truncate">{a.author.name}</span>
+                      <span className="text-sm truncate">{toFrenchBrackets(a.title) || '(제목 없음)'}</span>
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            )}
           </RippleDotCard>
 
-          {/* 회원 — 뭘 눌러도 회원 관리탭으로 */}
-          <RippleDotCard href="/admin/members" className="h-[250px] hover:opacity-90">
-            <p className="text-xs text-gray-900/60 mb-1">회원</p>
-            <p className="text-5xl font-bold">
-              {stats.newMembersToday}/{stats.totalMembers}
-            </p>
+          {/* 회원 — 오늘 가입 / 전체, 최근 12명 */}
+          <RippleDotCard className="min-h-[250px]">
+            <CardHead label="회원 (오늘 / 전체)" value={`${stats.newMembersToday}/${stats.totalMembers}`} href="/admin/members" />
+            <PeopleGrid people={stats.recentMembers} />
           </RippleDotCard>
 
-          {/* 기자 — 대기중 숫자는 기자신청 대기함으로, 현재 숫자는 기자관리 메뉴로 */}
-          <RippleDotCard className="h-[250px]">
-            <p className="text-xs text-gray-900/60 mb-1">기자</p>
-            <p className="text-5xl font-bold">
-              <a href="/admin/reporter-applications" className="hover:underline">
-                {stats.pendingReporterCount}
-              </a>
-              /
-              <a href="/admin/members?role=REPORTER" className="hover:underline">
-                {stats.currentReporterCount}
-              </a>
-            </p>
+          {/* 기자 — 신청 대기 / 현재 기자, 최근 12명 */}
+          <RippleDotCard className="min-h-[250px]">
+            <CardHead
+              label="기자 (신청 대기 / 현재)"
+              value={
+                <>
+                  <a href="/admin/reporter-applications" className="hover:underline">{stats.pendingReporterCount}</a>/
+                  <a href="/admin/members?role=REPORTER" className="hover:underline">{stats.currentReporterCount}</a>
+                </>
+              }
+              href="/admin/members?role=REPORTER"
+            />
+            <PeopleGrid people={stats.recentReporters} />
           </RippleDotCard>
 
-          {/* 후원 — 실제 결제된 후원 누적 총액(큰 숫자) + 오늘 금액, 누르면 후원내역으로 (2026-10-08) */}
-          <RippleDotCard href="/admin/donations" className="h-[250px] hover:opacity-90">
-            <p className="text-xs text-gray-900/60 mb-1">후원 누적</p>
-            <p className="text-5xl font-bold">{stats.donationAmountMonth.toLocaleString()}원</p>
-            <p className="text-sm text-gray-900/60 mt-2">오늘 {stats.donationAmountToday.toLocaleString()}원</p>
+          {/* 후원 — 실제 결제된 후원 누적 총액 + 오늘, 최근 후원자·금액·기자 */}
+          <RippleDotCard className="min-h-[250px]">
+            <CardHead label="후원 누적" value={`${stats.donationAmountMonth.toLocaleString()}원`} href="/admin/donations" />
+            <p className="text-sm text-gray-900/60 -mt-1 mb-3">오늘 {stats.donationAmountToday.toLocaleString()}원</p>
+            {stats.recentDonations.length === 0 ? (
+              <p className="text-sm text-gray-900/60">아직 후원이 없습니다.</p>
+            ) : (
+              <ul className="space-y-1.5">
+                {stats.recentDonations.map((d) => (
+                  <li key={d.id} className="flex items-baseline gap-2 text-sm">
+                    <span className="text-[11px] text-gray-900/50 shrink-0 w-9">{fmtDay(d.startedAt)}</span>
+                    <span className="truncate">{d.donorName ?? '-'}</span>
+                    <span className="font-semibold shrink-0">{d.amount.toLocaleString()}원</span>
+                    <span className="text-[11px] text-gray-900/60 truncate">→ {d.reporter?.name ?? '사이트 전체'}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
           </RippleDotCard>
         </div>
       )}
