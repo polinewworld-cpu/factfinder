@@ -268,7 +268,15 @@ async function importArticles() {
   const stats = { created: 0, skipped: 0, unmappedCategory: new Set(), placeholderReporters: new Set() };
 
   // 옛 기자 → 새 계정. reporters.json에 이메일이 있으면 그 계정, 없으면 로그인 불가능한 자리표시 계정(나중에 관리자가 기사 작성자 변경 가능)
-  async function authorId(name) {
+  // 같은 사람이 직함 때문에 여러 이름으로 나뉜 것 통일 — "박주현 칼럼리스트"·"권순욱 편집인"·"김만흠 전 국회입법조사처장" → 이름만.
+  // 첫 단어가 한글 2~4자(사람 이름)일 때만 자르고, "인터넷뉴스팀"처럼 한 단어인 필자명은 그대로 (2026-10-08 확정)
+  const normalizeReporter = (raw) => {
+    const first = raw.trim().split(/\s+/)[0];
+    return /^[가-힣]{2,4}$/.test(first) ? first : raw.trim();
+  };
+
+  async function authorId(rawName) {
+    const name = normalizeReporter(rawName);
     if (userCache.has(name)) return userCache.get(name);
     const email = reporterMap[name] ?? `legacy-${Buffer.from(name).toString('hex')}@legacy.invalid`;
     if (!reporterMap[name]) stats.placeholderReporters.add(name);
@@ -297,7 +305,8 @@ async function importArticles() {
   }
 
   for (const a of articles) {
-    if (existing.has(a.legacyId)) { stats.skipped++; continue; }
+    const isUpdate = existing.has(a.legacyId);
+    if (isUpdate && !flag('update-existing')) { stats.skipped++; continue; }
     let content = a.contentHtml;
     const urlMap = new Map();
     for (const u of new Set(a.images)) urlMap.set(u, await storeImage(u));
@@ -322,10 +331,21 @@ async function importArticles() {
       categoryId: catName ? categories.get(catName) ?? null : null,
       publishedAt: a.publishedAt ? new Date(a.publishedAt) : null,
       createdAt: a.publishedAt ? new Date(a.publishedAt) : undefined,
+      updatedAt: a.updatedAt ? new Date(a.updatedAt) : undefined, // 옛 사이트 수정 시각 (없으면 등록 시각)
     };
-    if (commit) await prisma.article.create({ data });
+    // --update-existing: 이미 이관된 기사(시험 이관분 등)는 지우지 않고 최신 변환 결과로 덮어씀
+    if (commit) {
+      if (isUpdate) await prisma.article.update({ where: { legacyId: a.legacyId }, data });
+      else await prisma.article.create({ data });
+    }
     stats.created++;
     if (stats.created % 100 === 0) console.log(`import ${stats.created}건…`);
+  }
+
+  // 시험 이관 때 직함 붙은 이름으로 만들어졌다가 이름 통일로 기사가 0건이 된 자리표시 계정 정리
+  if (commit) {
+    const { count } = await prisma.user.deleteMany({ where: { email: { endsWith: '@legacy.invalid' }, articles: { none: {} } } });
+    if (count) console.log(`기사 없는 자리표시 기자 계정 ${count}개 정리`);
   }
   await prisma.$disconnect();
 

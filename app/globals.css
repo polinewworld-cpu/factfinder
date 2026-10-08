@@ -2849,3 +2849,46 @@ img {
   padding: 2px 8px;
   margin-right: 6px;
 }
+
+/* 목록 하단 페이지 번호 (2026-10-08) */
+.pagination {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  padding-top: 32px;
+  padding-bottom: 48px;
+}
+.pagination-num,
+.pagination-step,
+.pagination-gap {
+  min-width: 36px;
+  height: 36px;
+  padding: 0 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--body);
+  text-decoration: none;
+}
+.pagination-num:hover,
+.pagination-step:hover {
+  background: var(--chip-hover);
+}
+.pagination-num.is-active {
+  background: var(--accent);
+  color: #fff;
+}
+.pagination-step.is-disabled {
+  color: var(--hairline);
+  pointer-events: none;
+}
+.pagination-gap {
+  min-width: 20px;
+  padding: 0;
+  color: var(--mute);
+}
