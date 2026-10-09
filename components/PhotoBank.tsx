@@ -769,6 +769,217 @@ function DetailPanel({
   );
 }
 
+// ── 외부 검색 (2단계, 2026-10-09) — 위키미디어·플리커·DVIDS·네이버 "제공" 사진. 통과 기준을 만족한 사진만 나온다 ──
+type ExtSource = 'wikimedia' | 'flickr' | 'dvids' | 'naver';
+type ExtItem = {
+  key: string;
+  source: ExtSource;
+  thumb: string;
+  image: string;
+  pageUrl: string;
+  viaArticleUrl?: string;
+  title: string;
+  caption: string;
+  author: string;
+  license: string;
+  takenAt: string | null;
+  sourceType: SourceType;
+  credit: string;
+  note?: string;
+  inBank?: boolean;
+};
+const EXT_LABEL: Record<ExtSource, string> = { wikimedia: '위키미디어 커먼즈', flickr: '플리커', dvids: '미 국방부 DVIDS', naver: '네이버 뉴스 "제공" 사진' };
+const EXT_HELP: Record<ExtSource, string> = {
+  wikimedia: '퍼블릭 도메인·CC0·CC BY·CC BY-SA(·공공누리 0/1유형)만',
+  flickr: '미국 정부 저작물·퍼블릭 도메인 마크·CC0·CC BY·CC BY-SA만',
+  dvids: '미 국방부 공개(퍼블릭 도메인) 사진',
+  naver: '기사 사진 캡션에 의원실·정당·정부기관 "제공"이 적힌 것만 (언론사·기자 크레디트 제외)',
+};
+
+function ImportPanel({ item, people, tags, onClose, onDone }: { item: ExtItem; people: Person[]; tags: Tag[]; onClose: () => void; onDone: () => void }) {
+  const [meta, setMeta] = useState<Meta>({
+    ...emptyMeta(),
+    sourceType: item.sourceType,
+    license: item.license,
+    sourceUrl: item.pageUrl,
+    viaArticleUrl: item.viaArticleUrl ?? '',
+    takenAt: item.takenAt ?? '',
+    photographer: item.author,
+    credit: item.credit,
+    creditTouched: true,
+    title: item.caption,
+    // 캡션·제목에 이름이 나오는 등록 인물은 미리 체크 (확인만 하면 되게)
+    peopleIds: people.filter((p) => [p.name, ...(p.aliases ?? '').split(',').map((a) => a.trim())].some((n) => n && `${item.caption} ${item.title}`.includes(n))).map((p) => p.id),
+  });
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState('');
+
+  async function save() {
+    const bad = checkPhotoInput(meta);
+    if (bad) return setMsg(bad);
+    setBusy(true);
+    setMsg('');
+    try {
+      const r1 = await fetch('/api/photos/from-url', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url: item.image }) });
+      const d1 = await r1.json();
+      if (!r1.ok) throw new Error(d1.error);
+      const { tagNames, ...rest } = metaBody(meta);
+      const r2 = await fetch('/api/photos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...rest, tags: tagNames, url: d1.url, filename: d1.filename }),
+      });
+      const d2 = await r2.json();
+      if (!r2.ok) throw new Error(d2.error);
+      onDone();
+    } catch (e) {
+      setMsg(e instanceof Error && e.message ? e.message : '가져오기 실패');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4" onClick={onClose}>
+      <div className="bg-white rounded-2xl w-full max-w-3xl max-h-[92vh] overflow-y-auto p-5 space-y-4" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between">
+          <h3 className="font-bold">사진 뱅크로 가져오기</h3>
+          <button type="button" onClick={onClose} className="text-gray-400 text-lg">
+            ✕
+          </button>
+        </div>
+        <div className="grid sm:grid-cols-[220px_1fr] gap-4">
+          <div className="space-y-2">
+            <img src={item.thumb} alt="" className="w-full rounded-lg border" />
+            <p className="text-xs text-gray-500 break-all">
+              {EXT_LABEL[item.source]} ·{' '}
+              <a href={item.viaArticleUrl ?? item.pageUrl} target="_blank" rel="noopener noreferrer" className="underline">
+                원본 보기
+              </a>
+            </p>
+            {item.note && <p className="text-xs font-semibold text-amber-700">확인: {item.note}</p>}
+          </div>
+          <div>
+            <p className="text-xs font-semibold text-brand mb-2">출처·크레디트는 자동으로 채웠습니다. 인물 태그만 확인하세요.</p>
+            <MetaForm meta={meta} setMeta={setMeta} people={people} tags={tags} />
+          </div>
+        </div>
+        {msg && <p className="text-xs text-red-600">{msg}</p>}
+        <button type="button" disabled={busy} onClick={save} className="text-sm font-bold text-white bg-brand rounded-lg px-5 py-2 disabled:opacity-40">
+          {busy ? '가져오는 중…' : '뱅크에 저장'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function ExternalSearch({ initialQuery, people, tags, onImported }: { initialQuery: string; people: Person[]; tags: Tag[]; onImported: () => void }) {
+  const [q, setQ] = useState(initialQuery);
+  const [source, setSource] = useState<ExtSource>('wikimedia');
+  const [avail, setAvail] = useState<Record<ExtSource, boolean> | null>(null);
+  const [result, setResult] = useState<{ items: ExtItem[]; error?: string; available: boolean } | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [importing, setImporting] = useState<ExtItem | null>(null);
+
+  useEffect(() => {
+    fetch('/api/photos/external')
+      .then((r) => r.json())
+      .then(setAvail)
+      .catch(() => {});
+  }, []);
+
+  async function run(src = source) {
+    if (!q.trim()) return;
+    setBusy(true);
+    setResult(null);
+    const res = await fetch(`/api/photos/external?source=${src}&q=${encodeURIComponent(q.trim())}`);
+    setResult(res.ok ? await res.json() : { items: [], available: true, error: '검색 실패' });
+    setBusy(false);
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="flex flex-wrap gap-2">
+        <input value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && run()} className={`${input} flex-1 min-w-[200px]`} placeholder="인물·주제로 검색 (예: 이재명, 국방부)" />
+        <button type="button" onClick={() => run()} disabled={busy || !q.trim()} className="text-xs font-bold text-white bg-brand rounded-lg px-4 disabled:opacity-40">
+          {busy ? '찾는 중…' : '검색'}
+        </button>
+      </div>
+      <div className="flex flex-wrap gap-1.5">
+        {(Object.keys(EXT_LABEL) as ExtSource[]).map((k) => (
+          <button
+            key={k}
+            type="button"
+            onClick={() => {
+              setSource(k);
+              if (q.trim()) run(k);
+            }}
+            className={`text-xs rounded-lg px-3 py-1.5 border ${source === k ? 'bg-brand text-white border-brand font-bold' : 'bg-white border-gray-200'}`}
+          >
+            {EXT_LABEL[k]}
+            {avail && !avail[k] ? ' (키 필요)' : ''}
+          </button>
+        ))}
+      </div>
+      <p className="text-xs text-gray-500">통과 기준: {EXT_HELP[source]}{source === 'naver' ? ' · 20초쯤 걸립니다' : ''}</p>
+
+      {result && !result.available && (
+        <p className="text-sm text-gray-600 border rounded-lg p-3">
+          {EXT_LABEL[source]} 검색은 무료 API 키를 Render 환경변수에 넣어야 켜집니다 ({source === 'flickr' ? 'FLICKR_API_KEY' : 'DVIDS_API_KEY'}).
+        </p>
+      )}
+      {result?.error && <p className="text-sm text-red-600">{result.error}</p>}
+      {result?.available && !result.error && <p className="text-xs text-gray-500">{result.items.length}장 (통과 기준을 만족한 사진만)</p>}
+
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3">
+        {result?.items.map((it) => (
+          <div key={it.key} className="rounded-lg border overflow-hidden bg-white flex flex-col">
+            <a href={it.viaArticleUrl ?? it.pageUrl} target="_blank" rel="noopener noreferrer" title="원본 보기">
+              <img src={it.thumb} alt="" loading="lazy" referrerPolicy="no-referrer" className="w-full aspect-[4/3] object-cover" />
+            </a>
+            <div className="p-2 space-y-1 text-[11px] flex-1">
+              <p className="flex flex-wrap gap-1">
+                <span className="font-bold text-white rounded px-1.5 py-0.5" style={{ background: BADGE[it.sourceType] }}>
+                  {SOURCE_LABEL[it.sourceType]}
+                </span>
+                {it.license && <span className="border rounded px-1.5 py-0.5">{it.license}</span>}
+              </p>
+              <p className="text-gray-700 line-clamp-2">{it.caption || it.title}</p>
+              <p className="text-gray-500 truncate">
+                {it.credit}
+                {it.takenAt ? ` · ${it.takenAt}` : ''}
+              </p>
+              {it.note && <p className="text-amber-700">⚠ {it.note}</p>}
+            </div>
+            <button
+              type="button"
+              disabled={it.inBank}
+              onClick={() => setImporting(it)}
+              className="m-2 mt-0 text-xs font-bold rounded-lg py-1.5 border border-brand text-brand disabled:border-gray-200 disabled:text-gray-400"
+            >
+              {it.inBank ? '이미 뱅크에 있음' : '뱅크로 가져오기'}
+            </button>
+          </div>
+        ))}
+      </div>
+
+      {importing && (
+        <ImportPanel
+          item={importing}
+          people={people}
+          tags={tags}
+          onClose={() => setImporting(null)}
+          onDone={() => {
+            setResult((r) => (r ? { ...r, items: r.items.map((x) => (x.key === importing.key ? { ...x, inBank: true } : x)) } : r));
+            setImporting(null);
+            onImported();
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
 // ── 본체 ──
 export default function PhotoBank({
   mode = 'manage',
@@ -786,6 +997,7 @@ export default function PhotoBank({
   const [tags, setTags] = useState<Tag[]>([]);
   const [loading, setLoading] = useState(true);
   const [panel, setPanel] = useState<'' | 'register' | 'manage'>('');
+  const [tab, setTab] = useState<'bank' | 'external'>('bank');
   const [detailId, setDetailId] = useState<string | null>(null);
   const [checked, setChecked] = useState<string[]>([]);
 
@@ -841,8 +1053,46 @@ export default function PhotoBank({
   const pickOne = (p: BankPhoto) => onPick?.([{ url: p.url, title: p.title, credit: p.credit, sourceType: p.sourceType }]);
   const filterCount = sources.length + (tag ? 1 : 0) + peopleSel.length + (from || to ? 1 : 0) + (usage ? 1 : 0);
 
+  const tabs = (
+    <div className="flex gap-1 border-b">
+      {(
+        [
+          ['bank', '사진 뱅크'],
+          ['external', '외부 검색'],
+        ] as const
+      ).map(([k, label]) => (
+        <button
+          key={k}
+          type="button"
+          onClick={() => setTab(k)}
+          className={`px-4 py-2 text-sm -mb-px border-b-2 ${tab === k ? 'border-brand text-brand font-bold' : 'border-transparent text-gray-500'}`}
+        >
+          {label}
+        </button>
+      ))}
+    </div>
+  );
+
+  if (tab === 'external') {
+    return (
+      <div className="space-y-3">
+        {tabs}
+        <ExternalSearch
+          initialQuery={q}
+          people={people}
+          tags={tags}
+          onImported={() => {
+            loadPhotos();
+            loadLists();
+          }}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-3">
+      {tabs}
       <div className="flex flex-wrap gap-2">
         <input value={q} onChange={(e) => setQ(e.target.value)} className={`${input} flex-1 min-w-[200px]`} placeholder="인물·별칭·캡션·크레디트·촬영자로 검색" />
         <select value={sort} onChange={(e) => setSort(e.target.value as typeof sort)} className="border border-gray-200 rounded-lg px-2 text-sm bg-white">
