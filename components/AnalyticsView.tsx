@@ -21,10 +21,12 @@ function Change({ now, prev }: { now: number; prev: number }) {
   );
 }
 
-function Card({ title, children, className = '' }: { title: string; children: React.ReactNode; className?: string }) {
+// 섹션 제목은 크게(동향 보고·방문 분석 모두, 2026-10-09 사장님 요청) — 숫자 칸 제목만 작게(big={false})
+const BIG_TITLE = 'text-xl font-bold text-gray-900';
+function Card({ title, children, className = '', big = true }: { title: string; children: React.ReactNode; className?: string; big?: boolean }) {
   return (
     <section className={`border rounded-xl p-4 ${className}`}>
-      <h2 className="text-xs font-semibold text-gray-500 mb-3 tracking-wide">{title}</h2>
+      <h2 className={big ? `${BIG_TITLE} mb-3` : 'text-xs font-semibold text-gray-500 mb-3 tracking-wide'}>{title}</h2>
       {children}
     </section>
   );
@@ -350,10 +352,10 @@ export default function AnalyticsView({ view }: { view: 'visits' | 'trends' }) {
             <>
           <section className="border rounded-xl p-4">
             <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-              <h2 className="text-xs font-semibold text-gray-500 tracking-wide">
+              <h2 className={BIG_TITLE}>
                 오늘의 키워드
                 {r.media && (
-                  <span className="font-normal text-gray-400">
+                  <span className="text-xs font-normal text-gray-400">
                     {' '}
                     · {new Date(r.media.generatedAt).toLocaleTimeString('ko-KR', { timeZone: 'Asia/Seoul', hour: '2-digit', minute: '2-digit' })} 기준 · 3시간마다 자동 갱신
                   </span>
@@ -373,10 +375,10 @@ export default function AnalyticsView({ view }: { view: 'visits' | 'trends' }) {
           {r.ai?.ideas && r.ai.ideas.length > 0 && (
             <section className="border rounded-xl p-4">
               <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-                <h2 className="text-xs font-semibold text-gray-500 tracking-wide">
+                <h2 className={BIG_TITLE}>
                   오늘의 기사 아이디어
                   {(r.mediaCheckedAt || r.media?.generatedAt) && (
-                    <span className="font-normal text-gray-400">
+                    <span className="text-xs font-normal text-gray-400">
                       {' '}
                       · {new Date((r.mediaCheckedAt || r.media?.generatedAt)!).toLocaleTimeString('ko-KR', { timeZone: 'Asia/Seoul', hour: '2-digit', minute: '2-digit' })} 기준 · 3시간마다 자동 갱신
                     </span>
@@ -396,7 +398,7 @@ export default function AnalyticsView({ view }: { view: 'visits' | 'trends' }) {
           )}
 
           {r.ai?.outletComparison && r.ai.outletComparison.length > 0 && (
-            <Card title="주요 언론 보도 동향">
+            <Card title="주요 언론 보도 동향" big>
               <ul className="list-disc pl-4 space-y-1 text-sm">
                 {r.ai.outletComparison.map((t, i) => (
                   <li key={i}>{t}</li>
@@ -406,7 +408,7 @@ export default function AnalyticsView({ view }: { view: 'visits' | 'trends' }) {
           )}
 
           {r.media && (
-            <Card title="주요 언론 지면">
+            <Card title="주요 언론 지면" big>
               <OutletTabs outlets={r.media.outlets} />
             </Card>
           )}
@@ -477,7 +479,7 @@ export default function AnalyticsView({ view }: { view: 'visits' | 'trends' }) {
                 ['1인당 체류', r.summary.engagementSec, r.summary.prev.engagementSec, '초'],
               ] as const
             ).map(([label, now, prev, unit]) => (
-              <Card key={label} title={`${label} (7일)`}>
+              <Card key={label} title={`${label} (7일)`} big={false}>
                 <p className="text-3xl font-bold leading-none mb-2">
                   {label === '1인당 체류' ? `${Math.floor(now / 60)}분 ${now % 60}초` : `${n(now)}${unit}`}
                 </p>
