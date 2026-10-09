@@ -257,10 +257,28 @@ const GOV_RE = /대통령실|청와대|국무총리|총리실|국회(사무처)?
 const PRESS_RE = /연합|뉴시스|뉴스1|뉴스|일보|신문|방송|TV|KBS|MBC|SBS|YTN|JTBC|채널A|MBN|기자단|기자|통신|포토|getty|게티|\bAP\b|AFP|로이터|EPA/i;
 
 // 캡션 끝의 "○○ 제공" 주체 — "/○○ 제공", "(사진=○○ 제공)", "[○○ 제공]", "○○ 제공"
+// 2026-10-09: 통신사 형식도 — "[국민의힘 제공. 재판매 및 DB 금지]"(연합), "(○○ 의원실 제공) 2026.10.9/뉴스1", "○○ 제공/뉴시스"
+// → 캡션 어디에 있든 "○○ 제공"을 찾고 마지막 것을 주체로
 export function providerOf(caption: string): string | null {
-  const m = caption.match(/(?:^|[\s/(=\[·,])([가-힣A-Za-z0-9·&\s]{1,30}?)\s*제공\s*[)\]]?\s*\.?\s*$/);
-  if (!m) return null;
-  return m[1].replace(/^사진\s*=?\s*/, '').trim() || null;
+  let last: string | null = null;
+  for (const m of caption.matchAll(/(?:^|[\s/(=\[·,\]])((?:사진\s*=?\s*)?[가-힣A-Za-z0-9·&]{1,15}(?:\s[가-힣A-Za-z0-9·&]{1,12}){0,2})\s*제공(?=[\s.,\])/]|$)/g)) {
+    last = m[1].replace(/^사진\s*=?\s*/, '').trim();
+  }
+  return last || null;
+}
+
+// 캡션에서 출처·통신사 꼬리표를 떼고 사진 설명만 — "(서울=연합뉴스) 홍길동 기자 = … [국민의힘 제공. 재판매 및 DB 금지] photo@yna.co.kr"
+export function cleanCaption(caption: string) {
+  return caption
+    .replace(/^\s*\([^)]*=\s*(연합뉴스|뉴시스|뉴스1)\)\s*([가-힣]{2,4}\s*기자\s*=\s*)?/, '')
+    .replace(/\[[^\]]*제공[^\]]*\]/g, '')
+    .replace(/\([^)]*제공[^)]*\)/g, '')
+    .replace(/[\w.+-]+@[\w-]+\.[\w.]+/g, '')
+    .replace(/\s*\d{4}\.\d{1,2}\.\d{1,2}\.?\s*(\/\s*(뉴스1|뉴시스|연합뉴스))?\s*$/, '')
+    .replace(/\s*\/\s*(뉴스1|뉴시스|연합뉴스)\s*$/, '')
+    .replace(/(^|[\s.,])[/(\[]?\s*(사진\s*=\s*)?(?:[가-힣A-Za-z0-9·&]{1,15}\s?){1,3}제공\s*[)\]]?\s*\.?\s*$/, '$1')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 export function classifyProvider(p: string): 'PARTY' | 'KOGL' | null {
@@ -329,6 +347,7 @@ async function naverArticlePhotos(articleUrl: string): Promise<ExternalItem[]> {
       b.match(/<em class="img_desc"[^>]*>([\s\S]*?)<\/em>/)?.[1] ?? b.match(/<\/span>\s*<\/td>\s*<\/tr>\s*<tr>\s*<td[^>]*>([\s\S]*?)<\/td>/)?.[1] ?? '',
     );
     if (!src || !caption) return;
+    // 통신사의 "재판매 및 DB 금지" 꼬리표는 무시 — 의원실·정당이 배포한 사진이라 통신사 조건과 무관(사장님 결정 2026-10-09)
     const provider = providerOf(caption);
     const type = provider ? classifyProvider(provider) : null;
     if (!provider || !type) return;
@@ -341,7 +360,7 @@ async function naverArticlePhotos(articleUrl: string): Promise<ExternalItem[]> {
       pageUrl: image,
       viaArticleUrl: articleUrl,
       title,
-      caption: caption.replace(/\s*[/(\[]?\s*(사진\s*=\s*)?[^/(\[]*제공\s*[)\]]?\s*\.?\s*$/, '').trim(),
+      caption: cleanCaption(caption),
       author: provider,
       license: '',
       takenAt: date,
@@ -354,11 +373,15 @@ async function naverArticlePhotos(articleUrl: string): Promise<ExternalItem[]> {
 }
 
 // 자동 수집기(lib/photoCollector.ts)도 씀 — 수집기는 쪽 수를 줄여 부르기
+// 2026-10-09: 검색어를 넓혀 통신사·다른 언론 기사까지 — "이름 제공", "이름 의원실 제공", "이름 사진 제공"을 함께 찾고 기사 주소를 합침
 export async function searchNaver(q: string, pages?: number[]): Promise<ExternalItem[]> {
-  const urls = await naverArticles(`${q} 제공`, pages);
+  const lists = await Promise.all(
+    [`${q} 제공`, `${q} 의원실 제공`, `"${q}" 사진 제공`].map((qq) => naverArticles(qq, pages).catch(() => [] as string[])),
+  );
+  const urls = Array.from(new Set(lists.flat())).slice(0, 60);
   const out: ExternalItem[] = [];
-  for (let i = 0; i < urls.length; i += 5) {
-    const chunk = await Promise.all(urls.slice(i, i + 5).map((u) => naverArticlePhotos(u).catch(() => [])));
+  for (let i = 0; i < urls.length; i += 8) {
+    const chunk = await Promise.all(urls.slice(i, i + 8).map((u) => naverArticlePhotos(u).catch(() => [])));
     out.push(...chunk.flat());
   }
   // 같은 사진(같은 이미지 주소)은 한 번만
