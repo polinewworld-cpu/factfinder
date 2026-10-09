@@ -208,8 +208,8 @@ export default function AdminHome() {
             <CardHead
               label="방문자 (최근 7일)"
               value={analysis?.report ? analysis.report.summary.users.toLocaleString() : '-'}
-              href="/admin/analytics"
-              linkText="방문 분석 보기"
+              href="/admin/trends"
+              linkText="동향 보고 보기"
             />
             {!analysis ? (
               <p className="text-sm text-gray-900/60">불러오는 중…</p>
