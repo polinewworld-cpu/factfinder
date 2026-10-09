@@ -176,8 +176,10 @@ export default function WritePage() {
       const cats: Category[] = await catRes.json();
       setCategories(cats);
       // 카테고리 기본값 — "정치"를 기본 선택으로 (사용자 요청 2026-09-11)
+      // 2026-10-09 버그 수정: 수정 모드에서 기사(원래 카테고리)가 먼저 불러와지면 여기서 "정치"로 덮어써,
+      // 그대로 저장하면 카테고리가 바뀌었음(예: 후원하기 → 정치). 비어 있을 때만 기본값을 넣는다.
       const defaultCat = cats.find((c) => c.name === '정치');
-      if (defaultCat) setCategoryId(defaultCat.id);
+      if (defaultCat) setCategoryId((prev) => prev || defaultCat.id);
       setKeywords(await kwRes.json());
       setAllThemes(themeRes.ok ? await themeRes.json() : []);
     })();
