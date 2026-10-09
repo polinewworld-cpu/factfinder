@@ -9,8 +9,7 @@ const CACHE = 'public, max-age=31536000, immutable';
 
 export async function GET(_req: NextRequest, { params }: { params: { filename: string } }) {
   const name = params.filename;
-  // pii-… = 암호화된 신분증 사진 — 여기로는 절대 내보내지 않음(편집장 전용 /api/ghost-writers/…/id-images)
-  if (!name || name.includes('/') || name.includes('..') || name.startsWith('pii-')) {
+  if (!name || name.includes('/') || name.includes('..')) {
     return NextResponse.json({ error: '잘못된 파일 이름입니다' }, { status: 400 });
   }
 

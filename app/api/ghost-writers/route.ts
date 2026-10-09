@@ -22,7 +22,7 @@ export async function GET() {
       writerTitle: true,
       image: true,
       bankAccount: true,
-      _count: { select: { articles: true, idImages: true } },
+      _count: { select: { articles: true } },
     },
   });
   return NextResponse.json(
@@ -30,7 +30,6 @@ export async function GET() {
       ...u,
       displayName: u.nickname || u.name,
       articleCount: _count.articles,
-      idImageCount: _count.idImages,
       hasBank: !!bankAccount,
     })),
   );

@@ -5,8 +5,8 @@ import AdminTabs, { PEOPLE_TABS } from '@/components/AdminTabs';
 import { compressImageFile } from '@/lib/imageCompress';
 
 // 회원/기자관리 → 유령기자 (2026-10-09 사장님 정의) — 로그인 없이 이름으로만 존재하는 필자(외부 기고자·옛 사이트 기자).
-// 이름·직함·프로필 사진(바이라인), 원고료 정산용 계좌, 주민등록증 사진(암호화 저장, 편집장만 열람).
-type Row = { id: string; displayName: string; writerTitle: string | null; image: string | null; articleCount: number; idImageCount: number; hasBank: boolean };
+// 이름·직함·프로필 사진(바이라인), 원고료 정산용 계좌. (주민등록증 사진 기능은 10-09 삭제)
+type Row = { id: string; displayName: string; writerTitle: string | null; image: string | null; articleCount: number; hasBank: boolean };
 type Detail = {
   id: string;
   displayName: string;
@@ -16,7 +16,6 @@ type Detail = {
   bankAccount: string | null;
   accountHolder: string | null;
   articleCount: number;
-  idImages: { id: string; createdAt: string }[];
 };
 
 const input = 'w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm outline-none focus:border-brand bg-white';
@@ -27,7 +26,6 @@ function EditPanel({ id, onClose, onChanged }: { id: string; onClose: () => void
   const [msg, setMsg] = useState('');
   const [busy, setBusy] = useState(false);
   const photoRef = useRef<HTMLInputElement>(null);
-  const idRef = useRef<HTMLInputElement>(null);
 
   async function load() {
     const res = await fetch(`/api/ghost-writers/${id}`);
@@ -67,32 +65,6 @@ function EditPanel({ id, onClose, onChanged }: { id: string; onClose: () => void
     if (!res.ok) return setMsg(data.error ?? '사진 업로드 실패');
     setForm((x) => ({ ...x, image: data.url }));
     setMsg('프로필 사진을 바꿨습니다. [저장]을 누르세요.');
-  }
-
-  async function uploadId(files: FileList | null) {
-    if (!files?.length) return;
-    setBusy(true);
-    setMsg('');
-    for (const f of Array.from(files)) {
-      const fd = new FormData();
-      fd.append('file', f);
-      const res = await fetch(`/api/ghost-writers/${id}/id-images`, { method: 'POST', body: fd });
-      if (!res.ok) {
-        setMsg((await res.json().catch(() => ({}))).error ?? '올리기 실패');
-        break;
-      }
-    }
-    setBusy(false);
-    if (idRef.current) idRef.current.value = '';
-    await load();
-    onChanged();
-  }
-
-  async function removeId(imageId: string) {
-    if (!confirm('이 신분증 사진을 지울까요? 되돌릴 수 없습니다.')) return;
-    await fetch(`/api/ghost-writers/${id}/id-images/${imageId}`, { method: 'DELETE' });
-    await load();
-    onChanged();
   }
 
   async function hide() {
@@ -163,33 +135,6 @@ function EditPanel({ id, onClose, onChanged }: { id: string; onClose: () => void
               {msg && <span className="text-xs text-gray-600">{msg}</span>}
             </div>
 
-            <section className="space-y-2 border-t pt-4">
-              <p className="text-xs font-semibold text-gray-500">주민등록증 사진 (암호화 저장 · 편집장만 열람)</p>
-              <button type="button" disabled={busy} onClick={() => idRef.current?.click()} className="text-xs border rounded-lg px-3 py-1.5 disabled:opacity-40">
-                {busy ? '올리는 중…' : '사진 올리기'}
-              </button>
-              <input ref={idRef} type="file" accept="image/*,application/pdf" multiple className="hidden" onChange={(e) => uploadId(e.target.files)} />
-              {d.idImages.length ? (
-                <ul className="text-sm space-y-1">
-                  {d.idImages.map((im, i) => (
-                    <li key={im.id} className="flex items-center gap-3">
-                      <span className="text-gray-600">
-                        {i + 1}. {new Date(im.createdAt).toLocaleDateString('ko-KR', { timeZone: 'Asia/Seoul' })} 올림
-                      </span>
-                      <a href={`/api/ghost-writers/${id}/id-images/${im.id}`} target="_blank" rel="noopener noreferrer" className="text-xs underline">
-                        보기
-                      </a>
-                      <button type="button" onClick={() => removeId(im.id)} className="text-xs text-red-600">
-                        삭제
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="text-xs text-gray-400">올린 사진이 없습니다.</p>
-              )}
-            </section>
-
             <div className="border-t pt-4">
               <button type="button" onClick={hide} className="text-xs border border-red-200 text-red-600 rounded-lg px-3 py-1.5">
                 유령기자 목록에서 삭제
@@ -258,7 +203,6 @@ export default function GhostWritersPage() {
                 <th className="py-2 pr-3">직함</th>
                 <th className="py-2 pr-3 text-right">기사</th>
                 <th className="py-2 pr-3">계좌</th>
-                <th className="py-2 pr-3">신분증</th>
                 <th className="py-2"></th>
               </tr>
             </thead>
@@ -274,7 +218,6 @@ export default function GhostWritersPage() {
                   <td className="py-2 pr-3 text-gray-600">{r.writerTitle ?? '-'}</td>
                   <td className="py-2 pr-3 text-right tabular-nums">{r.articleCount.toLocaleString()}</td>
                   <td className="py-2 pr-3">{r.hasBank ? '등록' : <span className="text-gray-400">없음</span>}</td>
-                  <td className="py-2 pr-3">{r.idImageCount ? `${r.idImageCount}장` : <span className="text-gray-400">없음</span>}</td>
                   <td className="py-2 text-right">
                     <button type="button" onClick={() => setEditId(r.id)} className="text-xs border rounded-lg px-3 py-1">
                       관리

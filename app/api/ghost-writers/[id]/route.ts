@@ -4,7 +4,7 @@ import { ROLES } from '@/lib/roles';
 import { getCurrentUser } from '@/lib/session';
 import { GHOST_WHERE } from '@/lib/ghostWriter';
 
-// 유령기자 상세·수정·숨김 (2026-10-09) — 편집장 전용. 정산 정보(은행·계좌·예금주)와 신분증 사진 목록 포함.
+// 유령기자 상세·수정·숨김 (2026-10-09) — 편집장 전용. 정산 정보(은행·계좌·예금주) 포함. (주민등록증 사진 기능은 사장님 지시로 삭제)
 async function chief() {
   const user = await getCurrentUser();
   return user?.role === ROLES.CHIEF_EDITOR ? user : null;
@@ -24,7 +24,6 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
       bankName: true,
       bankAccount: true,
       accountHolder: true,
-      idImages: { orderBy: { createdAt: 'desc' }, select: { id: true, createdAt: true } },
       _count: { select: { articles: true } },
     },
   });
