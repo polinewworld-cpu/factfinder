@@ -19,7 +19,10 @@ async function writer() {
 export async function GET(req: NextRequest) {
   const { error } = await writer();
   if (error) return error;
-  return NextResponse.json(await searchPhotos(searchFromParams(req.nextUrl.searchParams)));
+  const search = searchFromParams(req.nextUrl.searchParams);
+  const [photos, unverified] = await Promise.all([searchPhotos(search), prisma.photo.count({ where: { sourceType: null } })]);
+  // 출처 미입력 사진 수 — 화면에서 "검색에서 빠졌다" 안내용
+  return NextResponse.json(photos, { headers: { 'X-Unverified-Count': String(unverified) } });
 }
 
 const str = (v: unknown) => (typeof v === 'string' && v.trim() ? v.trim() : null);

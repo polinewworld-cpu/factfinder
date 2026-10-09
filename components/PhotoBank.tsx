@@ -796,7 +796,7 @@ const EXT_HELP: Record<ExtSource, string> = {
   naver: '기사 사진 캡션에 의원실·정당·정부기관 "제공"이 적힌 것만 (언론사·기자 크레디트 제외)',
 };
 
-function ImportPanel({ item, people, tags, onClose, onDone }: { item: ExtItem; people: Person[]; tags: Tag[]; onClose: () => void; onDone: () => void }) {
+function ImportPanel({ item, people, tags, onClose, onDone, pickLabel }: { item: ExtItem; people: Person[]; tags: Tag[]; onClose: () => void; onDone: (photo: BankPhoto) => void; pickLabel?: string }) {
   const [meta, setMeta] = useState<Meta>({
     ...emptyMeta(),
     sourceType: item.sourceType,
@@ -831,7 +831,7 @@ function ImportPanel({ item, people, tags, onClose, onDone }: { item: ExtItem; p
       });
       const d2 = await r2.json();
       if (!r2.ok) throw new Error(d2.error);
-      onDone();
+      onDone(d2);
     } catch (e) {
       setMsg(e instanceof Error && e.message ? e.message : '가져오기 실패');
     } finally {
@@ -866,113 +866,138 @@ function ImportPanel({ item, people, tags, onClose, onDone }: { item: ExtItem; p
         </div>
         {msg && <p className="text-xs text-red-600">{msg}</p>}
         <button type="button" disabled={busy} onClick={save} className="text-sm font-bold text-white bg-brand rounded-lg px-5 py-2 disabled:opacity-40">
-          {busy ? '가져오는 중…' : '뱅크에 저장'}
+          {busy ? '가져오는 중…' : pickLabel ?? '뱅크에 저장'}
         </button>
       </div>
     </div>
   );
 }
 
-function ExternalSearch({ initialQuery, people, tags, onImported }: { initialQuery: string; people: Person[]; tags: Tag[]; onImported: () => void }) {
-  const [q, setQ] = useState(initialQuery);
-  const [source, setSource] = useState<ExtSource>('wikimedia');
-  const [avail, setAvail] = useState<Record<ExtSource, boolean> | null>(null);
-  const [result, setResult] = useState<{ items: ExtItem[]; error?: string; available: boolean } | null>(null);
-  const [busy, setBusy] = useState(false);
+const EXT_ORDER: ExtSource[] = ['wikimedia', 'naver', 'flickr', 'dvids'];
+type ExtState = { loading: boolean; available: boolean; items: ExtItem[]; error?: string };
+
+// 검색어를 넣으면 내 뱅크 결과 아래에 외부 결과가 함께 나온다 (사장님 지시 2026-10-09: "내 뱅크 안의 사진만 검색되면 안 돼")
+// 외부도 통과 기준을 만족한 안전한 사진만.
+function ExternalResults({
+  q,
+  people,
+  tags,
+  onImported,
+  onPickImported,
+}: {
+  q: string;
+  people: Person[];
+  tags: Tag[];
+  onImported: () => void;
+  onPickImported?: (p: BankPhoto) => void;
+}) {
+  const [state, setState] = useState<Partial<Record<ExtSource, ExtState>>>({});
+  const [open, setOpen] = useState<Partial<Record<ExtSource, boolean>>>({});
   const [importing, setImporting] = useState<ExtItem | null>(null);
 
   useEffect(() => {
-    fetch('/api/photos/external')
-      .then((r) => r.json())
-      .then(setAvail)
-      .catch(() => {});
-  }, []);
+    setState({});
+    if (q.trim().length < 2) return;
+    const ctrl = new AbortController();
+    // 네이버는 기사 여러 건을 읽어 느리므로 입력이 멈춘 뒤에만
+    const t = setTimeout(() => {
+      for (const src of EXT_ORDER) {
+        setState((st) => ({ ...st, [src]: { loading: true, available: true, items: [] } }));
+        fetch(`/api/photos/external?source=${src}&q=${encodeURIComponent(q.trim())}`, { signal: ctrl.signal })
+          .then((r) => r.json())
+          .then((d) => setState((st) => ({ ...st, [src]: { loading: false, available: d.available !== false, items: d.items ?? [], error: d.error } })))
+          .catch(() => {});
+      }
+    }, 900);
+    return () => {
+      clearTimeout(t);
+      ctrl.abort();
+    };
+  }, [q]);
 
-  async function run(src = source) {
-    if (!q.trim()) return;
-    setBusy(true);
-    setResult(null);
-    const res = await fetch(`/api/photos/external?source=${src}&q=${encodeURIComponent(q.trim())}`);
-    setResult(res.ok ? await res.json() : { items: [], available: true, error: '검색 실패' });
-    setBusy(false);
-  }
+  if (q.trim().length < 2) return null;
+  const off = EXT_ORDER.filter((s0) => state[s0] && !state[s0]!.available);
 
   return (
-    <div className="space-y-3">
-      <div className="flex flex-wrap gap-2">
-        <input value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && run()} className={`${input} flex-1 min-w-[200px]`} placeholder="인물·주제로 검색 (예: 이재명, 국방부)" />
-        <button type="button" onClick={() => run()} disabled={busy || !q.trim()} className="text-xs font-bold text-white bg-brand rounded-lg px-4 disabled:opacity-40">
-          {busy ? '찾는 중…' : '검색'}
-        </button>
+    <div className="space-y-4 pt-2">
+      <div className="border-t pt-4">
+        <h3 className="text-sm font-bold">사진 뱅크 밖에서 찾은 사진</h3>
+        <p className="text-xs text-gray-500">통과 기준을 만족한 안전한 사진만 나옵니다. [가져오기]를 누르면 출처·크레디트가 자동으로 채워집니다.</p>
       </div>
-      <div className="flex flex-wrap gap-1.5">
-        {(Object.keys(EXT_LABEL) as ExtSource[]).map((k) => (
-          <button
-            key={k}
-            type="button"
-            onClick={() => {
-              setSource(k);
-              if (q.trim()) run(k);
-            }}
-            className={`text-xs rounded-lg px-3 py-1.5 border ${source === k ? 'bg-brand text-white border-brand font-bold' : 'bg-white border-gray-200'}`}
-          >
-            {EXT_LABEL[k]}
-            {avail && !avail[k] ? ' (키 필요)' : ''}
-          </button>
-        ))}
-      </div>
-      <p className="text-xs text-gray-500">통과 기준: {EXT_HELP[source]}{source === 'naver' ? ' · 20초쯤 걸립니다' : ''}</p>
-
-      {result && !result.available && (
-        <p className="text-sm text-gray-600 border rounded-lg p-3">
-          {EXT_LABEL[source]} 검색은 무료 API 키를 Render 환경변수에 넣어야 켜집니다 ({source === 'flickr' ? 'FLICKR_API_KEY' : 'DVIDS_API_KEY'}).
-        </p>
+      {EXT_ORDER.filter((src) => state[src]?.available !== false).map((src) => {
+        const st = state[src];
+        const items = st?.items ?? [];
+        const shown = open[src] ? items : items.slice(0, 10);
+        return (
+          <section key={src}>
+            <p className="text-xs font-semibold text-gray-700 mb-1.5">
+              {EXT_LABEL[src]}{' '}
+              <span className="font-normal text-gray-500">
+                {!st || st.loading ? (src === 'naver' ? '찾는 중… (20초쯤)' : '찾는 중…') : st.error ? `· 오류: ${st.error}` : `· ${items.length}장`} · {EXT_HELP[src]}
+              </span>
+            </p>
+            {items.length > 0 && (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3">
+                {shown.map((it) => (
+                  <div key={it.key} className="rounded-lg border overflow-hidden bg-white flex flex-col">
+                    <a href={it.viaArticleUrl ?? it.pageUrl} target="_blank" rel="noopener noreferrer" title="원본 보기">
+                      <img src={it.thumb} alt="" loading="lazy" referrerPolicy="no-referrer" className="w-full aspect-[4/3] object-cover" />
+                    </a>
+                    <div className="p-2 space-y-1 text-[11px] flex-1">
+                      <p className="flex flex-wrap gap-1">
+                        <span className="font-bold text-white rounded px-1.5 py-0.5" style={{ background: BADGE[it.sourceType] }}>
+                          {SOURCE_LABEL[it.sourceType]}
+                        </span>
+                        {it.license && <span className="border rounded px-1.5 py-0.5">{it.license}</span>}
+                      </p>
+                      <p className="text-gray-700 line-clamp-2">{it.caption || it.title}</p>
+                      <p className="text-gray-500 truncate">
+                        {it.credit}
+                        {it.takenAt ? ` · ${it.takenAt}` : ''}
+                      </p>
+                      {it.note && <p className="text-amber-700">⚠ {it.note}</p>}
+                    </div>
+                    <button
+                      type="button"
+                      disabled={it.inBank}
+                      onClick={() => setImporting(it)}
+                      className="m-2 mt-0 text-xs font-bold rounded-lg py-1.5 border border-brand text-brand disabled:border-gray-200 disabled:text-gray-400"
+                    >
+                      {it.inBank ? '이미 뱅크에 있음' : onPickImported ? '가져와서 넣기' : '뱅크로 가져오기'}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+            {items.length > 10 && (
+              <button type="button" onClick={() => setOpen((o) => ({ ...o, [src]: !o[src] }))} className="mt-2 text-xs underline text-gray-500">
+                {open[src] ? '접기' : `${items.length - 10}장 더 보기`}
+              </button>
+            )}
+          </section>
+        );
+      })}
+      {off.length > 0 && (
+        <p className="text-xs text-gray-400">{off.map((x) => EXT_LABEL[x]).join('·')}는 무료 API 키를 넣으면 같이 검색됩니다.</p>
       )}
-      {result?.error && <p className="text-sm text-red-600">{result.error}</p>}
-      {result?.available && !result.error && <p className="text-xs text-gray-500">{result.items.length}장 (통과 기준을 만족한 사진만)</p>}
-
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3">
-        {result?.items.map((it) => (
-          <div key={it.key} className="rounded-lg border overflow-hidden bg-white flex flex-col">
-            <a href={it.viaArticleUrl ?? it.pageUrl} target="_blank" rel="noopener noreferrer" title="원본 보기">
-              <img src={it.thumb} alt="" loading="lazy" referrerPolicy="no-referrer" className="w-full aspect-[4/3] object-cover" />
-            </a>
-            <div className="p-2 space-y-1 text-[11px] flex-1">
-              <p className="flex flex-wrap gap-1">
-                <span className="font-bold text-white rounded px-1.5 py-0.5" style={{ background: BADGE[it.sourceType] }}>
-                  {SOURCE_LABEL[it.sourceType]}
-                </span>
-                {it.license && <span className="border rounded px-1.5 py-0.5">{it.license}</span>}
-              </p>
-              <p className="text-gray-700 line-clamp-2">{it.caption || it.title}</p>
-              <p className="text-gray-500 truncate">
-                {it.credit}
-                {it.takenAt ? ` · ${it.takenAt}` : ''}
-              </p>
-              {it.note && <p className="text-amber-700">⚠ {it.note}</p>}
-            </div>
-            <button
-              type="button"
-              disabled={it.inBank}
-              onClick={() => setImporting(it)}
-              className="m-2 mt-0 text-xs font-bold rounded-lg py-1.5 border border-brand text-brand disabled:border-gray-200 disabled:text-gray-400"
-            >
-              {it.inBank ? '이미 뱅크에 있음' : '뱅크로 가져오기'}
-            </button>
-          </div>
-        ))}
-      </div>
 
       {importing && (
         <ImportPanel
           item={importing}
           people={people}
           tags={tags}
+          pickLabel={onPickImported ? '뱅크에 저장하고 기사에 넣기' : undefined}
           onClose={() => setImporting(null)}
-          onDone={() => {
-            setResult((r) => (r ? { ...r, items: r.items.map((x) => (x.key === importing.key ? { ...x, inBank: true } : x)) } : r));
+          onDone={(photo) => {
+            const key = importing.key;
+            setState((st) => {
+              const next = { ...st };
+              for (const k of EXT_ORDER) if (next[k]) next[k] = { ...next[k]!, items: next[k]!.items.map((x) => (x.key === key ? { ...x, inBank: true } : x)) };
+              return next;
+            });
             setImporting(null);
             onImported();
+            onPickImported?.(photo);
           }}
         />
       )}
@@ -1245,11 +1270,12 @@ export default function PhotoBank({
   onPick?: (items: PickedPhoto[]) => void;
 }) {
   const [photos, setPhotos] = useState<BankPhoto[]>([]);
+  const [unverified, setUnverified] = useState(0);
   const [people, setPeople] = useState<Person[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
   const [loading, setLoading] = useState(true);
   const [panel, setPanel] = useState<'' | 'register' | 'manage'>('');
-  const [tab, setTab] = useState<'bank' | 'external' | 'inbox'>('bank');
+  const [tab, setTab] = useState<'bank' | 'inbox'>('bank');
   const [inboxCount, setInboxCount] = useState<number | null>(null);
   const [detailId, setDetailId] = useState<string | null>(null);
   const [checked, setChecked] = useState<string[]>([]);
@@ -1291,6 +1317,7 @@ export default function PhotoBank({
     setLoading(true);
     const res = await fetch(`/api/photos?${params}`);
     setPhotos(res.ok ? await res.json() : []);
+    setUnverified(Number(res.headers.get('X-Unverified-Count') ?? 0));
     setLoading(false);
   }
   useEffect(() => {
@@ -1318,7 +1345,6 @@ export default function PhotoBank({
       {(
         [
           ['bank', '사진 뱅크'],
-          ['external', '외부 검색'],
           ...(isChief && mode === 'manage' ? ([['inbox', `수신함${inboxCount ? ` (${inboxCount})` : ''}`]] as const) : []),
         ] as const
       ).map(([k, label]) => (
@@ -1351,28 +1377,11 @@ export default function PhotoBank({
     );
   }
 
-  if (tab === 'external') {
-    return (
-      <div className="space-y-3">
-        {tabs}
-        <ExternalSearch
-          initialQuery={q}
-          people={people}
-          tags={tags}
-          onImported={() => {
-            loadPhotos();
-            loadLists();
-          }}
-        />
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-3">
       {tabs}
       <div className="flex flex-wrap gap-2">
-        <input value={q} onChange={(e) => setQ(e.target.value)} className={`${input} flex-1 min-w-[200px]`} placeholder="인물·별칭·캡션·크레디트·촬영자로 검색" />
+        <input value={q} onChange={(e) => setQ(e.target.value)} className={`${input} flex-1 min-w-[200px]`} placeholder="인물·주제로 검색 — 내 뱅크와 외부에서 안전한 사진만" />
         <select value={sort} onChange={(e) => setSort(e.target.value as typeof sort)} className="border border-gray-200 rounded-lg px-2 text-sm bg-white">
           <option value="created">최근 등록순</option>
           <option value="taken">최근 촬영순</option>
@@ -1396,7 +1405,7 @@ export default function PhotoBank({
           <div>
             <p className="text-xs text-gray-500 mb-1">출처 유형 (여러 개)</p>
             <Chips
-              items={[...SOURCE_TYPES.map((t) => ({ key: t, label: SOURCE_LABEL[t] })), { key: 'NONE', label: '출처 미입력' }]}
+              items={[...SOURCE_TYPES.map((t) => ({ key: t, label: SOURCE_LABEL[t] })), ...(mode === 'manage' ? [{ key: 'NONE', label: '출처 미입력' }] : [])]}
               selected={sources}
               onToggle={(k) => setSources(toggle(sources, k))}
             />
@@ -1490,7 +1499,12 @@ export default function PhotoBank({
         />
       )}
 
-      <p className="text-xs text-gray-500">{loading ? '불러오는 중…' : `${photos.length}장${photos.length >= 200 ? ' (최대 200장까지 표시 — 검색어·필터로 좁혀 주세요)' : ''}`}</p>
+      <p className="text-xs text-gray-500">
+        {loading ? '불러오는 중…' : `내 사진 뱅크 ${photos.length}장${photos.length >= 200 ? ' (최대 200장까지 표시 — 검색어·필터로 좁혀 주세요)' : ''}`}
+        {!loading && unverified > 0 && !sources.includes('NONE') && (
+          <span className="text-amber-700"> · 출처 미입력 {unverified}장은 안전 확인 전이라 검색에서 빠졌습니다{mode === 'manage' ? ' (필터 → 출처 미입력에서 출처를 넣어 주세요)' : ''}</span>
+        )}
+      </p>
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 gap-3">
         {photos.map((p) => {
           const on = checked.includes(p.id);
@@ -1534,6 +1548,17 @@ export default function PhotoBank({
           );
         })}
       </div>
+
+      <ExternalResults
+        q={q}
+        people={people}
+        tags={tags}
+        onImported={() => {
+          loadPhotos();
+          loadLists();
+        }}
+        onPickImported={mode === 'pick' && !multiple ? (p) => pickOne(p) : undefined}
+      />
 
       {mode === 'pick' && multiple && (
         <div className="sticky bottom-0 bg-white border-t pt-3 flex justify-end">

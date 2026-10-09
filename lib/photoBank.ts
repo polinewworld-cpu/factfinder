@@ -60,6 +60,9 @@ export async function searchPhotos(s: PhotoSearch, take = 200) {
     and.push({ OR: [{ sourceType: { in: sources as any } }, ...(withNone ? [{ sourceType: null }] : [])] });
   } else if ((s.sources ?? []).includes('NONE')) {
     and.push({ sourceType: null });
+  } else {
+    // 안전한 사진만 — 출처 미입력(옛 갤러리 사진)은 "출처 미입력" 필터를 직접 고를 때만 (사장님 지시 2026-10-09)
+    and.push({ sourceType: { not: null } });
   }
   if (s.tag) and.push({ tags: { some: { name: s.tag } } });
   if (s.people?.length) {
