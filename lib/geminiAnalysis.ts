@@ -18,7 +18,8 @@ export type ArticleIdea = {
   angle: string; // 쓸 각도
   evidence: string; // 근거(어느 매체 몇 면·몇 위)
   reporter?: string; // 옛 보고서 호환 — 2026-10-09 사장님 지시로 추천 기자는 만들지 않음
-  related: { id: string; title: string; date: string | null }[]; // 연결할 우리 옛 기사(서버가 붙임)
+  related?: { id: string; title: string; date: string | null }[]; // (옛 보고서 호환) 연결할 우리 옛 기사 — 10-09 사장님 지시로 표시 안 함
+  refs?: { outlet: string; title: string; url: string }[]; // 이 이슈의 대표 기사(다른 언론) — 서버가 매체 동향에서 골라 붙임
 };
 
 export type GeminiAnalysis = {
@@ -202,34 +203,39 @@ ${JSON.stringify(data)}`;
   const parsed = JSON.parse(text.replace(/^```json\s*|```\s*$/g, ''));
   const arr = (v: unknown) => (Array.isArray(v) ? v.map(String).filter(Boolean).slice(0, 6) : []);
 
-  // 아이디어마다 "연결할 우리 옛 기사"를 서버가 붙임 — 키워드 집계에 있으면 그 결과, 없으면 제목 검색
-  const ideas: ArticleIdea[] = await Promise.all(
-    (Array.isArray(parsed.ideas) ? parsed.ideas : []).slice(0, 8).map(async (i: any) => {
-      const keyword = String(i.keyword ?? '').trim();
-      const row = media?.keywords.find((k) => k.word === keyword);
-      const related =
-        row?.related ??
-        (keyword.length >= 2
-          ? (
-              await prisma.article.findMany({
-                where: { status: 'PUBLISHED', title: { contains: keyword } },
-                orderBy: { publishedAt: 'desc' },
-                take: 2,
-                select: { id: true, title: true, publishedAt: true },
-              })
-            ).map((r) => ({ id: r.id, title: r.title, date: r.publishedAt?.toISOString().slice(0, 10) ?? null }))
-          : []);
-      return {
-        priority: Math.min(3, Math.max(1, Number(i.priority) || 3)),
-        keyword,
-        issue: String(i.issue ?? ''),
-        headline: String(i.headline ?? ''),
-        angle: String(i.angle ?? ''),
-        evidence: String(i.evidence ?? ''),
-        related,
-      };
-    }),
-  );
+  // 아이디어마다 이 이슈의 대표 기사(다른 언론) 몇 개 — 오늘 모은 1면·많이 본·댓글 많은·지면 기사 중 제목에 키워드가 있는 것,
+  // 매체가 겹치지 않게 최대 3개(1면 → 많이 본 → 댓글 많은 → 나머지 지면 순) (2026-10-09: "연결할 우리 기사" 대신)
+  const pool = (media?.outlets ?? []).flatMap((o) => [
+    ...o.newspaper.filter((x) => /^A?1면$/.test(x.page ?? '')).map((x) => ({ outlet: o.name, title: x.title, url: x.url, rank: 0 })),
+    ...o.popular.map((x) => ({ outlet: o.name, title: x.title, url: x.url, rank: 1 })),
+    ...o.commented.map((x) => ({ outlet: o.name, title: x.title, url: x.url, rank: 2 })),
+    ...o.newspaper.filter((x) => !/^A?1면$/.test(x.page ?? '')).map((x) => ({ outlet: o.name, title: x.title, url: x.url, rank: 3 })),
+  ]);
+  // 제목에선 한자 약칭으로 쓰는 경우가 많음 — "북한"은 "北"도, "이재명"은 "李"도
+  const ABBR: Record<string, string> = { 북한: '北', 미국: '美', 중국: '中', 일본: '日', 이재명: '李', 윤석열: '尹', 노무현: '盧', 문재인: '文', 검찰: '檢', 여당: '與', 야당: '野', 러시아: '露' };
+  const refsFor = (keyword: string) => {
+    if (keyword.length < 2) return [];
+    const terms = [keyword, ...(ABBR[keyword] ? [ABBR[keyword]] : [])];
+    const picked: { outlet: string; title: string; url: string }[] = [];
+    for (const r of [...pool].filter((x) => terms.some((t) => x.title.includes(t))).sort((x, y) => x.rank - y.rank)) {
+      if (picked.some((p) => p.outlet === r.outlet || p.title === r.title)) continue;
+      picked.push({ outlet: r.outlet, title: r.title, url: r.url });
+      if (picked.length >= 3) break;
+    }
+    return picked;
+  };
+  const ideas: ArticleIdea[] = (Array.isArray(parsed.ideas) ? parsed.ideas : []).slice(0, 8).map((i: any) => {
+    const keyword = String(i.keyword ?? '').trim();
+    return {
+      priority: Math.min(3, Math.max(1, Number(i.priority) || 3)),
+      keyword,
+      issue: String(i.issue ?? ''),
+      headline: String(i.headline ?? ''),
+      angle: String(i.angle ?? ''),
+      evidence: String(i.evidence ?? ''),
+      refs: refsFor(keyword),
+    };
+  });
   ideas.sort((a, b) => a.priority - b.priority);
 
   return {

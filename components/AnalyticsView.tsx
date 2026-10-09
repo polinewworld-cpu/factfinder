@@ -185,16 +185,15 @@ function Ideas({ ideas }: { ideas: NonNullable<NonNullable<AnalyticsReport['ai']
           <p className="text-gray-600 mb-2">{it.issue}</p>
           <p className="mb-1"><b className="text-xs text-gray-500 mr-1">각도</b>{it.angle}</p>
           <p className="mb-1"><b className="text-xs text-gray-500 mr-1">근거</b>{it.evidence}</p>
-          {it.related.length > 0 && (
-            <p className="text-xs text-gray-500 mt-2">
-              연결할 우리 기사:{' '}
-              {it.related.map((a, j) => (
-                <span key={a.id}>
+          {!!it.refs?.length && (
+            <p className="text-[11px] text-gray-500 mt-2 leading-relaxed">
+              대표 기사:{' '}
+              {it.refs.map((r, j) => (
+                <span key={r.url}>
                   {j ? ' · ' : ''}
-                  <a href={`/article/${a.id}`} target="_blank" rel="noopener noreferrer" className="underline">
-                    {a.title}
+                  <a href={r.url} target="_blank" rel="noopener noreferrer" className="hover:underline">
+                    [{r.outlet.replace(/일보|신문$/, '').replace('한국경제', '한경')}] {r.title}
                   </a>
-                  {a.date && <span className="text-gray-400"> ({a.date})</span>}
                 </span>
               ))}
             </p>
