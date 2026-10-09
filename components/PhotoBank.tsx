@@ -1153,7 +1153,7 @@ function InboxPanel({ people, tags, onApproved, onCount }: { people: Person[]; t
     const res = await fetch('/api/photo-inbox', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'collect' }) });
     const d = await res.json().catch(() => ({}));
     setBusy('');
-    setMsg(d.error ? `수집 실패: ${d.error}` : d.people?.length ? `${d.people.join('·')} 확인 · 후보 ${d.found}장 중 새로 ${d.added}장 (중복 ${d.skipped})` : '인물 목록이 비어 있습니다. 먼저 인물을 등록하세요.');
+    setMsg(d.error ? `수집 실패: ${d.error}` : `${d.people?.length ? `${d.people.join('·')} 확인 · ` : ''}후보 ${d.found}장 중 새로 ${d.added}장${d.party ? ` (정당 홈페이지 ${d.party}장)` : ''} · 중복 ${d.skipped}장`);
     await load();
   }
   async function setMinutes(m: number) {
@@ -1182,7 +1182,7 @@ function InboxPanel({ people, tags, onApproved, onCount }: { people: Person[]; t
           {busy === 'collect' ? '수집 중… (1~2분)' : '지금 수집'}
         </button>
         <p className="basis-full text-xs text-gray-500">
-          네이버 뉴스에서 &quot;등록 인물 이름 + 제공&quot;을 찾아, 캡션에 의원실·정당·정부기관 &quot;제공&quot;과 등록 인물 이름이 함께 있는 사진만 가져옵니다. 한 번에 인물 5명씩 돌아가며 찾습니다.
+          ① 민주당 포토갤러리·개혁신당 사진자료의 새 사진 ② 네이버 뉴스에서 &quot;등록 인물 이름 + 제공&quot; 캡션 사진(인물 5명씩 돌아가며)을 가져옵니다. 국민의힘은 홈페이지에 사진 게시판이 없어 네이버로만 찾습니다.
         </p>
       </div>
 

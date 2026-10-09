@@ -57,10 +57,30 @@ export async function fetchRemoteImage(url: string): Promise<RemoteImage> {
   return { buf, type, ext, filename: decodeURIComponent(target.pathname.split('/').pop() || `image.${ext}`), hash: createHash('sha1').update(buf).digest('hex') };
 }
 
-// 받아서 우리 저장소(/api/blob)에 올림
+// 저장 용량 절약 — 가로세로 최대 2000px로 줄이고 JPEG(투명 PNG는 PNG) 85% 품질로 (정당 원본은 장당 5MB까지 있음, 2026-10-09)
+// 움직이는 GIF와 이미 작은 사진은 그대로. 해시는 원본 기준(중복 판정 일관성)
+async function shrink(img: RemoteImage): Promise<{ buf: Buffer; type: string; ext: string }> {
+  if (img.type === 'image/gif' || img.buf.length < 400 * 1024) return img;
+  try {
+    const sharp = (await import('sharp')).default;
+    const pipe = sharp(img.buf, { failOn: 'none' }).rotate().resize({ width: 2000, height: 2000, fit: 'inside', withoutEnlargement: true });
+    const meta = await sharp(img.buf).metadata();
+    if (img.type === 'image/png' && meta.hasAlpha) {
+      const buf = await pipe.png({ compressionLevel: 9 }).toBuffer();
+      return buf.length < img.buf.length ? { buf, type: 'image/png', ext: 'png' } : img;
+    }
+    const buf = await pipe.jpeg({ quality: 85, mozjpeg: true }).toBuffer();
+    return buf.length < img.buf.length ? { buf, type: 'image/jpeg', ext: 'jpg' } : img;
+  } catch {
+    return img; // 줄이기 실패하면 원본 그대로
+  }
+}
+
+// 받아서 (줄인 뒤) 우리 저장소(/api/blob)에 올림
 export async function storeRemoteImage(url: string) {
   const img = await fetchRemoteImage(url);
-  const name = `${randomUUID()}.${img.ext}`;
-  await putBlob(name, img.buf, img.type);
+  const small = await shrink(img);
+  const name = `${randomUUID()}.${small.ext}`;
+  await putBlob(name, small.buf, small.type);
   return { url: `/api/blob/${name}`, filename: img.filename, hash: img.hash };
 }

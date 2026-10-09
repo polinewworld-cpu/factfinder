@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import { searchNaver } from '@/lib/externalPhotos';
 import { fetchRemoteImage, storeRemoteImage } from '@/lib/remoteImage';
+import { minjooPhotos, reformPhotos } from '@/lib/partySources';
 
 // 사진 뱅크 자동 수집기 (2026-10-09, 3단계) — 네이버 뉴스에서 "등록 인물 이름 + 제공"을 찾아
 // 캡션에 의원실·정당·정부기관 "제공"이 있고 등록 인물 이름(별칭)이 나오는 사진만 수신함으로 넣는다(바로 등록하지 않음).
@@ -11,7 +12,7 @@ const PER_RUN = 5;
 const SEARCH_PAGES = [1, 11];
 
 let running: Promise<CollectResult> | null = null;
-export type CollectResult = { people: string[]; found: number; added: number; skipped: number; error?: string };
+export type CollectResult = { people: string[]; found: number; added: number; skipped: number; party?: number; error?: string };
 
 function namesOf(p: { name: string; aliases: string | null }) {
   return [p.name, ...(p.aliases ?? '').split(',').map((a) => a.trim())].filter((n) => n.length >= 2);
@@ -72,6 +73,46 @@ async function collect(): Promise<CollectResult> {
         .catch(() => out.skipped++); // 동시에 같은 사진이 들어온 경우(유니크 충돌)
     }
     await prisma.person.update({ where: { id: person.id }, data: { lastCollectedAt: new Date() } });
+  }
+
+  // 정당 홈페이지 사진 게시판(민주당 포토갤러리·개혁신당 사진자료) — 정당이 직접 배포한 사진이라
+  // 등록 인물 이름이 없어도 수신함에 넣고, 이름이 맞는 등록 인물만 자동 태그 (2026-10-09: 등록 인물이 적어 이름 조건이면 0장)
+  out.party = 0;
+  for (const load of [minjooPhotos, () => reformPhotos()]) {
+    const list = await load().catch(() => []);
+    for (const it of list) {
+      out.found++;
+      const dup =
+        (await prisma.photoInbox.findUnique({ where: { imageUrl: it.image }, select: { id: true } })) ||
+        (await prisma.photo.findFirst({ where: { sourceUrl: it.image }, select: { id: true } }));
+      if (dup) {
+        out.skipped++;
+        continue;
+      }
+      const text = `${it.caption} ${it.title}`;
+      const matched = all.filter((p) => namesOf(p).some((n) => text.includes(n)));
+      await prisma.photoInbox
+        .create({
+          data: {
+            origin: it.origin,
+            imageUrl: it.image,
+            thumbUrl: it.thumb,
+            pageUrl: it.pageUrl,
+            title: it.title || null,
+            caption: it.caption || null,
+            provider: it.provider,
+            sourceType: it.sourceType,
+            credit: it.credit,
+            takenAt: it.takenAt ? new Date(`${it.takenAt}T12:00:00+09:00`) : null,
+            peopleIds: matched.map((p) => p.id).join(',') || null,
+          },
+        })
+        .then(() => {
+          out.added++;
+          out.party!++;
+        })
+        .catch(() => out.skipped++);
+    }
   }
   return out;
 }
