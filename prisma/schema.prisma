@@ -312,13 +312,16 @@ model Banner {
 
 // 사이트 전역 설정값 — 기사 본문 삽입 광고 개수 + 애드센스 설정 (싱글턴 row, id 고정)
 model SiteConfig {
-  id                 String  @id @default("singleton")
-  articleBannerCount Int     @default(0)
+  id                  String    @id @default("singleton")
+  articleBannerCount  Int       @default(0)
   // 구글 애드센스 자동광고 (2026-10-09, 관리자 광고 관리 → 애드센스 탭) — 켜기/끄기와 화면 종류별 노출
-  adsenseEnabled     Boolean @default(true)
-  adsenseOnHome      Boolean @default(true) // 홈·카테고리 목록
-  adsenseOnArticle   Boolean @default(true) // 기사 화면
-  adsenseOnOther     Boolean @default(true) // 검색·회사소개 등 그 밖의 화면
+  adsenseEnabled      Boolean   @default(true)
+  adsenseOnHome       Boolean   @default(true) // 홈·카테고리 목록
+  adsenseOnArticle    Boolean   @default(true) // 기사 화면
+  adsenseOnOther      Boolean   @default(true) // 검색·회사소개 등 그 밖의 화면
+  // 사진 뱅크 자동 수집기 (2026-10-09) — 주기(분, 0이면 끔)와 마지막 실행 시각
+  photoCollectMinutes Int       @default(60)
+  photoCollectAt      DateTime?
 }
 
 // 범용 사진 라이브러리 — 기사에 종속되지 않는 재사용 가능한 사진 모음 (기능정의서 8.1)
@@ -342,6 +345,7 @@ model Photo {
   credit        String? // 사진=○○ (출처 유형별 자동, 수정 가능)
   people        Person[]
   usages        PhotoUsage[]
+  hash          String?      @unique // 이미지 내용 해시(sha1) — 수집기 중복 제거용 (2026-10-09)
 }
 
 // 사진 출처 유형 (사진 뱅크)
@@ -363,13 +367,46 @@ model PhotoTag {
 
 // 사진 뱅크 인물 목록 — 편집장이 관리 (2026-10-09)
 model Person {
-  id          String   @id @default(cuid())
-  name        String   @unique
-  aliases     String? // 별칭, 쉼표로 구분
-  affiliation String? // 소속
-  title       String? // 직함
-  photos      Photo[]
-  createdAt   DateTime @default(now())
+  id              String    @id @default(cuid())
+  name            String    @unique
+  aliases         String? // 별칭, 쉼표로 구분
+  affiliation     String? // 소속
+  title           String? // 직함
+  photos          Photo[]
+  createdAt       DateTime  @default(now())
+  lastCollectedAt DateTime? // 자동 수집기가 마지막으로 이 인물을 찾아본 시각 (돌아가며 수집)
+}
+
+// 사진 뱅크 수신함 — 자동 수집기가 가져온 후보. 승인해야 사진 뱅크에 들어감 (2026-10-09, 3단계)
+// 용량 때문에 수신함 단계에서는 원본 링크만 두고, 승인할 때 파일을 우리 저장소로 복사한다.
+model PhotoInbox {
+  id            String      @id @default(cuid())
+  origin        String // 수집 경로 (naver 등)
+  imageUrl      String      @unique
+  thumbUrl      String
+  pageUrl       String?
+  viaArticleUrl String?
+  title         String? // 기사 제목
+  caption       String?
+  provider      String? // "○○ 제공"의 주체
+  sourceType    PhotoSource
+  license       String?
+  credit        String?
+  takenAt       DateTime?
+  peopleIds     String? // 캡션에서 찾은 등록 인물 id (쉼표)
+  hash          String?     @unique
+  status        InboxStatus @default(PENDING)
+  photoId       String?
+  createdAt     DateTime    @default(now())
+  decidedAt     DateTime?
+
+  @@index([status, createdAt])
+}
+
+enum InboxStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }
 
 // 사진 사용 이력 — 기사 저장 때 본문·카드뉴스·커버에 들어 있는 사진을 기록 (2026-10-09)

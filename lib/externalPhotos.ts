@@ -210,9 +210,9 @@ export function classifyProvider(p: string): 'PARTY' | 'KOGL' | null {
   return null;
 }
 
-async function naverArticles(q: string): Promise<string[]> {
+async function naverArticles(q: string, pages = [1, 11, 21, 31]): Promise<string[]> {
   const urls = new Set<string>();
-  for (const start of [1, 11, 21, 31]) {
+  for (const start of pages) {
     const res = await fetch(`https://search.naver.com/search.naver?where=news&sort=1&query=${encodeURIComponent(q)}&start=${start}`, {
       headers: { 'User-Agent': BROWSER_UA },
       signal: AbortSignal.timeout(15_000),
@@ -264,8 +264,9 @@ async function naverArticlePhotos(articleUrl: string): Promise<ExternalItem[]> {
   return items;
 }
 
-async function searchNaver(q: string): Promise<ExternalItem[]> {
-  const urls = await naverArticles(`${q} 제공`);
+// 자동 수집기(lib/photoCollector.ts)도 씀 — 수집기는 쪽 수를 줄여 부르기
+export async function searchNaver(q: string, pages?: number[]): Promise<ExternalItem[]> {
+  const urls = await naverArticles(`${q} 제공`, pages);
   const out: ExternalItem[] = [];
   for (let i = 0; i < urls.length; i += 5) {
     const chunk = await Promise.all(urls.slice(i, i + 5).map((u) => naverArticlePhotos(u).catch(() => [])));

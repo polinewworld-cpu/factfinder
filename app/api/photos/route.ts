@@ -43,6 +43,12 @@ export async function POST(req: NextRequest) {
   }
   const peopleIds: string[] = Array.isArray(b.peopleIds) ? b.peopleIds.map(String) : [];
 
+  // 같은 이미지(내용 해시)가 이미 있으면 막음 — URL 등록·외부 가져오기는 해시를 같이 보냄
+  const hash = str(b.hash);
+  if (hash && (await prisma.photo.findUnique({ where: { hash }, select: { id: true } }))) {
+    return NextResponse.json({ error: '이미 사진 뱅크에 있는 사진입니다' }, { status: 400 });
+  }
+
   const photo = await prisma.photo.create({
     data: {
       url: b.url,
@@ -56,6 +62,7 @@ export async function POST(req: NextRequest) {
       takenAt: str(b.takenAt) ? new Date(`${b.takenAt}T12:00:00+09:00`) : null,
       photographer: str(b.photographer),
       credit: credit || null,
+      hash,
       tags: { connectOrCreate: tagNames.map((name) => ({ where: { name }, create: { name } })) },
       people: { connect: peopleIds.map((id) => ({ id })) },
     },

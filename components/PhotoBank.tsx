@@ -372,7 +372,7 @@ function RegisterPanel({ people, tags, onDone }: { people: Person[]; tags: Tag[]
     const failed: Staged[] = [];
     for (const it of staged) {
       try {
-        let stored: { url: string; filename?: string };
+        let stored: { url: string; filename?: string; hash?: string };
         if (it.file) {
           const form = new FormData();
           form.append('file', await compressImageFile(it.file));
@@ -390,7 +390,7 @@ function RegisterPanel({ people, tags, onDone }: { people: Person[]; tags: Tag[]
         const r = await fetch('/api/photos', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...rest, tags: tagNames, url: stored.url, filename: stored.filename ?? it.name }),
+          body: JSON.stringify({ ...rest, tags: tagNames, url: stored.url, filename: stored.filename ?? it.name, hash: stored.hash }),
         });
         const d = await r.json();
         if (!r.ok) throw new Error(d.error);
@@ -827,7 +827,7 @@ function ImportPanel({ item, people, tags, onClose, onDone }: { item: ExtItem; p
       const r2 = await fetch('/api/photos', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...rest, tags: tagNames, url: d1.url, filename: d1.filename }),
+        body: JSON.stringify({ ...rest, tags: tagNames, url: d1.url, filename: d1.filename, hash: d1.hash }),
       });
       const d2 = await r2.json();
       if (!r2.ok) throw new Error(d2.error);
@@ -980,6 +980,258 @@ function ExternalSearch({ initialQuery, people, tags, onImported }: { initialQue
   );
 }
 
+// ── 수신함 (3단계, 2026-10-09) — 자동 수집기가 가져온 후보. 승인해야 사진 뱅크에 들어간다 (편집장) ──
+type InboxItem = {
+  id: string;
+  origin: string;
+  imageUrl: string;
+  thumbUrl: string;
+  pageUrl: string | null;
+  viaArticleUrl: string | null;
+  title: string | null;
+  caption: string | null;
+  provider: string | null;
+  sourceType: SourceType;
+  license: string | null;
+  credit: string | null;
+  takenAt: string | null;
+  peopleIds: string | null;
+  createdAt: string;
+};
+const INTERVALS: [number, string][] = [
+  [0, '끄기'],
+  [30, '30분'],
+  [60, '1시간'],
+  [180, '3시간'],
+  [360, '6시간'],
+  [720, '12시간'],
+  [1440, '하루'],
+];
+
+function InboxApprove({ item, people, tags, onClose, onDone }: { item: InboxItem; people: Person[]; tags: Tag[]; onClose: () => void; onDone: () => void }) {
+  const [meta, setMeta] = useState<Meta>({
+    ...emptyMeta(),
+    sourceType: item.sourceType,
+    license: item.license ?? '',
+    sourceUrl: item.imageUrl,
+    viaArticleUrl: item.viaArticleUrl ?? '',
+    takenAt: ymd(item.takenAt),
+    photographer: item.provider ?? '',
+    credit: item.credit ?? '',
+    creditTouched: true,
+    title: item.caption ?? '',
+    peopleIds: (item.peopleIds ?? '').split(',').filter(Boolean),
+  });
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState('');
+
+  async function approve() {
+    const bad = checkPhotoInput(meta);
+    if (bad) return setMsg(bad);
+    setBusy(true);
+    const res = await fetch('/api/photo-inbox', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'approve',
+        ids: [item.id],
+        peopleIds: meta.peopleIds,
+        tagNames: meta.tagNames,
+        title: meta.title,
+        credit: meta.credit,
+        sourceType: meta.sourceType,
+        license: meta.license,
+      }),
+    });
+    const d = await res.json().catch(() => ({}));
+    setBusy(false);
+    if (!res.ok || d.errors?.length) return setMsg(d.error ?? d.errors?.[0] ?? '승인 실패');
+    onDone();
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4" onClick={onClose}>
+      <div className="bg-white rounded-2xl w-full max-w-3xl max-h-[92vh] overflow-y-auto p-5 space-y-4" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between">
+          <h3 className="font-bold">확인 후 승인</h3>
+          <button type="button" onClick={onClose} className="text-gray-400 text-lg">
+            ✕
+          </button>
+        </div>
+        <div className="grid sm:grid-cols-[220px_1fr] gap-4">
+          <div className="space-y-2">
+            <img src={item.thumbUrl} alt="" referrerPolicy="no-referrer" className="w-full rounded-lg border" />
+            {item.viaArticleUrl && (
+              <a href={item.viaArticleUrl} target="_blank" rel="noopener noreferrer" className="block text-xs underline text-gray-600">
+                경유 기사: {item.title ?? item.viaArticleUrl}
+              </a>
+            )}
+            <p className="text-xs font-semibold text-amber-700">언론사 로고가 박혀 있지 않은지 확인하세요.</p>
+          </div>
+          <div>
+            <p className="text-xs font-semibold text-brand mb-2">인물·상황 태그를 확인하세요.</p>
+            <MetaForm meta={meta} setMeta={setMeta} people={people} tags={tags} />
+          </div>
+        </div>
+        {msg && <p className="text-xs text-red-600">{msg}</p>}
+        <button type="button" disabled={busy} onClick={approve} className="text-sm font-bold text-white bg-brand rounded-lg px-5 py-2 disabled:opacity-40">
+          {busy ? '승인 중…' : '승인 — 사진 뱅크에 등록'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function InboxPanel({ people, tags, onApproved, onCount }: { people: Person[]; tags: Tag[]; onApproved: () => void; onCount: (n: number) => void }) {
+  const [data, setData] = useState<{ items: InboxItem[]; minutes: number; lastAt: string | null } | null>(null);
+  const [checked, setChecked] = useState<string[]>([]);
+  const [bulkTags, setBulkTags] = useState<string[]>([]);
+  const [busy, setBusy] = useState('');
+  const [msg, setMsg] = useState('');
+  const [approving, setApproving] = useState<InboxItem | null>(null);
+  const personName = useMemo(() => new Map(people.map((p) => [p.id, p.name])), [people]);
+
+  async function load() {
+    const res = await fetch('/api/photo-inbox');
+    if (res.ok) {
+      const d = await res.json();
+      setData(d);
+      onCount(d.items.length);
+      setChecked((c) => c.filter((id) => d.items.some((x: InboxItem) => x.id === id)));
+    }
+  }
+  useEffect(() => {
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  async function act(action: 'approve' | 'reject', ids: string[]) {
+    if (!ids.length) return;
+    if (action === 'reject' && !confirm(`${ids.length}장을 반려할까요?`)) return;
+    setBusy(action);
+    setMsg('');
+    const res = await fetch('/api/photo-inbox', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action, ids, tagNames: action === 'approve' ? bulkTags : undefined }) });
+    const d = await res.json().catch(() => ({}));
+    setBusy('');
+    setMsg(action === 'approve' ? `승인 ${d.approved ?? 0}장${d.errors?.length ? ` · 실패 ${d.errors.length}장 (${d.errors[0]})` : ''}` : `반려 ${d.rejected ?? 0}장`);
+    await load();
+    if (action === 'approve') onApproved();
+  }
+  async function collectNow() {
+    setBusy('collect');
+    setMsg('');
+    const res = await fetch('/api/photo-inbox', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'collect' }) });
+    const d = await res.json().catch(() => ({}));
+    setBusy('');
+    setMsg(d.error ? `수집 실패: ${d.error}` : d.people?.length ? `${d.people.join('·')} 확인 · 후보 ${d.found}장 중 새로 ${d.added}장 (중복 ${d.skipped})` : '인물 목록이 비어 있습니다. 먼저 인물을 등록하세요.');
+    await load();
+  }
+  async function setMinutes(m: number) {
+    await fetch('/api/photo-inbox', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ minutes: m }) });
+    await load();
+  }
+
+  if (!data) return <p className="text-sm text-gray-400">불러오는 중…</p>;
+  const allIds = data.items.map((x) => x.id);
+
+  return (
+    <div className="space-y-3">
+      <div className="border rounded-xl p-3 flex flex-wrap items-center gap-3 text-sm">
+        <span className="font-semibold">자동 수집</span>
+        <select value={data.minutes} onChange={(e) => setMinutes(Number(e.target.value))} className="border border-gray-200 rounded-lg px-2 py-1 text-sm bg-white">
+          {INTERVALS.map(([m, label]) => (
+            <option key={m} value={m}>
+              {m ? `${label}마다` : label}
+            </option>
+          ))}
+        </select>
+        <span className="text-xs text-gray-500">
+          마지막 수집 {data.lastAt ? new Date(data.lastAt).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '없음'}
+        </span>
+        <button type="button" disabled={!!busy} onClick={collectNow} className="ml-auto text-xs border rounded-lg px-3 py-1.5 disabled:opacity-40">
+          {busy === 'collect' ? '수집 중… (1~2분)' : '지금 수집'}
+        </button>
+        <p className="basis-full text-xs text-gray-500">
+          네이버 뉴스에서 &quot;등록 인물 이름 + 제공&quot;을 찾아, 캡션에 의원실·정당·정부기관 &quot;제공&quot;과 등록 인물 이름이 함께 있는 사진만 가져옵니다. 한 번에 인물 5명씩 돌아가며 찾습니다.
+        </p>
+      </div>
+
+      {msg && <p className="text-sm text-gray-700">{msg}</p>}
+
+      {data.items.length === 0 ? (
+        <p className="text-sm text-gray-400">승인을 기다리는 사진이 없습니다.</p>
+      ) : (
+        <>
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            <label className="flex items-center gap-1">
+              <input type="checkbox" checked={checked.length === allIds.length} onChange={(e) => setChecked(e.target.checked ? allIds : [])} /> 전체 선택 ({checked.length}/{allIds.length})
+            </label>
+            <button type="button" disabled={!checked.length || !!busy} onClick={() => act('approve', checked)} className="font-bold text-white bg-brand rounded-lg px-3 py-1.5 disabled:opacity-40">
+              {busy === 'approve' ? '승인 중…' : '선택 승인'}
+            </button>
+            <button type="button" disabled={!checked.length || !!busy} onClick={() => act('reject', checked)} className="border rounded-lg px-3 py-1.5 disabled:opacity-40">
+              선택 반려
+            </button>
+            <span className="text-gray-500 ml-2">여러 장 승인 때 붙일 상황 태그:</span>
+            <Chips items={tags.map((t) => ({ key: t.name, label: t.name }))} selected={bulkTags} onToggle={(k) => setBulkTags((b) => (b.includes(k) ? b.filter((x) => x !== k) : [...b, k]))} />
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3">
+            {data.items.map((it) => {
+              const on = checked.includes(it.id);
+              const names = (it.peopleIds ?? '').split(',').map((id) => personName.get(id)).filter(Boolean);
+              return (
+                <div key={it.id} className={`rounded-lg border-2 overflow-hidden bg-white flex flex-col ${on ? 'border-brand' : 'border-gray-100'}`}>
+                  <button type="button" onClick={() => setChecked(on ? checked.filter((x) => x !== it.id) : [...checked, it.id])} className="relative block">
+                    <img src={it.thumbUrl} alt="" loading="lazy" referrerPolicy="no-referrer" className="w-full aspect-[4/3] object-cover" />
+                    <span className={`absolute top-1.5 right-1.5 w-6 h-6 rounded text-xs flex items-center justify-center ${on ? 'bg-brand text-white' : 'bg-white/80 border'}`}>{on ? '✓' : ''}</span>
+                  </button>
+                  <div className="p-2 space-y-1 text-[11px] flex-1">
+                    <p className="flex flex-wrap gap-1 items-center">
+                      <span className="font-bold text-white rounded px-1.5 py-0.5" style={{ background: BADGE[it.sourceType] }}>
+                        {SOURCE_LABEL[it.sourceType]}
+                      </span>
+                      <span className="text-gray-600 truncate">{it.credit}</span>
+                    </p>
+                    {names.length > 0 && <p className="font-semibold">{names.join(', ')}</p>}
+                    <p className="text-gray-700 line-clamp-3">{it.caption}</p>
+                    {it.viaArticleUrl && (
+                      <a href={it.viaArticleUrl} target="_blank" rel="noopener noreferrer" className="block text-gray-500 underline truncate">
+                        {ymd(it.takenAt)} {it.title ?? '원래 기사'}
+                      </a>
+                    )}
+                  </div>
+                  <div className="flex gap-1 m-2 mt-0">
+                    <button type="button" onClick={() => setApproving(it)} className="flex-1 text-xs font-bold rounded-lg py-1.5 border border-brand text-brand">
+                      확인 후 승인
+                    </button>
+                    <button type="button" onClick={() => act('reject', [it.id])} className="text-xs rounded-lg px-2 py-1.5 border text-gray-500">
+                      반려
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </>
+      )}
+
+      {approving && (
+        <InboxApprove
+          item={approving}
+          people={people}
+          tags={tags}
+          onClose={() => setApproving(null)}
+          onDone={() => {
+            setApproving(null);
+            load();
+            onApproved();
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
 // ── 본체 ──
 export default function PhotoBank({
   mode = 'manage',
@@ -997,7 +1249,8 @@ export default function PhotoBank({
   const [tags, setTags] = useState<Tag[]>([]);
   const [loading, setLoading] = useState(true);
   const [panel, setPanel] = useState<'' | 'register' | 'manage'>('');
-  const [tab, setTab] = useState<'bank' | 'external'>('bank');
+  const [tab, setTab] = useState<'bank' | 'external' | 'inbox'>('bank');
+  const [inboxCount, setInboxCount] = useState<number | null>(null);
   const [detailId, setDetailId] = useState<string | null>(null);
   const [checked, setChecked] = useState<string[]>([]);
 
@@ -1042,6 +1295,13 @@ export default function PhotoBank({
   }
   useEffect(() => {
     loadLists();
+    if (isChief && mode === 'manage') {
+      fetch('/api/photo-inbox')
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d) => d && setInboxCount(d.items.length))
+        .catch(() => {});
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   useEffect(() => {
     const t = setTimeout(loadPhotos, 250);
@@ -1059,6 +1319,7 @@ export default function PhotoBank({
         [
           ['bank', '사진 뱅크'],
           ['external', '외부 검색'],
+          ...(isChief && mode === 'manage' ? ([['inbox', `수신함${inboxCount ? ` (${inboxCount})` : ''}`]] as const) : []),
         ] as const
       ).map(([k, label]) => (
         <button
@@ -1072,6 +1333,23 @@ export default function PhotoBank({
       ))}
     </div>
   );
+
+  if (tab === 'inbox') {
+    return (
+      <div className="space-y-3">
+        {tabs}
+        <InboxPanel
+          people={people}
+          tags={tags}
+          onCount={setInboxCount}
+          onApproved={() => {
+            loadPhotos();
+            loadLists();
+          }}
+        />
+      </div>
+    );
+  }
 
   if (tab === 'external') {
     return (
