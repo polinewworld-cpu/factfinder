@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import PhotoBank from '@/components/PhotoBank';
+import PhotoBank, { PhotoBankGuide } from '@/components/PhotoBank';
 
 const WRITER_ROLES = ['REPORTER', 'COLUMNIST', 'CHIEF_EDITOR'];
 
@@ -28,7 +28,7 @@ export default function PhotosLibraryPage() {
   return (
     <main className="max-w-6xl mx-auto px-4 py-8">
       <h1 className="text-xl font-bold text-gray-900 mb-1">사진 뱅크</h1>
-      <p className="text-sm text-gray-500 mb-5">출처가 확인된 사진만 들어옵니다. 통신사·게티 사진은 등록할 수 없습니다.</p>
+      <PhotoBankGuide />
       <PhotoBank mode="manage" isChief={me.role === 'CHIEF_EDITOR'} />
     </main>
   );

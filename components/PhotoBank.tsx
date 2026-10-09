@@ -1262,6 +1262,28 @@ function InboxPanel({ people, tags, onApproved, onCount }: { people: Person[]; t
   );
 }
 
+// 사진 뱅크 머리말 — 출처 유형 용어 풀이 (2026-10-09 사장님 요청: 통신사 문구 대신 용어 설명)
+export function PhotoBankGuide() {
+  const rows: [string, string][] = [
+    ['공공누리', '정부·공공기관 사진. 1유형은 출처만 밝히면 자유롭게, 0유형은 출처 표시도 필요 없음'],
+    ['정당·의원실 배포', '정당·의원실이 보도용으로 나눠 준 사진. "사진=○○ 의원실"로 표시'],
+    ['퍼블릭 도메인', '저작권이 없는 사진(미국 정부 사진, 기간이 끝난 옛 사진 등). 조건 없이 사용'],
+    ['CC', '찍은 사람이 조건부로 허락한 사진. BY=출처 표시, SA=고친 사진도 같은 조건으로 공개. 상업 금지(NC)·변경 금지(ND)는 받지 않음'],
+    ['자체 촬영', '팩트파인더가 직접 찍은 사진'],
+    ['AI 재구성·생성', 'AI로 다시 그리거나 만든 이미지. 기사 캡션에 "AI" 표시가 자동으로 붙음'],
+  ];
+  return (
+    <dl className="grid sm:grid-cols-2 gap-x-6 gap-y-1 text-xs text-gray-600 mb-5">
+      {rows.map(([k, v]) => (
+        <div key={k} className="flex gap-2">
+          <dt className="shrink-0 w-24 font-semibold text-gray-800">{k}</dt>
+          <dd>{v}</dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
 // ── 본체 ──
 export default function PhotoBank({
   mode = 'manage',
