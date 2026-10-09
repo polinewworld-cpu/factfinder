@@ -5,7 +5,7 @@ import AdminTabs, { AD_TABS } from '@/components/AdminTabs';
 
 // 광고 관리 → 애드센스 탭 (2026-10-09) — 자동광고 켜기/끄기, 화면 종류별 노출.
 // 광고 개수·밀도(광고 로드)는 애드센스 사이트에서만 바꿀 수 있어 바로가기만 둔다.
-const PUB_ID = 'pub-5435039189673790';
+const PUB_ID = 'pub-1922059581667762';
 const AUTO_ADS_URL = `https://adsense.google.com/adsense/u/0/${PUB_ID}/myads/auto-ads`;
 
 type Config = { adsenseEnabled: boolean; adsenseOnHome: boolean; adsenseOnArticle: boolean; adsenseOnOther: boolean };
