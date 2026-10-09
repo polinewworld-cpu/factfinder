@@ -47,7 +47,7 @@ export default function AdminArticlesPage() {
   const [queryInput, setQueryInput] = useState('');
   const [query, setQuery] = useState('');
   const [status, setStatus] = useState('ALL');
-  const [sortBy, setSortBy] = useState<SortField>('updatedAt');
+  const [sortBy, setSortBy] = useState<SortField>('createdAt'); // 2026-10-09: 최초 등록일 역순이 기본 (최종편집일은 옛 사진 옮기기 등으로 바뀌어 순서가 섞임)
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [page, setPage] = useState(1);
 
@@ -204,7 +204,7 @@ export default function AdminArticlesPage() {
               <SortTh field="viewCount" label="조회수" className="pr-4" />
               <SortTh field="commentCount" label="댓글수" className="pr-4" />
               <th className="py-2 pr-4 font-semibold">메인노출</th>
-              <SortTh field="updatedAt" label="최종편집일" className="pr-4" />
+              <SortTh field="createdAt" label="최초 등록일" className="pr-4" />
               <th className="py-2 pr-4 font-semibold">삭제</th>
             </tr>
           </thead>
@@ -260,7 +260,7 @@ export default function AdminArticlesPage() {
                       <span className="text-gray-300 text-xs">–</span>
                     )}
                   </td>
-                  <td className="py-2 pr-4 text-gray-400 text-xs">{fmtDateTime(r.updatedAt)}</td>
+                  <td className="py-2 pr-4 text-gray-400 text-xs" title={`최종편집 ${fmtDateTime(r.updatedAt)}`}>{fmtDateTime(r.createdAt)}</td>
                   <td className="py-2 pr-4">
                     <button
                       type="button"

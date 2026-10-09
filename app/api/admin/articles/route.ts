@@ -19,8 +19,8 @@ export async function GET(req: NextRequest) {
   const q = (searchParams.get('q') ?? '').trim();
   const status = searchParams.get('status'); // ALL(기본) | PUBLISHED | DRAFT | AUTOSAVE
   const categoryId = searchParams.get('categoryId');
-  const sortByParam = searchParams.get('sortBy') ?? 'updatedAt';
-  const sortBy = DB_SORTABLE.has(sortByParam) || sortByParam === 'commentCount' ? sortByParam : 'updatedAt';
+  const sortByParam = searchParams.get('sortBy') ?? 'createdAt';
+  const sortBy = DB_SORTABLE.has(sortByParam) || sortByParam === 'commentCount' ? sortByParam : 'createdAt';
   const sortDir: 'asc' | 'desc' = searchParams.get('sortDir') === 'asc' ? 'asc' : 'desc';
   const page = Math.max(1, Number(searchParams.get('page') ?? '1') || 1);
   const pageSize = Math.min(100, Math.max(1, Number(searchParams.get('pageSize') ?? '20') || 20));
