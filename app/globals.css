@@ -64,7 +64,7 @@
   --radius: 8px;
   --radius-lg: 8px;
   --gap: 16px;
-  --page-gutter: 0px;
+  --page-gutter: 32px; /* 2026-10-09: 0이면 창을 줄였을 때(1280px 미만) 본문이 화면 왼쪽 끝에 붙음 */
   --max: 1280px;
   /* Shared column measure for header, feed, article, and footer so chrome lines up with the main box */
   --page-width: min(var(--max), calc(100% - (var(--page-gutter) * 2)));
