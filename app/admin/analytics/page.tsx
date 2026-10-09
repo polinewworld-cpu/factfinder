@@ -317,9 +317,9 @@ export default function AnalyticsPage() {
           <h1 className="text-xl font-bold text-gray-900">방문 분석</h1>
           {r && (
             <p className="text-xs text-gray-500 mt-1">
-              최근 7일 {r.period.from} ~ {r.period.to} · 분석 시각{' '}
+              방문 숫자: 최근 7일 {r.period.from} ~ {r.period.to} ·{' '}
               {new Date(r.generatedAt).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}{' '}
-              · 매일 아침 자동 갱신
+              (매일 아침) · 기사 아이디어·키워드는 3시간마다
             </p>
           )}
         </div>
@@ -333,10 +333,25 @@ export default function AnalyticsPage() {
       {r && (
         <>
           {r.ai?.ideas && r.ai.ideas.length > 0 && (
-            <Card title="오늘의 기사 아이디어">
+            <section className="border rounded-xl p-4">
+              {/* 2026-10-09: 아이디어도 3시간마다(06~23시) 새로 만들어짐 — 시각·새로고침을 여기에도 */}
+              <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+                <h2 className="text-xs font-semibold text-gray-500 tracking-wide">
+                  오늘의 기사 아이디어
+                  {(r.mediaCheckedAt || r.media?.generatedAt) && (
+                    <span className="font-normal text-gray-400">
+                      {' '}
+                      · {new Date((r.mediaCheckedAt || r.media?.generatedAt)!).toLocaleTimeString('ko-KR', { timeZone: 'Asia/Seoul', hour: '2-digit', minute: '2-digit' })} 기준 · 3시간마다 자동 갱신
+                    </span>
+                  )}
+                </h2>
+                <button type="button" onClick={reloadMedia} disabled={mediaBusy} className="border rounded-lg px-3 py-1 text-xs disabled:opacity-40">
+                  {mediaBusy ? '새로 만드는 중… (1분쯤)' : '새로고침'}
+                </button>
+              </div>
               <p className="text-base font-semibold mb-3">{r.ai.headline}</p>
               <Ideas ideas={r.ai.ideas} />
-            </Card>
+            </section>
           )}
 
           <section className="border rounded-xl p-4">
