@@ -210,8 +210,23 @@ export function classifyProvider(p: string): 'PARTY' | 'KOGL' | null {
   return null;
 }
 
+// 네이버 검색 API 키(NAVER_CLIENT_ID·NAVER_CLIENT_SECRET, developers.naver.com 무료)가 있으면 한 번에 100건 중 네이버 뉴스 기사를,
+// 없으면 검색 화면(한 쪽에 네이버 뉴스 기사 2~5건뿐)을 읽는다 — 키 없이는 "제공" 사진이 거의 안 잡힘(2026-10-09 실측)
 async function naverArticles(q: string, pages = [1, 11, 21, 31]): Promise<string[]> {
   const urls = new Set<string>();
+  if (process.env.NAVER_CLIENT_ID && process.env.NAVER_CLIENT_SECRET) {
+    const res = await fetch(`https://openapi.naver.com/v1/search/news.json?query=${encodeURIComponent(q)}&display=100&sort=date`, {
+      headers: { 'X-Naver-Client-Id': process.env.NAVER_CLIENT_ID, 'X-Naver-Client-Secret': process.env.NAVER_CLIENT_SECRET },
+      signal: AbortSignal.timeout(15_000),
+      cache: 'no-store',
+    });
+    if (!res.ok) throw new Error(`네이버 검색 API HTTP ${res.status}`);
+    for (const it of (await res.json()).items ?? []) {
+      const m = String(it.link ?? '').match(/https:\/\/n\.news\.naver\.com\/mnews\/article\/\d+\/\d+/);
+      if (m) urls.add(m[0]);
+    }
+    return [...urls].slice(0, 40);
+  }
   for (const start of pages) {
     const res = await fetch(`https://search.naver.com/search.naver?where=news&sort=1&query=${encodeURIComponent(q)}&start=${start}`, {
       headers: { 'User-Agent': BROWSER_UA },
