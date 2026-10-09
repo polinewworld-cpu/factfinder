@@ -54,7 +54,7 @@ export async function GET() {
     // 기자 신청 대기자 — 대시보드 기자 카드에서 "현재 기자"와 나눠 보여줌 (2026-10-09)
     prisma.user.findMany({
       where: { reporterApplicationStatus: 'PENDING' },
-      orderBy: { updatedAt: 'desc' },
+      orderBy: { createdAt: 'desc' },
       take: 12,
       select: { id: true, name: true, nickname: true, image: true, createdAt: true },
     }),
