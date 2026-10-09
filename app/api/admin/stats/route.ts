@@ -20,7 +20,7 @@ export async function GET() {
   const todayStart = new Date(Date.UTC(kstNow.getUTCFullYear(), kstNow.getUTCMonth(), kstNow.getUTCDate()) - 9 * 3600_000);
 
   // 대시보드 카드 안 목록 (2026-10-08 신설) — 최근 발행 7, 승인 대기 기사, 최근 회원 12, 최근 기자 12, 최근 후원 8
-  const [recentArticles, pendingArticles, recentMembers, recentReporters, recentDonations] = await Promise.all([
+  const [recentArticles, pendingArticles, recentMembers, recentReporters, recentDonations, pendingReporters] = await Promise.all([
     prisma.article.findMany({
       where: { status: 'PUBLISHED' },
       orderBy: { publishedAt: 'desc' },
@@ -43,13 +43,20 @@ export async function GET() {
       where: { ...REAL, role: { in: ['REPORTER', 'COLUMNIST'] } },
       orderBy: { createdAt: 'desc' },
       take: 12,
-      select: { id: true, name: true, nickname: true, image: true, createdAt: true, email: true },
+      select: { id: true, name: true, nickname: true, image: true, createdAt: true, email: true, role: true },
     }),
     prisma.donation.findMany({
       where: PAID,
       orderBy: { startedAt: 'desc' },
       take: 8,
       select: { id: true, donorName: true, amount: true, startedAt: true, reporter: { select: { name: true } } },
+    }),
+    // 기자 신청 대기자 — 대시보드 기자 카드에서 "현재 기자"와 나눠 보여줌 (2026-10-09)
+    prisma.user.findMany({
+      where: { reporterApplicationStatus: 'PENDING' },
+      orderBy: { updatedAt: 'desc' },
+      take: 12,
+      select: { id: true, name: true, nickname: true, image: true, createdAt: true },
     }),
   ]);
 
@@ -96,5 +103,6 @@ export async function GET() {
     recentMembers,
     recentReporters: recentReporters.map(({ email, ...r }) => ({ ...r, legacy: email.endsWith('@legacy.invalid') })),
     recentDonations,
+    pendingReporters,
   });
 }

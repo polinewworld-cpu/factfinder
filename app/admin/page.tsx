@@ -22,7 +22,8 @@ type Stats = {
   recentArticles: { id: string; title: string; publishedAt: string | null; author: { name: string } }[];
   pendingArticles: { id: string; title: string; updatedAt: string; author: { name: string } }[];
   recentMembers: Person[];
-  recentReporters: Person[];
+  recentReporters: (Person & { role?: string })[];
+  pendingReporters: Person[];
   recentDonations: { id: string; donorName: string | null; amount: number; startedAt: string; reporter: { name: string } | null }[];
 };
 
@@ -171,7 +172,15 @@ export default function AdminHome() {
               }
               href="/admin/members?role=REPORTER"
             />
-            <PeopleGrid people={stats.recentReporters} />
+            {/* 2026-10-09: 신청 대기와 현재 기자를 나눠 표시 — 섞여 있으면 이미 기자인 사람이 대기 중인 것처럼 보였음 */}
+            <p className="text-[11px] font-semibold text-gray-900/60 mb-1">신청 대기</p>
+            {stats.pendingReporters?.length ? (
+              <PeopleGrid people={stats.pendingReporters} />
+            ) : (
+              <p className="text-sm text-gray-900/60 mb-1">없음</p>
+            )}
+            <p className="text-[11px] font-semibold text-gray-900/60 mt-3 mb-1">현재 기자·논설위원</p>
+            <PeopleGrid people={stats.recentReporters.map((u) => ({ ...u, nickname: `${u.nickname ?? u.name}${u.role === 'COLUMNIST' ? ' (논설위원)' : ''}` }))} />
           </RippleDotCard>
 
           {/* 후원 — 실제 결제된 후원 누적 총액 + 오늘, 최근 후원자·금액·기자 */}
