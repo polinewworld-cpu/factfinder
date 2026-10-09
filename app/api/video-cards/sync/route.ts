@@ -19,7 +19,7 @@ export async function POST() {
   }
 
   try {
-    const result = await syncVideoCards();
+    const result = await syncVideoCards({ forceLive: true });
     return NextResponse.json(result);
   } catch (e: any) {
     return NextResponse.json({ error: e?.message ?? '동기화에 실패했습니다' }, { status: 500 });

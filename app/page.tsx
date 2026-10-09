@@ -9,6 +9,7 @@ import type { Metadata } from 'next';
 import { SITE_URL } from '@/lib/siteTags';
 import Pagination from '@/components/Pagination';
 import { permanentRedirect } from 'next/navigation';
+import { CARD_ARTICLE_SELECT, toCardArticle } from '@/lib/publicFields';
 
 export const dynamic = 'force-dynamic';
 
@@ -68,9 +69,10 @@ export default async function Home({ searchParams }: { searchParams: { category?
   const page = Math.max(1, Math.floor(Number(searchParams.page)) || 1);
 
   // 정치신세계는 Article이 아니라 유튜브에서 자동 수집된 VideoCard로 구성되는 전용 피드 (기능정의서 4.2.1)
-  // 브라우저 새로고침마다 유튜브와 동기화한다.
+  // 유튜브 동기화는 5분에 한 번, 화면은 기다리지 않음 — 접속마다 강제 동기화하던 방식은 이 탭을 3초씩 늦추고
+  // 유튜브 하루 할당량을 태웠음 (2026-10-09). 즉시 갱신은 편집장의 새로고침 버튼(/api/video-cards/sync).
   if (category === '정치신세계') {
-    await ensureVideoCardsFresh(true);
+    ensureVideoCardsFresh();
     const [cards, user] = await Promise.all([
       prisma.videoCard.findMany({ orderBy: { publishedAt: 'desc' }, take: 60 }),
       getCurrentUser(),
@@ -82,25 +84,27 @@ export default async function Home({ searchParams }: { searchParams: { category?
   // 인덱스 피드에 최신 기사들과 함께 섞어서 노출한다 (2026-09-11 사용자 지시). 정치/국제/사회/문화 등 개별 카테고리
   // 탭이나 정치신세계 전용 탭(위 분기)에는 영향 없음.
   const showVideosInFeed = !category;
-  if (showVideosInFeed) await ensureVideoCardsFresh();
+  if (showVideosInFeed) ensureVideoCardsFresh(); // 기다리지 않음 — 동기화 결과는 다음 접속부터 반영
 
   const where = {
     status: 'PUBLISHED' as ArticleStatus,
     showOnMain: true, // 편집장이 카드 (-) 버튼으로 뺀 기사는 메인(전체+카테고리 탭)에서만 제외 (2026-09-12 신설)
     ...(category ? { category: { name: category } } : {}),
   };
-  const include = { author: true, keywords: true, category: true } as const;
+  // 공개 카드용 필드만 — 기자 이메일·정산 계좌가 HTML에 실리던 문제, 카드에 안 쓰는 본문 전체 전송 제거 (2026-10-09)
+  const select = CARD_ARTICLE_SELECT;
 
   // 대표(featured) 슬롯: 편집장이 1면톱으로 수동 지정한 기사가 있으면 그걸 우선, 없으면 최신 기사로 대체
   // (2026-09-22 재도입 — 단, 지정한 걸 잊고 방치하면 오래된 기사가 계속 남는 문제가 있었으므로
   //  "지정된 게 없을 때만" 최신순으로 대체하도록 해서 완전히 빈 자리가 되는 것만 막음)
   const [pinned, homepageBanners] = await Promise.all([
-    prisma.article.findFirst({ where: { ...where, isFrontpageTop: true }, include }),
+    prisma.article.findFirst({ where: { ...where, isFrontpageTop: true }, select }),
     prisma.banner.findMany({
       where: { active: true, placement: { in: ['HOMEPAGE_3', 'HOMEPAGE_5', 'HOMEPAGE_7'] } },
     }),
   ]);
-  const top = pinned ?? (await prisma.article.findFirst({ where, include, orderBy: { publishedAt: 'desc' } }));
+  const topRow = pinned ?? (await prisma.article.findFirst({ where, select, orderBy: { publishedAt: 'desc' } }));
+  const top = topRow ? toCardArticle(topRow) : null;
   // 대표 기사는 1페이지 맨 위에만 — 페이지 나눔은 대표를 뺀 나머지 목록 기준
   const listWhere = top ? { ...where, NOT: { id: top.id } } : where;
   const offset = (page - 1) * PAGE_SIZE;
@@ -129,11 +133,11 @@ export default async function Home({ searchParams }: { searchParams: { category?
     ]);
     total = counts[0] + counts[1];
     const [articles, videos] = await Promise.all([
-      prisma.article.findMany({ where: { id: { in: rows.filter((r) => r.t === 'A').map((r) => r.id) } }, include }),
+      prisma.article.findMany({ where: { id: { in: rows.filter((r) => r.t === 'A').map((r) => r.id) } }, select }),
       prisma.videoCard.findMany({ where: { id: { in: rows.filter((r) => r.t === 'V').map((r) => r.id) } } }),
     ]);
     const byId = new Map<string, unknown>([
-      ...articles.map((a) => [a.id, a] as const),
+      ...articles.map((a) => [a.id, toCardArticle(a)] as const),
       // 영상도 "기사 생성"처럼 취급해 같은 카드 그리드에 섞음 (2026-09-11 사용자 지시)
       ...videos.map((v) => [v.id, {
         id: v.id,
@@ -147,10 +151,12 @@ export default async function Home({ searchParams }: { searchParams: { category?
     ]);
     feedItems = rows.map((r) => byId.get(r.id)).filter(Boolean);
   } else {
-    [feedItems, total] = await Promise.all([
-      prisma.article.findMany({ where: listWhere, include, orderBy: { publishedAt: 'desc' }, skip: offset, take: PAGE_SIZE }),
+    const [rows, count] = await Promise.all([
+      prisma.article.findMany({ where: listWhere, select, orderBy: { publishedAt: 'desc' }, skip: offset, take: PAGE_SIZE }),
       prisma.article.count({ where: listWhere }),
     ]);
+    feedItems = rows.map(toCardArticle);
+    total = count;
   }
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 

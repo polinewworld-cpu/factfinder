@@ -10,6 +10,7 @@ import { validGhostWriterId } from '@/lib/ghostWriter';
 import { resolveAuthorByName } from '@/lib/authorResolve';
 import { clampFocal } from '@/lib/cardImage';
 import { toFrenchBrackets } from '@/lib/frenchBrackets';
+import { CARD_ARTICLE_SELECT } from '@/lib/publicFields';
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -18,8 +19,8 @@ export async function GET(req: NextRequest) {
   const sort = searchParams.get('sort'); // 'popular'이면 많이 본 기사 순
   const exclude = searchParams.get('exclude'); // 관련기사에서 자기 자신 제외
   const statusParam = searchParams.get('status'); // 'draft' -> 편집장 승인대기함 전용, 그 외엔 항상 공개(PUBLISHED)만
-  const page = Number(searchParams.get('page') ?? '1');
-  const pageSize = Number(searchParams.get('pageSize') ?? '20');
+  const page = Math.max(1, Math.floor(Number(searchParams.get('page'))) || 1);
+  const pageSize = Math.min(60, Math.max(1, Math.floor(Number(searchParams.get('pageSize'))) || 20)); // 상한 — 한 번에 수천 건 요청 방지
 
   let status: ArticleStatus = 'PUBLISHED';
   if (statusParam === 'draft') {
@@ -37,7 +38,8 @@ export async function GET(req: NextRequest) {
       ...(keyword ? { keywords: { some: { name: keyword } } } : {}),
       ...(exclude ? { NOT: { id: exclude } } : {}),
     },
-    include: { author: true, category: true, images: true, keywords: true },
+    // 공개 필드만 — 기자 이메일·정산 계좌가 응답에 실리던 문제, 본문 전체도 제외 (2026-10-09)
+    select: { ...CARD_ARTICLE_SELECT, content: false, updatedAt: true },
     orderBy: status === 'DRAFT' ? { updatedAt: 'desc' } : sort === 'popular' ? { viewCount: 'desc' } : { publishedAt: 'desc' },
     skip: (page - 1) * pageSize,
     take: pageSize,

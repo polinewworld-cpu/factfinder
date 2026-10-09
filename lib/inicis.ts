@@ -81,6 +81,9 @@ export function isInicisUrl(url: string | null, idc: string | null, kind: 'stdpa
   }
 }
 
+// 이니시스 응답 대기 상한 — 응답이 없으면 무한정 걸려 있던 문제 (2026-10-09). PC는 시간 초과 시 망취소로 정리
+const INICIS_TIMEOUT_MS = 20_000;
+
 // PC STEP3 승인요청 / 망취소 — 같은 파라미터
 function pcAuthBody(authToken: string, price: number) {
   const timestamp = String(Date.now());
@@ -97,16 +100,16 @@ function pcAuthBody(authToken: string, price: number) {
 }
 
 export async function pcApprove(authUrl: string, authToken: string, price: number) {
-  const res = await fetch(authUrl, { method: 'POST', body: pcAuthBody(authToken, price) });
+  const res = await fetch(authUrl, { method: 'POST', body: pcAuthBody(authToken, price), signal: AbortSignal.timeout(INICIS_TIMEOUT_MS) });
   return (await res.json()) as Record<string, string>;
 }
 
 export async function pcNetCancel(netCancelUrl: string, authToken: string, price: number) {
-  await fetch(netCancelUrl, { method: 'POST', body: pcAuthBody(authToken, price) }).catch(() => {});
+  await fetch(netCancelUrl, { method: 'POST', body: pcAuthBody(authToken, price), signal: AbortSignal.timeout(INICIS_TIMEOUT_MS) }).catch(() => {});
 }
 
 // 모바일 STEP3 승인요청 — 응답은 "P_STATUS=00&P_TID=..." 형태
 export async function mobileApprove(reqUrl: string, tid: string) {
-  const res = await fetch(reqUrl, { method: 'POST', body: new URLSearchParams({ P_MID: INICIS_MID, P_TID: tid }) });
+  const res = await fetch(reqUrl, { method: 'POST', body: new URLSearchParams({ P_MID: INICIS_MID, P_TID: tid }), signal: AbortSignal.timeout(INICIS_TIMEOUT_MS) });
   return Object.fromEntries(new URLSearchParams(await res.text()));
 }

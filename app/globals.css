@@ -68,7 +68,7 @@
   --max: 1280px;
   /* Shared column measure for header, feed, article, and footer so chrome lines up with the main box */
   --page-width: min(var(--max), calc(100% - (var(--page-gutter) * 2)));
-  --title: 'Gowun Batang', '고운바탕', serif;
+  --title: var(--font-gowun), 'Gowun Batang', '고운바탕', serif;
   --sans: 'IBM Plex Sans', 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 

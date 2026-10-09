@@ -1,6 +1,9 @@
 import type { MetadataRoute } from 'next';
 import { prisma } from '@/lib/prisma';
 
+// 10분마다 새로 만듦 — 예전엔 배포(빌드) 때 한 번만 만들어져 배포 사이에 쓴 새 기사가 빠졌음 (2026-10-09)
+export const revalidate = 600;
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = process.env.NEXTAUTH_URL || 'http://localhost:3411';
 

@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/session';
 import { putBlob } from '@/lib/blobStorage';
+import { shrinkImage } from '@/lib/imageResize';
 import { randomUUID } from 'crypto';
 
-// 커버이미지 등 파일 업로드 — Netlify 배포 환경에선 Netlify Blobs에, 로컬 개발 환경에선 프로젝트 폴더에 저장 (lib/blobStorage 참고).
+// 커버이미지 등 파일 업로드 — 운영은 Supabase 저장소, 로컬 개발 환경에선 프로젝트 폴더에 저장 (lib/blobStorage 참고).
 // 업로드된 파일은 /api/blob/[filename] 라우트로 서빙됨.
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/avif'];
 const MAX_SIZE = 10 * 1024 * 1024; // 10MB
+const EXT: Record<string, string> = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif', 'image/avif': 'avif' };
 
 export async function POST(req: NextRequest) {
   const user = await getCurrentUser();
@@ -27,11 +29,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: '자동 압축 후에도 파일이 너무 큽니다. 더 작은 사진으로 다시 시도해주세요.' }, { status: 400 });
   }
 
-  const ext = file.name.includes('.') ? file.name.split('.').pop() : 'jpg';
-  const filename = `${randomUUID()}.${ext}`;
-  const buffer = Buffer.from(await file.arrayBuffer());
+  // 확장자는 실제 파일 형식으로 (파일 이름의 확장자는 아무 값이나 올 수 있음), 큰 사진은 긴 변 2000px로 줄여 저장 (2026-10-09)
+  const original = Buffer.from(await file.arrayBuffer());
+  const small = await shrinkImage(original, file.type).catch(() => null);
+  const buffer = small?.buf ?? original;
+  const type = small?.type ?? file.type;
+  const filename = `${randomUUID()}.${EXT[type] ?? 'jpg'}`;
 
-  await putBlob(filename, buffer, file.type);
+  await putBlob(filename, buffer, type);
 
   return NextResponse.json({ url: `/api/blob/${filename}` }, { status: 201 });
 }

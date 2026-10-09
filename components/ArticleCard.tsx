@@ -7,7 +7,7 @@ import { useSavedArticles } from './SavedArticlesProvider';
 import KineticTextGrid from './AppearText';
 import { stripHtml } from '@/lib/stripHtml';
 import { deriveExcerpt } from '@/lib/excerpt';
-import { cardImageRatio, hashString } from '@/lib/cardImage';
+import { cardImageRatio, hashString, sizedImage } from '@/lib/cardImage';
 import { toFrenchBrackets } from '@/lib/frenchBrackets';
 import { cardHeadlineText, withoutTitleBreaks } from '@/lib/titleLineBreak';
 import CardHeadline from './CardHeadline';
@@ -152,7 +152,8 @@ export default function ArticleCard({
       <a className="pin-media" href={href}>
         {article.coverImageUrl ? (
           <CoverHoverImage
-            src={article.coverImageUrl}
+            src={sizedImage(article.coverImageUrl, featured || wide ? 1600 : 800)!}
+            fallbackSrc={article.coverImageUrl}
             alt={toFrenchBrackets(article.title)}
             lazy={!featured}
             aspectRatio={`1 / ${imageRatio}`}

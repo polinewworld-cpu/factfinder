@@ -2,6 +2,7 @@ import { lookup } from 'dns/promises';
 import { isIP } from 'net';
 import { createHash, randomUUID } from 'crypto';
 import { putBlob } from '@/lib/blobStorage';
+import { shrinkImage } from '@/lib/imageResize';
 
 // 외부 이미지 받아오기 (2026-10-09, 사진 뱅크) — URL 등록·외부 검색 가져오기·수신함 승인·수집기 중복 확인이 같이 쓴다.
 // 내부망 주소로 요청을 보내는 악용을 막으려고 공인 IP로 풀리는 http(s) 주소만, 리다이렉트도 매번 같은 검사.
@@ -52,31 +53,17 @@ export async function fetchRemoteImage(url: string): Promise<RemoteImage> {
   const type = (res.headers.get('content-type') ?? '').split(';')[0].trim().toLowerCase();
   const ext = TYPES[type];
   if (!ext) throw new Error('이미지 주소가 아닙니다 (jpg·png·webp·gif·avif 직접 주소를 넣어 주세요)');
+  if (Number(res.headers.get('content-length')) > MAX) throw new Error('10MB가 넘는 이미지입니다'); // 받기 전에 먼저 거름
   const buf = Buffer.from(await res.arrayBuffer());
   if (buf.length > MAX) throw new Error('10MB가 넘는 이미지입니다');
   return { buf, type, ext, filename: decodeURIComponent(target.pathname.split('/').pop() || `image.${ext}`), hash: createHash('sha1').update(buf).digest('hex') };
 }
 
-// 저장 용량 절약 — 가로세로 최대 2000px로 줄이고 JPEG(투명 PNG는 PNG) 85% 품질로 (정당 원본은 장당 5MB까지 있음, 2026-10-09)
-// 움직이는 GIF와 이미 작은 사진은 그대로. 해시는 원본 기준(중복 판정 일관성)
+// 2000px 넘는 큰 사진은 줄여서 저장 — 처리는 lib/imageResize(한 번에 한 장, 2026-10-09)
 async function shrink(img: RemoteImage): Promise<{ buf: Buffer; type: string; ext: string }> {
-  if (img.type === 'image/gif' || img.buf.length < 400 * 1024) return img;
-  try {
-    const sharp = (await import('sharp')).default;
-    const pipe = sharp(img.buf, { failOn: 'none' }).rotate().resize({ width: 2000, height: 2000, fit: 'inside', withoutEnlargement: true });
-    const meta = await sharp(img.buf).metadata();
-    if (img.type === 'image/png' && meta.hasAlpha) {
-      const buf = await pipe.png({ compressionLevel: 9 }).toBuffer();
-      return buf.length < img.buf.length ? { buf, type: 'image/png', ext: 'png' } : img;
-    }
-    const buf = await pipe.jpeg({ quality: 85, mozjpeg: true }).toBuffer();
-    return buf.length < img.buf.length ? { buf, type: 'image/jpeg', ext: 'jpg' } : img;
-  } catch {
-    return img; // 줄이기 실패하면 원본 그대로
-  }
+  return (await shrinkImage(img.buf, img.type).catch(() => null)) ?? img; // 줄이기 실패하면 원본 그대로
 }
 
-// 받아서 (줄인 뒤) 우리 저장소(/api/blob)에 올림
 export async function storeRemoteImage(url: string) {
   const img = await fetchRemoteImage(url);
   const small = await shrink(img);

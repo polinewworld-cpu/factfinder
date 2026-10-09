@@ -3,6 +3,9 @@ import { prisma } from '@/lib/prisma';
 import { ROLES } from '@/lib/roles';
 import { getCurrentUser } from '@/lib/session';
 
+// 요청마다 DB에서 읽음 — 없으면 Next가 배포(빌드) 때 한 번 만든 응답을 계속 돌려줘, 관리자 설정·기자 목록 변경이 다음 배포 전까지 안 보였음 (2026-10-09)
+export const dynamic = 'force-dynamic';
+
 // 사이트 전역 설정 — 기사 본문 삽입 광고 개수(기능정의서 5) + 애드센스 설정. 싱글턴 row.
 export async function GET() {
   const config = await prisma.siteConfig.upsert({

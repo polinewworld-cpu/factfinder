@@ -16,7 +16,7 @@ async function ytFetch(path: string, params: Record<string, string>) {
   const apiKey = process.env.YOUTUBE_API_KEY;
   if (!apiKey) throw new Error('YOUTUBE_API_KEY 환경변수가 설정되어 있지 않습니다');
   const query = new URLSearchParams({ ...params, key: apiKey });
-  const res = await fetch(`${YT_API}/${path}?${query.toString()}`);
+  const res = await fetch(`${YT_API}/${path}?${query.toString()}`, { signal: AbortSignal.timeout(10_000) });
   if (!res.ok) {
     const body = await res.text().catch(() => '');
     throw new Error(`YouTube API 호출 실패 (${path}, HTTP ${res.status}): ${body.slice(0, 300)}`);
@@ -55,6 +55,9 @@ type SyncResult = { synced: number; skipped: number };
 // '항상 최신'을 유지하되 방문마다 유튜브 API를 부르지 않도록 최소 재동기화 간격 (2026-09-11 신설)
 const MIN_SYNC_INTERVAL_MS = 5 * 60 * 1000; // 5분
 let lastSyncedAt = 0;
+const LIVE_SEARCH_INTERVAL_MS = 30 * 60 * 1000;
+let lastLiveSearchAt = 0;
+let cachedChannelId: string | null = null; // 채널 id는 바뀌지 않으므로 한 번만 조회
 let inFlightSync: Promise<SyncResult> | null = null;
 
 // 2026-10-08 규칙 변경(사장님 지시): 정치신세계는 "라이브 방송"만 가져온다 — 진행 중·예정 라이브 + 끝난 라이브 다시보기.
@@ -85,9 +88,9 @@ async function fetchVideoDetails(ids: string[]): Promise<any[]> {
   return out;
 }
 
-export async function syncVideoCards(): Promise<SyncResult> {
+export async function syncVideoCards({ forceLive = false } = {}): Promise<SyncResult> {
   lastSyncedAt = Date.now();
-  const channelId = await resolveChannelId();
+  const channelId = cachedChannelId ?? (cachedChannelId = await resolveChannelId());
   const playlistId = uploadsPlaylistId(channelId);
 
   const candidateIds = new Set<string>();
@@ -105,11 +108,15 @@ export async function syncVideoCards(): Promise<SyncResult> {
   }
 
   // 진행 중 라이브는 업로드 재생목록에 아직 안 잡힐 수 있어 별도로 확인 (기능정의서 4.2.1 warning 1)
-  try {
-    const liveData = await ytFetch('search', { part: 'snippet', channelId, eventType: 'live', type: 'video', maxResults: '5' });
-    for (const item of liveData.items ?? []) if (item.id?.videoId) candidateIds.add(item.id.videoId);
-  } catch {
-    /* 라이브 확인 실패는 전체 동기화를 막지 않음 */
+  // search는 1회 100유닛(나머지 호출은 1유닛) — 30분에 한 번만 (하루 한도 1만 유닛, 2026-10-09)
+  if (forceLive || Date.now() - lastLiveSearchAt >= LIVE_SEARCH_INTERVAL_MS) {
+    lastLiveSearchAt = Date.now();
+    try {
+      const liveData = await ytFetch('search', { part: 'snippet', channelId, eventType: 'live', type: 'video', maxResults: '5' });
+      for (const item of liveData.items ?? []) if (item.id?.videoId) candidateIds.add(item.id.videoId);
+    } catch {
+      /* 라이브 확인 실패는 전체 동기화를 막지 않음 */
+    }
   }
 
   // 이미 저장된 카드도 함께 재확인 — 규칙에 안 맞으면(또는 유튜브에서 삭제됐으면) 정리

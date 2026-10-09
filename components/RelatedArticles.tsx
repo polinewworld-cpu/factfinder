@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { timeAgo } from '@/lib/time';
-import { cardImageRatio } from '@/lib/cardImage';
+import { cardImageRatio, sizedImage } from '@/lib/cardImage';
 import { toFrenchBrackets } from '@/lib/frenchBrackets';
 import { withoutTitleBreaks } from '@/lib/titleLineBreak';
 import { RightPanelIcon } from '@/components/icons';
@@ -29,7 +29,8 @@ function RailCard({ article }: { article: Item }) {
       <a className="pin-media" href={href}>
         {article.coverImageUrl ? (
           <CoverHoverImage
-            src={article.coverImageUrl}
+            src={sizedImage(article.coverImageUrl, 800)!}
+            fallbackSrc={article.coverImageUrl}
             alt={title}
             aspectRatio={`1 / ${imageRatio}`}
             focalX={article.coverFocalX}

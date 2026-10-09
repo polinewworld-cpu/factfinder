@@ -9,110 +9,130 @@ import { syncPhotoUsage } from '@/lib/photoBank';
 import { validGhostWriterId } from '@/lib/ghostWriter';
 import { clampFocal } from '@/lib/cardImage';
 import { toFrenchBrackets } from '@/lib/frenchBrackets';
+import { PUBLIC_AUTHOR_SELECT } from '@/lib/publicFields';
+import { deleteArticleAudio } from '@/lib/blobStorage';
 
+// 공개 조회 — 발행된 기사만 누구나, 초안·임시저장은 글쓴이·편집장만 (2026-10-09: 초안이 누구에게나 보이고
+// 기자 이메일·정산 계좌까지 실리던 문제 수정). 조회수는 기사 페이지에서만 센다.
 export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
   const article = await prisma.article.findUnique({
     where: { id: params.id },
-    include: { author: true, category: true, images: true, comments: true, poll: { include: { options: true } } },
+    include: {
+      author: { select: PUBLIC_AUTHOR_SELECT },
+      category: true,
+      images: true,
+      poll: { include: { options: true } },
+    },
   });
-
   if (!article) return NextResponse.json({ error: 'Not found' }, { status: 404 });
-
-  // updatedAt은 @updatedAt이라 update() 호출만으로 자동 갱신됨 — 조회수 증가는 "수정"이 아니므로
-  // 명시적으로 기존 값을 그대로 돌려줘서 "최종편집일"이 조회할 때마다 오늘로 밀리는 걸 막음 (2026-09-22)
-  await prisma.article.update({
-    where: { id: params.id },
-    data: { viewCount: { increment: 1 }, updatedAt: article.updatedAt },
-  });
-
+  if (article.status !== 'PUBLISHED') {
+    const user = await getCurrentUser();
+    if (!user || (user.id !== article.authorId && user.role !== ROLES.CHIEF_EDITOR)) {
+      return NextResponse.json({ error: 'Not found' }, { status: 404 });
+    }
+  }
   return NextResponse.json(article);
 }
 
+// 글쓰기 화면이 보내는 값 중 요청 본문으로 바꿀 수 있는 칸만 — 상태·발행일·조회수·추천수·글쓴이 등은 서버가 정함 (2026-10-09)
+const EDITABLE_FIELDS = [
+  'title', 'subtitle1', 'subtitle2', 'subtitle3', 'hoverText', 'content', 'categoryId', 'coverImageUrl',
+  'coverFocalX', 'coverFocalY', 'coverFeatureFocalX', 'coverFeatureFocalY', 'coverSecondFocalX', 'coverSecondFocalY',
+] as const;
+const FOCAL_FIELDS = ['coverFocalX', 'coverFocalY', 'coverFeatureFocalX', 'coverFeatureFocalY', 'coverSecondFocalX', 'coverSecondFocalY'] as const;
+
 export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
-  const body = await req.json();
-  const { keywordIds, relatedArticleIds, intent, images, poll, themeTags, authorName, ghostWriterId, ...rest } = body; // intent: 'autosave' | 'submit' (글쓰기 화면 전용, 그 외 편집은 기존 방식 그대로) / poll: { question, options: string[] } | null
-  delete (rest as { cardTitle?: unknown }).cardTitle;
-  // 글쓴이는 요청 본문으로 직접 못 바꿈 — 편집장의 "글쓴이" 칸(authorName)으로만 (2026-10-08)
-  delete (rest as { authorId?: unknown }).authorId;
-  if (authorName !== undefined || ghostWriterId !== undefined) {
-    const me = await getCurrentUser();
-    if (me?.role === ROLES.CHIEF_EDITOR) {
-      // 2026-10-09: 유령기자 선택이 우선, 아니면 이름으로
-      const id = (await validGhostWriterId(ghostWriterId)) || (authorName !== undefined ? await resolveAuthorByName(authorName) : null);
-      if (id) (rest as { authorId?: string }).authorId = id;
-    }
+  // 2026-10-09: 예전엔 intent(autosave/submit)가 없는 요청은 로그인 검사 없이 통과해 누구나 아무 기사나 고칠 수 있었음.
+  // 이제 모든 수정은 로그인 + 글쓴이 본인 또는 편집장만.
+  const user = await getCurrentUser();
+  if (!user) return NextResponse.json({ error: '로그인이 필요합니다' }, { status: 401 });
+  if (!WRITER_ROLES.includes(user.role as any)) {
+    return NextResponse.json({ error: '기사 작성 권한이 없습니다' }, { status: 403 });
+  }
+  const existing = await prisma.article.findUnique({
+    where: { id: params.id },
+    include: { poll: { include: { options: { orderBy: { order: 'asc' } } } } },
+  });
+  if (!existing) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  const isChief = user.role === ROLES.CHIEF_EDITOR;
+  // 편집장은 본인이 작성하지 않은 기사도 수정할 수 있음 (2026-09-11, 관리자 "전체 기사" 화면에서 사용)
+  if (existing.authorId !== user.id && !isChief) {
+    return NextResponse.json({ error: '본인이 작성한 글만 수정할 수 있습니다' }, { status: 403 });
   }
 
-  if (rest.coverFocalX !== undefined) rest.coverFocalX = clampFocal(rest.coverFocalX);
-  if (rest.coverFocalY !== undefined) rest.coverFocalY = clampFocal(rest.coverFocalY);
-  if (rest.coverFeatureFocalX !== undefined) rest.coverFeatureFocalX = clampFocal(rest.coverFeatureFocalX);
-  if (rest.coverFeatureFocalY !== undefined) rest.coverFeatureFocalY = clampFocal(rest.coverFeatureFocalY);
-  if (rest.coverSecondFocalX !== undefined) rest.coverSecondFocalX = clampFocal(rest.coverSecondFocalX);
-  if (rest.coverSecondFocalY !== undefined) rest.coverSecondFocalY = clampFocal(rest.coverSecondFocalY);
+  const body = await req.json();
+  const { keywordIds, relatedArticleIds, intent, images, poll, themeTags, authorName, ghostWriterId } = body; // intent: 'autosave' | 'submit' / poll: { question, options: string[] } | null
+  if (intent !== 'autosave' && intent !== 'submit') {
+    return NextResponse.json({ error: '잘못된 요청입니다' }, { status: 400 });
+  }
+
+  const data: Record<string, any> = {};
+  for (const key of EDITABLE_FIELDS) if (body[key] !== undefined) data[key] = body[key];
+  for (const key of FOCAL_FIELDS) if (data[key] !== undefined) data[key] = clampFocal(data[key]);
+
+  // 글쓴이는 편집장의 "글쓴이" 칸(authorName)·유령기자 선택(ghostWriterId)으로만 (2026-10-08, 10-09)
+  if (isChief && (authorName !== undefined || ghostWriterId !== undefined)) {
+    const id = (await validGhostWriterId(ghostWriterId)) || (authorName !== undefined ? await resolveAuthorByName(authorName) : null);
+    if (id) data.authorId = id;
+  }
 
   // 요약문은 별도 입력을 받지 않고 본문에서 자동 추출 — 화면에는 노출하지 않고 RSS용으로만 사용 (2026-09-11)
-  // 본문이 바뀌면 "읽어주기"용으로 캐싱해둔 오디오도 더 이상 최신 내용이 아니므로 초기화 — 다음 재생 요청 때 새 본문으로 재생성됨 (2026-09-12)
-  if (typeof rest.content === 'string') {
+  // 본문이 바뀌면 "읽어주기" 오디오도 초기화 — 다음 재생 요청 때 새 본문으로 재생성됨 (2026-09-12)
+  let staleAudio = false;
+  if (typeof data.content === 'string') {
     // 저장 전 항상 새니타이즈 — POST(articles/route.ts)와 동일한 이유
-    rest.content = sanitizeArticleContent(rest.content);
-    rest.excerpt = deriveExcerpt(rest.content);
-    rest.audioUrl = null;
+    data.content = sanitizeArticleContent(data.content);
+    data.excerpt = deriveExcerpt(data.content);
+    if (data.content !== existing.content) {
+      data.audioUrl = null;
+      staleAudio = true;
+    }
   }
 
   for (const key of ['title', 'subtitle1', 'subtitle2', 'subtitle3', 'hoverText'] as const) {
-    if (typeof rest[key] === 'string') rest[key] = toFrenchBrackets(rest[key]);
+    if (typeof data[key] === 'string') data[key] = toFrenchBrackets(data[key]);
   }
 
-  // 자동저장/제출은 세션 검증 + 본인 글만 — 클라이언트가 다른 사람 글을 건드리지 못하게 함
-  if (intent === 'autosave' || intent === 'submit') {
-    const user = await getCurrentUser();
-    if (!user) return NextResponse.json({ error: '로그인이 필요합니다' }, { status: 401 });
-    if (!WRITER_ROLES.includes(user.role as any)) {
-      return NextResponse.json({ error: '기사 작성 권한이 없습니다' }, { status: 403 });
-    }
-    const existing = await prisma.article.findUnique({ where: { id: params.id } });
-    if (!existing) return NextResponse.json({ error: 'Not found' }, { status: 404 });
-    // 편집장은 본인이 작성하지 않은 기사도 수정할 수 있음 (2026-09-11, 관리자 "전체 기사" 화면에서 사용)
-    if (existing.authorId !== user.id && user.role !== ROLES.CHIEF_EDITOR) {
-      return NextResponse.json({ error: '본인이 작성한 글만 수정할 수 있습니다' }, { status: 403 });
-    }
-
-    if (intent === 'autosave') {
-      // 이미 제출(DRAFT)되었거나 발행(PUBLISHED)된 글은 자동저장으로 되돌리지 않음 — 내용만 갱신
-      if (existing.status !== 'AUTOSAVE') {
-        delete (rest as any).status;
-      } else {
-        rest.status = 'AUTOSAVE';
-      }
-    } else {
-      // submit: 기자=DRAFT(승인대기), 논설위원/편집장=PUBLISHED(즉시발행)
-      const newStatus = initialStatusForRole(user.role, 'submit');
-      rest.status = newStatus;
-      if (newStatus === 'PUBLISHED' && !existing.publishedAt) rest.publishedAt = new Date();
-      rest.isFrontpageTop = !!rest.isFrontpageTop && newStatus === 'PUBLISHED';
-    }
+  if (intent === 'autosave') {
+    // 이미 제출(DRAFT)되었거나 발행(PUBLISHED)된 글은 자동저장으로 상태를 되돌리지 않음 — 내용만 갱신
+    if (existing.status === 'AUTOSAVE') data.status = 'AUTOSAVE';
+  } else {
+    // submit: 기자=DRAFT(승인대기), 논설위원/편집장=PUBLISHED(즉시발행)
+    const newStatus = initialStatusForRole(user.role, 'submit');
+    data.status = newStatus;
+    if (newStatus === 'PUBLISHED' && !existing.publishedAt) data.publishedAt = new Date();
+    data.isFrontpageTop = !!body.isFrontpageTop && newStatus === 'PUBLISHED';
   }
 
-  const pollProvided = 'poll' in body; // 필드 자체가 왔을 때만 설문을 건드림 (안 왔으면 기존 설문 유지)
+  // 설문 — 질문·항목이 실제로 바뀌었을 때만 교체. 예전엔 자동저장(15초)마다 지우고 새로 만들어
+  // 설문 달린 기사를 고치는 순간 독자 투표가 전부 사라졌음 (2026-10-09)
   const validPollOptions: string[] = (poll?.options ?? []).map((o: string) => (o ?? '').trim()).filter(Boolean);
   const wantsPoll = !!poll?.question?.trim() && validPollOptions.length >= 2;
+  const newQuestion = wantsPoll ? toFrenchBrackets(poll.question.trim()) : null;
+  const newOptions = validPollOptions.map((text) => toFrenchBrackets(text));
+  const pollUnchanged = wantsPoll
+    ? !!existing.poll &&
+      existing.poll.question === newQuestion &&
+      existing.poll.options.length === newOptions.length &&
+      existing.poll.options.every((o, i) => o.text === newOptions[i])
+    : !existing.poll;
+  const replacePoll = 'poll' in body && !pollUnchanged; // 필드 자체가 안 왔으면 기존 설문 유지
 
   const updated = await prisma.$transaction(async (tx) => {
-    if (rest.isFrontpageTop) {
+    if (data.isFrontpageTop) {
       await tx.article.updateMany({
         where: { isFrontpageTop: true, NOT: { id: params.id } },
         data: { isFrontpageTop: false },
       });
     }
-    if (pollProvided) {
-      // 설문은 기사당 1개 — 매번 통째로 교체(기존 삭제 후 새로 생성). 옵션 변경 시 기존 투표는 초기화됨.
+    if (replacePoll) {
       await tx.poll.deleteMany({ where: { articleId: params.id } });
       if (wantsPoll) {
         await tx.poll.create({
           data: {
             articleId: params.id,
-            question: toFrenchBrackets(poll.question.trim()),
-            options: { create: validPollOptions.map((text, i) => ({ text: toFrenchBrackets(text), order: i })) },
+            question: newQuestion!,
+            options: { create: newOptions.map((text, i) => ({ text, order: i })) },
           },
         });
       }
@@ -120,17 +140,17 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     return tx.article.update({
       where: { id: params.id },
       data: {
-        ...rest,
+        ...data,
         ...(themeTags !== undefined
           ? { themeTags: Array.isArray(themeTags) && themeTags.length ? themeTags.join(',') : null }
           : {}),
-        ...(keywordIds ? { keywords: { set: keywordIds.map((id: string) => ({ id })) } } : {}),
+        ...(Array.isArray(keywordIds) ? { keywords: { set: keywordIds.map((id: string) => ({ id })) } } : {}),
         // 관련기사 — 매번 선택된 목록으로 통째로 교체 (기능정의서 8.2)
-        ...(relatedArticleIds
+        ...(Array.isArray(relatedArticleIds)
           ? { relatedArticles: { set: relatedArticleIds.map((id: string) => ({ id })) } }
           : {}),
         // 카드뉴스 이미지 — 매번 전체 목록을 통째로 교체 (순서 포함)
-        ...(images
+        ...(Array.isArray(images)
           ? {
               images: {
                 deleteMany: {},
@@ -143,10 +163,12 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
             }
           : {}),
       },
-      include: { keywords: true, images: true, relatedArticles: true, poll: { include: { options: true } } },
+      include: { keywords: true, images: true, relatedArticles: { select: { id: true } }, poll: { include: { options: true } } },
     });
   });
 
+  // 더 이상 안 쓰는 읽어주기 음성 파일은 저장소에서 지움 (실패해도 저장은 그대로)
+  if (staleAudio) await deleteArticleAudio(updated.id).catch(() => {});
   // 사진 뱅크 사용 이력 — 본문·커버·카드뉴스에 들어간 사진 (실패해도 저장은 그대로)
   await syncPhotoUsage(updated.id, updated.content, [updated.coverImageUrl, ...updated.images.map((i) => i.url)]).catch(() => {});
 
@@ -165,6 +187,8 @@ export async function DELETE(_req: NextRequest, { params }: { params: { id: stri
   }
 
   await prisma.article.delete({ where: { id: params.id } });
+  // 읽어주기 음성은 이 기사 전용 파일이라 함께 지움 (사진은 다른 기사·사진 뱅크와 같이 쓸 수 있어 남김)
+  await deleteArticleAudio(params.id).catch(() => {});
   return NextResponse.json({ ok: true });
 }
 

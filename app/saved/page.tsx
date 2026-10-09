@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import { getCurrentUser } from '@/lib/session';
 import Masonry from '@/components/Masonry';
+import { CARD_ARTICLE_SELECT, toCardArticle } from '@/lib/publicFields';
 
 // 내가 저장한 기사 목록 — 카테고리 줄 "저장한 기사"와 계정 메뉴에서 진입 (기능정의서 3.1)
 export default async function SavedArticlesPage() {
@@ -20,9 +21,9 @@ export default async function SavedArticlesPage() {
   const saved = await prisma.savedArticle.findMany({
     where: { userId: user.id, article: { status: 'PUBLISHED' } },
     orderBy: { createdAt: 'desc' },
-    include: { article: { include: { author: true, keywords: true, category: true } } },
+    select: { article: { select: CARD_ARTICLE_SELECT } },
   });
-  const articles = saved.map((s) => s.article);
+  const articles = saved.map((s) => toCardArticle(s.article));
 
   return (
     <>

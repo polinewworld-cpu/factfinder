@@ -48,9 +48,10 @@
 ## 4. 배포·DB 변경 방식
 
 - `npm run build` 안에서 `prisma/migrate-safe.mjs` → `prisma migrate deploy`. **`db push --accept-data-loss` 쓰지 않음.** 데이터를 지우는 변경은 마이그레이션 파일에 명시적으로 쓴 것만 일어남.
-- 마이그레이션: `0_init` … `12_drop_writer_id_images` (8 애드센스 설정, 9 사진 뱅크, 10 수신함, 11 유령기자, 12 신분증 테이블 삭제).
+- 마이그레이션: `0_init` … `13_indexes` (8 애드센스 설정, 9 사진 뱅크, 10 수신함, 11 유령기자, 12 신분증 테이블 삭제, 13 조회 색인).
+- 빈 DB(새 고객사 등)는 폴더 이름순 정렬('10_'이 '9_'보다 앞) 때문에 그대로 적용하면 실패 → `migrate-safe.mjs`가 schema.prisma로 한 번에 만들고 전부 적용됨으로 기록(2026-10-09).
 - 새 스키마 변경 순서: `schema.prisma` 수정 → `npx prisma migrate diff --from-schema-datasource prisma/schema.prisma --to-schema-datamodel prisma/schema.prisma --script`로 SQL 확인 → `prisma/migrations/<번호>_<이름>/migration.sql` 저장 → 커밋·푸시.
-- 로컬 `next build`는 `.env.production`(옛 서울 DB)을 읽어 prerender 단계에서 DB 오류가 나지만 "Compiled successfully"까지 나오면 코드는 정상.
+- 로컬 `next build`는 `.env.local`(옛 서울 DB)을 먼저 읽어 prerender 단계에서 DB 오류가 남 → `.env` 값을 환경변수로 넣고 빌드하면 끝까지 확인 가능.
 - Render 빌드가 실패하면 이전 버전이 계속 서비스됨(데이터 영향 없음).
 
 ## 5. 옛 사이트 이관 (완료분)
@@ -86,6 +87,8 @@
 - **편집실 권한**(2026-10-09): 기자·논설위원은 편집실에서 **동향 보고·기사 작성·사진 뱅크만**. 그 밖의 화면은 `components/AdminGate.tsx`가 막고, 관리 API도 편집장 전용.
 - **유령기자**(2026-10-09 정의): 로그인 계정 없이 이름으로만 있는 필자(외부 기고자·옛 사이트 기자). 실제 데이터 = 이메일 `…@legacy.invalid` + `ghost=false` 계정. 편집장이 자기 계정으로 외부 기고를 올릴 때 글쓴이로 고르면, 바이라인·후원·정산이 그 사람 앞으로 잡힘.
 - `User.ghost=true`는 "삭제해서 목록에서 숨긴" 계정(기사·이름은 유지) — 유령기자와 다른 개념.
+- 등급 변경은 30초 안에 반영(로그인 출입증의 등급을 `lib/auth.ts`가 DB로 재확인). 삭제·숨김 계정은 기존 로그인도 무효.
+- 공개 화면·API로 내보내는 기자 정보는 `lib/publicFields.ts`의 PUBLIC_AUTHOR_SELECT만 — `author: true`(이메일·정산 계좌 포함) 금지.
 
 ## 8. 편집실(관리자) 메뉴별 기능
 
@@ -133,6 +136,7 @@
 | 동향 보고(키워드·지면·기사 아이디어) | 06~23시 3시간마다 |
 | 사진 수집기 | 관리자 설정(기본 60분, 0=끔) |
 | DB 백업 | GitHub Actions 매일 새벽 |
+| 정치신세계 유튜브 동기화 | 홈·정치신세계 접속 시 5분 간격(라이브 검색은 30분), 화면은 기다리지 않음 |
 
 ## 10. 결정 사항 (사장님)
 

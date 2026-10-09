@@ -29,7 +29,11 @@ export function allowRequest(key: string, limit: number, windowMs: number): bool
   return true;
 }
 
+// 사이트 앞단이 Cloudflare라 cf-connecting-ip가 진짜 접속 IP — x-forwarded-for 첫 값은 접속자가 마음대로 적어 보낼 수 있어
+// 횟수 제한을 우회할 수 있었음 (2026-10-09)
 export function clientIp(req: Request): string {
+  const cf = req.headers.get('cf-connecting-ip')?.trim();
+  if (cf) return cf;
   const fwd = req.headers.get('x-forwarded-for');
   return fwd?.split(',')[0]?.trim() || 'unknown';
 }

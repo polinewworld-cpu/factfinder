@@ -6,7 +6,8 @@
 // 단, DB 실제 구조와 schema.prisma의 차이가 "0_init 이후 마이그레이션 파일 내용"과 정확히 일치할 때만 진행하고,
 // 그 외 차이가 하나라도 있으면 빌드를 실패시킨다(= Render는 기존 버전을 계속 서비스, 데이터는 그대로).
 import { execSync } from 'child_process';
-import { readdirSync, readFileSync } from 'fs';
+import { readdirSync, readFileSync, writeFileSync } from 'fs';
+import os from 'os';
 import path from 'path';
 import { PrismaClient } from '@prisma/client';
 
@@ -50,6 +51,19 @@ if (!hasMigrations && hasArticle) {
     process.exit(1);
   }
   run(`npx prisma migrate resolve --applied ${BASELINE}`);
+}
+
+// 빈 DB(새 고객사·개발DB 새로 만들기) — 마이그레이션 폴더는 이름순으로 실행되는데 '10_…'이 '1_…'·'9_…'보다 앞에 정렬돼
+// 9_photo_bank가 만드는 표를 10_photo_inbox가 먼저 고치려다 실패한다. 그래서 빈 DB는 schema.prisma로 한 번에 만들고
+// 모든 마이그레이션을 "적용됨"으로 기록한다 (2026-10-09). 운영 DB(이미 적용된 상태)에는 영향 없음.
+if (!hasMigrations && !hasArticle) {
+  console.log('[migrate-safe] 빈 DB 감지 — schema.prisma로 전체 생성 후 마이그레이션 기록');
+  const sql = execSync('npx prisma migrate diff --from-empty --to-schema-datamodel prisma/schema.prisma --script', { encoding: 'utf8' });
+  const file = path.join(os.tmpdir(), `ff-init-${Date.now()}.sql`);
+  writeFileSync(file, sql);
+  run(`npx prisma db execute --file "${file}" --schema prisma/schema.prisma`);
+  const names = readdirSync(MIGRATIONS_DIR, { withFileTypes: true }).filter((d) => d.isDirectory()).map((d) => d.name);
+  for (const name of names) run(`npx prisma migrate resolve --applied ${name}`);
 }
 
 run('npx prisma migrate deploy');

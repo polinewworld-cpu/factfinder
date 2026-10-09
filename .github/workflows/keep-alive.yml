@@ -1,3 +1,5 @@
+# 가벼운 상태 확인 주소(/api/health)를 찌름 — 예전엔 무거운 홈('/')을 10분마다 불러 유튜브 동기화까지 돌렸음 (2026-10-09)
+# cron-job.org도 같은 주소를 10분마다 찌르고 있어, 이 작업은 그쪽이 멈췄을 때의 예비
 name: Keep Render instance awake
 
 on:
@@ -10,4 +12,4 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Ping factfinder
-        run: curl -sS -o /dev/null -w "%{http_code}\n" https://factfinder-85w9.onrender.com/
+        run: curl -sS -o /dev/null -w "%{http_code}\n" https://factfinder-85w9.onrender.com/api/health

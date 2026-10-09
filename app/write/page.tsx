@@ -87,6 +87,10 @@ export default function WritePage() {
 
   const [articleId, setArticleId] = useState<string | null>(null);
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
+  // 이미 발행된 기사를 고칠 때는 자동저장을 서버에 보내지 않음 — 15초마다 고치던 중인 문장이 실사이트에 그대로
+  // 나가던 문제 (2026-10-09). [수정 저장]을 눌러야 반영되고, 저장 안 한 채 창을 닫으려 하면 경고.
+  const publishedRef = useRef(false);
+  const [isPublished, setIsPublished] = useState(false);
   const [saving, setSaving] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
@@ -211,6 +215,8 @@ export default function WritePage() {
         }
         articleIdRef.current = data.id;
         submittedRef.current = false;
+        publishedRef.current = data.status === 'PUBLISHED';
+        setIsPublished(publishedRef.current);
         setArticleId(data.id);
         setTitle(toFrenchBrackets(data.title ?? ''));
         setSubtitle1(toFrenchBrackets(data.subtitle1 ?? ''));
@@ -278,10 +284,21 @@ export default function WritePage() {
   // 15초 주기 자동저장 — 변경사항(dirty)이 있을 때만, 제출 완료 전까지만 동작
   useEffect(() => {
     const timer = setInterval(() => {
-      if (dirtyRef.current && !submittedRef.current) doAutosave();
+      if (dirtyRef.current && !submittedRef.current && !publishedRef.current) doAutosave();
     }, 15000);
     return () => clearInterval(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    const warn = (e: BeforeUnloadEvent) => {
+      if (publishedRef.current && dirtyRef.current && !submittedRef.current) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+    window.addEventListener('beforeunload', warn);
+    return () => window.removeEventListener('beforeunload', warn);
   }, []);
 
   function markDirty() {
@@ -923,7 +940,7 @@ export default function WritePage() {
             }}
           />
           <span className="composer-save">
-            {saving ? '저장 중…' : lastSavedAt ? `저장됨 ${lastSavedAt.toLocaleTimeString('ko-KR')}` : ''}
+            {saving ? '저장 중…' : lastSavedAt ? `저장됨 ${lastSavedAt.toLocaleTimeString('ko-KR')}` : isPublished ? '발행된 기사 — [수정 저장]을 눌러야 반영됩니다' : ''}
           </span>
         </div>
         <div

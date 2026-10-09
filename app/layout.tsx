@@ -10,9 +10,13 @@ import { AdminNavProvider } from '@/components/AdminNav';
 import SiteAnalytics from '@/components/SiteAnalytics';
 import AdSenseLoader from '@/components/AdSenseLoader';
 import type { Metadata } from 'next';
+import { Gowun_Batang } from 'next/font/google';
 import {
   SITE_URL, IS_LIVE_DOMAIN, ADSENSE_CLIENT, GOOGLE_SITE_VERIFICATION, NAVER_SITE_VERIFICATION,
 } from '@/lib/siteTags';
+
+// 제목 글꼴(고운바탕)은 빌드 때 받아 우리 서버에서 제공 — 구글 폰트 CSS를 받을 때까지 화면 그리기가 멈추던 것 제거 (2026-10-09)
+const gowunBatang = Gowun_Batang({ weight: '700', subsets: ['latin'], display: 'swap', preload: false, variable: '--font-gowun' });
 
 const SITE_DESCRIPTION = '팩트파인더는 진영주의를 벗어나 중도주의 관점으로 정치와 사회를 봅니다.';
 
@@ -48,7 +52,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     ? await prisma.siteConfig.findUnique({ where: { id: 'singleton' } }).catch(() => null)
     : null;
   return (
-    <html lang="ko">
+    <html lang="ko" className={gowunBatang.variable}>
       <head>
         <link
           rel="preload"
@@ -57,15 +61,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           type="font/woff2"
           crossOrigin="anonymous"
         />
+        <link rel="preconnect" href="https://cdn.jsdelivr.net" crossOrigin="anonymous" />
         <link
           rel="stylesheet"
           href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"
-        />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@700&display=swap"
-          rel="stylesheet"
         />
       </head>
       <body className="min-h-screen">

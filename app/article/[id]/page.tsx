@@ -25,20 +25,35 @@ import ArticleHeadline from '@/components/ArticleHeadline';
 import { enhanceArticleImages } from '@/lib/articleHtml';
 import { authorName, bylineOf, isLegacyEmail } from '@/lib/byline';
 import { SITE_URL } from '@/lib/siteTags';
+import { PUBLIC_AUTHOR_SELECT } from '@/lib/publicFields';
+import { cache } from 'react';
 
 // 옛 사이트(다다미디어 CMS) 기사 번호는 숫자 — /article/3377 같은 옛 주소 판별용 (2026-10-08)
 const isLegacyId = (id: string) => /^\d{1,9}$/.test(id);
 
+// 메타 태그(generateMetadata)와 본문이 같은 기사를 두 번 조회하던 것을 한 요청 안에서 한 번으로 (2026-10-09)
+const loadArticle = cache((id: string) =>
+  prisma.article.findUnique({
+    where: { id },
+    include: {
+      author: { include: { snsLinks: { orderBy: { order: 'asc' } } } },
+      category: true,
+      keywords: true,
+      images: true,
+      poll: true,
+      // 직접 고른 관련기사 중 발행된 것만 — 초안·임시저장이 섞이면 눌렀을 때 404 (2026-10-09)
+      relatedArticles: {
+        where: { status: 'PUBLISHED' },
+        select: { id: true, title: true, publishedAt: true, coverImageUrl: true, coverFocalX: true, coverFocalY: true, author: { select: PUBLIC_AUTHOR_SELECT } },
+      },
+    },
+  }),
+);
+
 // 카톡·페북·X 공유 미리보기 + 검색엔진용 기사별 메타 태그 (2026-10-08 신설)
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
   if (isLegacyId(params.id)) return {};
-  const article = await prisma.article.findUnique({
-    where: { id: params.id },
-    select: {
-      title: true, subtitle1: true, excerpt: true, content: true, coverImageUrl: true,
-      status: true, publishedAt: true, updatedAt: true, author: { select: { nickname: true, name: true } },
-    },
-  });
+  const article = await loadArticle(params.id);
   if (!article || article.status !== 'PUBLISHED') return {};
   const description = (article.subtitle1 || article.excerpt || stripHtml(article.content)).trim().slice(0, 160);
   const image = article.coverImageUrl || article.content.match(/<img[^>]+src="([^"]+)"/i)?.[1];
@@ -78,17 +93,7 @@ export default async function ArticlePage({
   }
 
   const [article, currentUser, siteConfig, articleBanners, lineAds] = await Promise.all([
-    prisma.article.findUnique({
-      where: { id: params.id },
-      include: {
-        author: { include: { snsLinks: { orderBy: { order: 'asc' } } } },
-        category: true,
-        keywords: true,
-        images: true,
-        poll: true,
-        relatedArticles: { include: { author: true } },
-      },
-    }),
+    loadArticle(params.id),
     getCurrentUser(),
     prisma.siteConfig.findUnique({ where: { id: 'singleton' } }),
     prisma.banner.findMany({ where: { placement: 'ARTICLE_BODY', active: true }, orderBy: { order: 'asc' } }),
@@ -102,7 +107,8 @@ export default async function ArticlePage({
   const oneYearAgo = new Date();
   oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
 
-  const [recentByAuthor, bestByAuthor] = await Promise.all([
+  // 기자 기사 목록·저장 여부·조회수 증가를 한꺼번에 (예전엔 차례로 기다려 기사 여는 시간이 늘었음, 2026-10-09)
+  const [recentByAuthor, bestByAuthor, savedRow] = await Promise.all([
     prisma.article.findMany({
       where: { authorId: article.authorId, status: 'PUBLISHED', NOT: { id: article.id } },
       orderBy: { publishedAt: 'desc' },
@@ -120,25 +126,24 @@ export default async function ArticlePage({
       take: 3,
       select: { id: true, title: true, publishedAt: true },
     }),
+    currentUser
+      ? prisma.savedArticle.findUnique({
+          where: { userId_articleId: { userId: currentUser.id, articleId: article.id } },
+          select: { id: true },
+        })
+      : null,
+    // 조회수 증가 — updatedAt은 @updatedAt이라 기존 값을 그대로 돌려줘 "최종편집일"이 밀리지 않게 (2026-09-22)
+    prisma.article.update({
+      where: { id: article.id },
+      data: { viewCount: { increment: 1 }, updatedAt: article.updatedAt },
+      select: { id: true },
+    }),
   ]);
-
-  const alreadySaved = currentUser
-    ? !!(await prisma.savedArticle.findUnique({
-        where: { userId_articleId: { userId: currentUser.id, articleId: article.id } },
-      }))
-    : false;
+  const alreadySaved = !!savedRow;
 
   const canEdit =
     !!currentUser &&
     (currentUser.role === ROLES.CHIEF_EDITOR || currentUser.id === article.authorId);
-
-  // 조회수 증가 (데모 단순화를 위해 상세 페이지 렌더링 시 직접 처리)
-  // updatedAt은 @updatedAt이라 update() 호출만으로 자동 갱신됨 — 조회는 "수정"이 아니므로 기존 값을
-  // 그대로 돌려줘서 관리자 "최종편집일"이 조회수만 올라도 오늘로 밀리던 문제를 막음 (2026-09-22)
-  await prisma.article.update({
-    where: { id: article.id },
-    data: { viewCount: { increment: 1 }, updatedAt: article.updatedAt },
-  });
 
   const subtitles = [article.subtitle1, article.subtitle2, article.subtitle3]
     .filter(Boolean)

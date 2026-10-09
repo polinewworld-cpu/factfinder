@@ -192,6 +192,12 @@ model Article {
   updatedAt   DateTime     @updatedAt
   publishedAt DateTime?
   photoUsages PhotoUsage[] // 사진 뱅크 사용 이력 (2026-10-09)
+
+  // 목록·기자별 기사·카테고리 조회용 색인 (2026-10-09 속도 점검)
+  @@index([status, showOnMain, publishedAt])
+  @@index([status, publishedAt])
+  @@index([authorId])
+  @@index([categoryId])
 }
 
 // 독자의 "기사 저장"(북마크) 기능 (기능정의서 3.1)
@@ -464,6 +470,8 @@ model Comment {
   user      User     @relation(fields: [userId], references: [id])
   content   String
   createdAt DateTime @default(now())
+
+  @@index([articleId]) // 기사별 댓글 (2026-10-09)
 }
 
 // 방문 분석(GA) 하루치 보고서 — 매일 한 번 자동 생성해 저장, 관리자 "방문 분석" 화면이 읽음 (2026-10-08)

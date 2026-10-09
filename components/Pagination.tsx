@@ -4,10 +4,12 @@ export default function Pagination({
   page,
   totalPages,
   category,
+  basePath = '/',
 }: {
   page: number;
   totalPages: number;
   category?: string;
+  basePath?: string; // 키워드 페이지 등 홈이 아닌 목록 (2026-10-09)
 }) {
   if (totalPages <= 1) return null;
 
@@ -16,7 +18,7 @@ export default function Pagination({
     if (category) params.set('category', category);
     if (p > 1) params.set('page', String(p));
     const qs = params.toString();
-    return qs ? `/?${qs}` : '/';
+    return qs ? `${basePath}?${qs}` : basePath;
   };
 
   // 10개 단위 묶음 (1~10, 11~20 …) — 이전/다음은 앞뒤 묶음의 첫·끝 페이지로 (2026-10-08 사장님 지시)

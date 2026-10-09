@@ -6,6 +6,21 @@ import { prisma } from '@/lib/prisma';
 import { usableAvatarUrl } from '@/lib/avatarGradient';
 import { claimLegacyReporterOnLogin } from '@/lib/legacyReporter';
 
+// 등급·계정 상태를 DB에서 다시 확인 (2026-10-09) — 예전엔 로그인할 때 받은 등급이 출입증(JWT)에 최대 30일 고정돼,
+// 강등·삭제·유령 처리한 기자도 기존 로그인으로 계속 기사를 쓰고 발행할 수 있었음.
+// 요청마다 DB를 치지 않도록 30초 동안은 기억해 둔 값을 씀.
+const ROLE_TTL_MS = 30_000;
+const roleCache = new Map<string, { role: string | null; at: number }>();
+async function currentRole(userId: string): Promise<string | null> {
+  const hit = roleCache.get(userId);
+  if (hit && Date.now() - hit.at < ROLE_TTL_MS) return hit.role;
+  const u = await prisma.user.findUnique({ where: { id: userId }, select: { role: true, ghost: true } });
+  const role = u && !u.ghost ? u.role : null; // 삭제·유령 처리된 계정은 로그인 무효
+  if (roleCache.size > 5000) roleCache.clear();
+  roleCache.set(userId, { role, at: Date.now() });
+  return role;
+}
+
 const providers = [
   GoogleProvider({
     clientId: process.env.GOOGLE_CLIENT_ID ?? '',
@@ -44,6 +59,11 @@ export const authOptions: NextAuthOptions = {
   session: { strategy: 'jwt' },
   callbacks: {
     async jwt({ token, user }) {
+      if (!user && token.id) {
+        // DB 장애 때는 출입증 값을 그대로 씀(사이트 전체 로그아웃 방지)
+        const role = await currentRole(token.id as string).catch(() => token.role as string);
+        token.role = role;
+      }
       if (user) {
         token.id = (user as any).id;
         token.role = (user as any).role;
@@ -55,6 +75,10 @@ export const authOptions: NextAuthOptions = {
       return token;
     },
     async session({ session, token }) {
+      if (session.user && !token.role) {
+        // 삭제·유령 처리된 계정 — 로그인 안 한 것으로
+        return { ...session, user: undefined } as any;
+      }
       if (session.user) {
         (session.user as any).id = token.id;
         (session.user as any).role = token.role;
