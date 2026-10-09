@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { ROLES } from '@/lib/roles';
 import { getCurrentUser } from '@/lib/session';
 
-// 사이트 전역 설정 — 지금은 기사 본문 삽입 광고 개수만 (기능정의서 5). 싱글턴 row.
+// 사이트 전역 설정 — 기사 본문 삽입 광고 개수(기능정의서 5) + 애드센스 설정. 싱글턴 row.
 export async function GET() {
   const config = await prisma.siteConfig.upsert({
     where: { id: 'singleton' },
@@ -20,13 +20,18 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: '편집장만 설정을 변경할 수 있습니다' }, { status: 403 });
   }
 
-  const { articleBannerCount } = await req.json();
-  const count = Math.max(0, Math.min(3, Number(articleBannerCount) || 0));
+  // 보낸 항목만 바꿈 — 배너 탭은 articleBannerCount, 애드센스 탭은 adsense* (2026-10-09)
+  const body = await req.json();
+  const data: Record<string, number | boolean> = {};
+  if (body.articleBannerCount !== undefined) data.articleBannerCount = Math.max(0, Math.min(3, Number(body.articleBannerCount) || 0));
+  for (const key of ['adsenseEnabled', 'adsenseOnHome', 'adsenseOnArticle', 'adsenseOnOther'] as const) {
+    if (typeof body[key] === 'boolean') data[key] = body[key];
+  }
 
   const config = await prisma.siteConfig.upsert({
     where: { id: 'singleton' },
-    update: { articleBannerCount: count },
-    create: { id: 'singleton', articleBannerCount: count },
+    update: data,
+    create: { id: 'singleton', ...data },
   });
   return NextResponse.json(config);
 }

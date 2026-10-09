@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { ROLES } from '@/lib/roles';
 import { getCurrentUser } from '@/lib/session';
-import { buildWeeklyDigest, currentWeekRange } from '@/lib/newsletter';
+import { buildNewsletter } from '@/lib/newsletter';
 import { isEmailConfigured, sendEmailBatch } from '@/lib/resend';
 
-// 뉴스레터 실제 발송 — 옵트인한 회원 전체 대상 (기능정의서 6)
+// 뉴스레터 실제 발송 — 편집장이 고른 기사 + 인사말, 옵트인한 회원 전체 대상 (기능정의서 6, 2026-10-09 선택 발송으로 변경)
 // 이메일 발송 인프라(RESEND_API_KEY, NEWSLETTER_FROM_EMAIL)가 설정돼 있어야 동작함.
 export async function POST(req: NextRequest) {
   const user = await getCurrentUser();
@@ -21,27 +21,24 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const { start: startParam, end: endParam } = await req.json().catch(() => ({}));
-  const { start, end } = startParam && endParam
-    ? { start: new Date(startParam), end: (() => { const d = new Date(endParam); d.setHours(23, 59, 59, 999); return d; })() }
-    : currentWeekRange();
-
-  const [{ subject, html }, subscribers] = await Promise.all([
-    buildWeeklyDigest(start, end),
+  const { ids, greeting } = await req.json().catch(() => ({}));
+  const [{ subject, html, articles }, subscribers] = await Promise.all([
+    buildNewsletter(Array.isArray(ids) ? ids.map(String) : [], String(greeting ?? '')),
     prisma.user.findMany({ where: { newsletterOptIn: true }, select: { email: true } }),
   ]);
 
-  if (subscribers.length === 0) {
-    return NextResponse.json({ error: '구독자가 없습니다' }, { status: 400 });
-  }
+  if (articles.length === 0) return NextResponse.json({ error: '보낼 기사를 하나 이상 고르세요' }, { status: 400 });
+  if (subscribers.length === 0) return NextResponse.json({ error: '구독자가 없습니다' }, { status: 400 });
 
   const { sent, failed } = await sendEmailBatch(
     subscribers.map((s) => s.email),
     { subject, html }
   );
 
+  // 기록용 기간 = 고른 기사들의 발행일 범위
+  const dates = articles.map((a) => (a.publishedAt ?? a.createdAt).getTime());
   await prisma.newsletterSend.create({
-    data: { weekStart: start, weekEnd: end, recipientCount: sent },
+    data: { weekStart: new Date(Math.min(...dates)), weekEnd: new Date(Math.max(...dates)), recipientCount: sent },
   });
 
   return NextResponse.json({ sent, failed, total: subscribers.length });

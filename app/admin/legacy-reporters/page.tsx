@@ -1,5 +1,6 @@
 'use client';
 
+import AdminTabs, { PEOPLE_TABS } from '@/components/AdminTabs';
 import { useEffect, useState } from 'react';
 
 type Legacy = { id: string; name: string; claimEmail: string | null; articleCount: number };
@@ -81,7 +82,7 @@ export default function LegacyReportersPage() {
 
   return (
     <main className="max-w-5xl mx-auto px-4 py-8">
-      <h1 className="text-xl font-bold text-gray-900 mb-2">옛 기자 계정 연결</h1>
+      <AdminTabs title="회원/기자관리" tabs={PEOPLE_TABS} />
       <p className="text-sm text-gray-500 mb-5">
         옛 사이트 기사는 로그인할 수 없는 임시 기자 이름으로 들어와 있습니다. <b>기자의 구글 이메일을 미리 등록</b>해 두면 그 사람이
         처음 로그인할 때 옛 기사와 기자 등급이 자동으로 이어집니다. 이미 가입한 사람은 계정을 골라 [연결]을 누르세요(이름이 같은 회원은

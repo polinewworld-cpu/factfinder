@@ -1,5 +1,6 @@
 'use client';
 
+import AdminTabs, { PEOPLE_TABS } from '@/components/AdminTabs';
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 
@@ -77,9 +78,8 @@ export default function MembersAdminPage() {
 
   return (
     <main className="max-w-3xl mx-auto px-4 py-8">
-      <h1 className="text-xl font-bold text-gray-900 mb-6">
-        {roleFilter ? `기자관리 (${shownUsers.length})` : `회원 관리 (${users.length})`}
-      </h1>
+      <AdminTabs title="회원/기자관리" tabs={PEOPLE_TABS} />
+      <p className="text-sm text-gray-500 mb-3">{roleFilter ? `기자 ${shownUsers.length}명` : `전체 회원 ${users.length}명`}</p>
       <div className="overflow-x-auto">
         <table className="w-full text-sm border-collapse">
           <thead>

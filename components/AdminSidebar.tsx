@@ -2,34 +2,31 @@
 
 import { usePathname, useSearchParams } from 'next/navigation';
 import { AdminSidebarToggle, useAdminNav } from './AdminNav';
+import { AD_TABS, PEOPLE_TABS, tabActive, type AdminTab } from './AdminTabs';
 
-type NavItem = { href: string; label: string };
+type NavItem = { href: string; label: string; group?: AdminTab[] };
 
 // 관리자 메뉴 — 전부 플랫 링크 (2026-09-11: 불필요한 '콘텐츠' 그룹 제거, 그룹 아코디언 구조 폐지)
+// 2026-10-09: 배너·줄광고·애드센스 → "광고 관리", 기자·신청·옛 기자·회원 → "회원/기자관리" 한 칸 + 화면 안 탭(AdminTabs).
+// "옛 사진 옮기기"(/admin/legacy-images)는 당분간 메뉴에서 숨김 — 주소로는 그대로 열림.
 const NAV: NavItem[] = [
   { href: '/admin', label: '대시보드' },
   { href: '/admin/analytics', label: '방문 분석' }, // GA 자동 분석 (2026-10-08)
   { href: '/write', label: '기사 작성' },
   { href: '/admin/articles', label: '전체 기사' },
   { href: '/admin/pending', label: '승인 대기함' },
-  { href: '/admin/banners', label: '배너 관리' },
-  { href: '/admin/line-ads', label: '줄광고 관리' },
-  { href: '/admin/members', label: '전체 회원' },
-  { href: '/admin/members?role=REPORTER', label: '기자관리' },
-  { href: '/admin/reporter-applications', label: '기자 신청 대기함' },
-  { href: '/admin/legacy-reporters', label: '옛 기자 연결' }, // 옛 사이트 기자 → 가입 계정 (2026-10-08)
+  { href: '/admin/banners', label: '광고 관리', group: AD_TABS },
+  { href: '/admin/members?role=REPORTER', label: '회원/기자관리', group: PEOPLE_TABS },
   { href: '/admin/donations', label: '후원내역' },
-  { href: '/admin/legacy-images', label: '옛 사진 옮기기' }, // 도메인 전환 전 1회용 (2026-10-08)
-  { href: '/admin/newsletter', label: '뉴스레터 발송' },
+  { href: '/admin/newsletter', label: '뉴스레터 관리' },
 ];
 
-// 같은 경로라도 쿼리가 다르면 다른 메뉴(예: 전체 회원 vs 기자관리 ?role=REPORTER) — role 값까지 비교해야 두 개가 동시에 켜지지 않음
-function isActive(href: string, pathname: string | null, role: string | null) {
+function isActive(item: NavItem, pathname: string | null, role: string | null) {
   if (!pathname) return false;
-  const [path, query] = href.split('?');
+  if (item.group) return item.group.some((t) => tabActive(t.href, pathname, role));
+  const path = item.href;
   if (path === '/admin') return pathname === '/admin';
-  if (pathname !== path && !pathname.startsWith(`${path}/`)) return false;
-  return (new URLSearchParams(query).get('role') ?? null) === role;
+  return pathname === path || pathname.startsWith(`${path}/`);
 }
 
 export default function AdminSidebar() {
@@ -46,7 +43,7 @@ export default function AdminSidebar() {
       {open ? (
         <div className="space-y-1">
           {NAV.map((item) => {
-            const active = isActive(item.href, pathname, role);
+            const active = isActive(item, pathname, role);
             return (
               <a
                 key={item.href}

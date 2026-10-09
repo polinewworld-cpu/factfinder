@@ -309,10 +309,15 @@ model Banner {
   updatedAt DateTime        @updatedAt
 }
 
-// 사이트 전역 설정값 — 지금은 기사 본문 삽입 광고 개수만 (싱글턴 row, id 고정)
+// 사이트 전역 설정값 — 기사 본문 삽입 광고 개수 + 애드센스 설정 (싱글턴 row, id 고정)
 model SiteConfig {
-  id                 String @id @default("singleton")
-  articleBannerCount Int    @default(0)
+  id                 String  @id @default("singleton")
+  articleBannerCount Int     @default(0)
+  // 구글 애드센스 자동광고 (2026-10-09, 관리자 광고 관리 → 애드센스 탭) — 켜기/끄기와 화면 종류별 노출
+  adsenseEnabled     Boolean @default(true)
+  adsenseOnHome      Boolean @default(true) // 홈·카테고리 목록
+  adsenseOnArticle   Boolean @default(true) // 기사 화면
+  adsenseOnOther     Boolean @default(true) // 검색·회사소개 등 그 밖의 화면
 }
 
 // 범용 사진 라이브러리 — 기사에 종속되지 않는 재사용 가능한 사진 모음 (기능정의서 8.1)

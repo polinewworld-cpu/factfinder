@@ -8,6 +8,7 @@ import { prisma } from '@/lib/prisma';
 import WelcomeSetup from '@/components/WelcomeSetup';
 import { AdminNavProvider } from '@/components/AdminNav';
 import SiteAnalytics from '@/components/SiteAnalytics';
+import AdSenseLoader from '@/components/AdSenseLoader';
 import type { Metadata } from 'next';
 import {
   SITE_URL, IS_LIVE_DOMAIN, ADSENSE_CLIENT, GOOGLE_SITE_VERIFICATION, NAVER_SITE_VERIFICATION,
@@ -33,6 +34,8 @@ export const metadata: Metadata = {
     other: { 'naver-site-verification': NAVER_SITE_VERIFICATION },
   },
   alternates: { types: { 'application/rss+xml': '/rss.xml' } },
+  // 애드센스 사이트 소유 확인용 — 광고 스크립트를 끈 화면에서도 계정 연결이 유지되도록
+  other: { 'google-adsense-account': ADSENSE_CLIENT },
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
@@ -41,17 +44,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const needsSetup = user
     ? !(await prisma.user.findUnique({ where: { id: user.id }, select: { nickname: true } }))?.nickname
     : false;
+  const adsense = IS_LIVE_DOMAIN
+    ? await prisma.siteConfig.findUnique({ where: { id: 'singleton' } }).catch(() => null)
+    : null;
   return (
     <html lang="ko">
       <head>
-        {/* 구글 애드센스 자동광고 — 옛 사이트와 동일하게 스크립트만 넣고, 광고 위치는 애드센스 콘솔(자동광고 설정)이 결정 */}
-        {IS_LIVE_DOMAIN && (
-          <script
-            async
-            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT}`}
-            crossOrigin="anonymous"
-          />
-        )}
         <link
           rel="preload"
           href="/fonts/ibm-plex-sans/ibm-plex-sans-latin.woff2"
@@ -85,6 +83,15 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           </AdminNavProvider>
         </div>
         <SiteAnalytics />
+        {/* 구글 애드센스 자동광고 — 광고 위치·밀도는 애드센스 콘솔이 결정, 켜기/끄기·화면 종류는 관리자 광고 관리 → 애드센스 탭 (2026-10-09) */}
+        {IS_LIVE_DOMAIN && adsense?.adsenseEnabled !== false && (
+          <AdSenseLoader
+            client={ADSENSE_CLIENT}
+            home={adsense?.adsenseOnHome ?? true}
+            article={adsense?.adsenseOnArticle ?? true}
+            other={adsense?.adsenseOnOther ?? true}
+          />
+        )}
         {/* 사이트 정보 구조화 데이터 — 언론사명·로고·사이트 내 검색 (2026-10-08 SEO) */}
         <script
           type="application/ld+json"

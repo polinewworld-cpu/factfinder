@@ -1,5 +1,6 @@
 'use client';
 
+import AdminTabs, { AD_TABS } from '@/components/AdminTabs';
 import { useEffect, useState } from 'react';
 
 type LineAd = { id: string; text: string; linkUrl: string; order: number; active: boolean };
@@ -78,7 +79,7 @@ export default function LineAdsAdminPage() {
 
   return (
     <main className="max-w-3xl mx-auto px-4 py-8">
-      <h1 className="text-xl font-bold text-gray-900 mb-2">줄광고 관리</h1>
+      <AdminTabs title="광고 관리" tabs={AD_TABS} />
       <p className="text-sm text-gray-500 mb-1">
         기사 본문 맨 마지막에 핫핑크 화살표와 함께 기사제목처럼 굵은 한 줄로 노출되는 텍스트 광고입니다.
       </p>

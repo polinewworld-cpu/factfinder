@@ -1,5 +1,6 @@
 'use client';
 
+import AdminTabs, { PEOPLE_TABS } from '@/components/AdminTabs';
 import { useEffect, useState } from 'react';
 import { detectSnsPlatform, SNS_PLATFORM_LABELS } from '@/lib/sns';
 import { UserAvatar } from '@/components/InitialAvatar';
@@ -51,7 +52,8 @@ export default function ReporterApplicationsPage() {
 
   return (
     <main className="max-w-3xl mx-auto px-4 py-8">
-      <h1 className="text-xl font-bold text-gray-900 mb-6">기자 신청 대기함 ({items.length})</h1>
+      <AdminTabs title="회원/기자관리" tabs={PEOPLE_TABS} />
+      <p className="text-sm text-gray-500 mb-3">기자 신청 대기 {items.length}건</p>
       {items.length === 0 && <p className="text-gray-400 text-sm">기자 신청 대기 중인 회원이 없습니다.</p>}
       <ul className="space-y-3">
         {items.map((a) => (

@@ -1,5 +1,6 @@
 'use client';
 
+import AdminTabs, { AD_TABS } from '@/components/AdminTabs';
 import { useEffect, useState } from 'react';
 
 type Banner = {
@@ -148,7 +149,7 @@ export default function BannersAdminPage() {
 
   return (
     <main className="max-w-3xl mx-auto px-4 py-8">
-      <h1 className="text-xl font-bold text-gray-900 mb-2">배너 관리</h1>
+      <AdminTabs title="광고 관리" tabs={AD_TABS} />
       <p className="text-sm text-gray-500 mb-6">메인화면 그리드의 3번째·5번째·7번째 카드 자리가 광고 슬롯입니다.</p>
       {errorMsg && <p className="text-red-600 text-sm mb-4">{errorMsg}</p>}
 
