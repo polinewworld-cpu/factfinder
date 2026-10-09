@@ -60,10 +60,9 @@ export async function searchPhotos(s: PhotoSearch, take = 200) {
     and.push({ OR: [{ sourceType: { in: sources as any } }, ...(withNone ? [{ sourceType: null }] : [])] });
   } else if ((s.sources ?? []).includes('NONE')) {
     and.push({ sourceType: null });
-  } else {
-    // 안전한 사진만 — 출처 미입력(옛 갤러리 사진)은 "출처 미입력" 필터를 직접 고를 때만 (사장님 지시 2026-10-09)
-    and.push({ sourceType: { not: null } });
   }
+  // 출처 미입력(옛 갤러리 사진)도 목록에는 다 보임 — 숨겼더니 기존 사진이 전부 사라진 것처럼 보였음(2026-10-09 되돌림).
+  // 대신 기사에 넣을 때 막음(출처를 먼저 입력해야 넣기 가능) — components/PhotoBank.tsx
   if (s.tag) and.push({ tags: { some: { name: s.tag } } });
   if (s.people?.length) {
     if (s.peopleMode === 'any') and.push({ people: { some: { id: { in: s.people } } } });

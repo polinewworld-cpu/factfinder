@@ -638,11 +638,16 @@ function DetailPanel({
         ) : (
           <>
             <img src={d.url} alt={d.title ?? ''} className="w-full rounded-lg border" />
-            {onPick && (
-              <button type="button" onClick={() => onPick(d)} className="w-full text-sm font-bold text-white bg-brand rounded-lg py-2.5">
-                {pickLabel ?? '이 사진 넣기'}
-              </button>
-            )}
+            {onPick &&
+              (d.sourceType ? (
+                <button type="button" onClick={() => onPick(d)} className="w-full text-sm font-bold text-white bg-brand rounded-lg py-2.5">
+                  {pickLabel ?? '이 사진 넣기'}
+                </button>
+              ) : (
+                <p className="text-sm font-semibold text-amber-700 border border-amber-200 bg-amber-50 rounded-lg p-2.5">
+                  출처가 확인되지 않은 사진이라 기사에 넣을 수 없습니다. [정보 수정]에서 출처 유형을 넣으면 넣을 수 있습니다.
+                </p>
+              ))}
             <div className="flex flex-wrap gap-2">
               <button
                 type="button"
@@ -1577,8 +1582,8 @@ export default function PhotoBank({
 
       <p className="text-xs text-gray-500">
         {loading ? '불러오는 중…' : `내 사진 뱅크 ${photos.length}장${photos.length >= 200 ? ' (최대 200장까지 표시 — 검색어·필터로 좁혀 주세요)' : ''}`}
-        {!loading && unverified > 0 && !sources.includes('NONE') && (
-          <span className="text-amber-700"> · 출처 미입력 {unverified}장은 안전 확인 전이라 검색에서 빠졌습니다{mode === 'manage' ? ' (필터 → 출처 미입력에서 출처를 넣어 주세요)' : ''}</span>
+        {!loading && unverified > 0 && (
+          <span className="text-amber-700"> · 출처 미입력 {unverified}장은 출처를 넣기 전에는 기사에 넣을 수 없습니다</span>
         )}
       </p>
       {mode === 'manage' && (
@@ -1638,7 +1643,9 @@ export default function PhotoBank({
                 type="button"
                 onClick={(e) =>
                   mode === 'pick' && multiple
-                    ? setChecked(toggle(checked, p.id))
+                    ? p.sourceType
+                      ? setChecked(toggle(checked, p.id))
+                      : setDetailId(p.id)
                     : mode === 'manage' && (e.ctrlKey || e.metaKey || e.shiftKey || sel.length > 0)
                       ? setSel(toggle(sel, p.id))
                       : setDetailId(p.id)
@@ -1659,7 +1666,7 @@ export default function PhotoBank({
                 </div>
                 {p.people.length > 0 && <p className="px-1.5 pb-1 text-[11px] text-gray-600 truncate">{p.people.map((x) => x.name).join(', ')}</p>}
               </button>
-              {mode === 'pick' && !multiple && (
+              {mode === 'pick' && !multiple && p.sourceType && (
                 <button
                   type="button"
                   onClick={() => pickOne(p)}
