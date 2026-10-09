@@ -74,12 +74,15 @@ export default function MembersAdminPage() {
     );
   }
 
-  const shownUsers = roleFilter ? users.filter((u) => u.role === roleFilter) : users;
+  // 2026-10-09: 기자관리 = 로그인하는 실제 기자·논설위원·편집장 전부(등급이 REPORTER인 것만 보이던 문제).
+  // 옛 사이트 임시 계정·외부 기고자(…@legacy.invalid)는 [유령기자] 탭에서 관리 — 여기 두 목록에선 뺌
+  const realUsers = users.filter((u) => !String(u.email ?? '').endsWith('@legacy.invalid'));
+  const shownUsers = roleFilter ? realUsers.filter((u) => ['REPORTER', 'COLUMNIST', 'CHIEF_EDITOR'].includes(u.role)) : realUsers;
 
   return (
     <main className="max-w-3xl mx-auto px-4 py-8">
       <AdminTabs title="회원/기자관리" tabs={PEOPLE_TABS} />
-      <p className="text-sm text-gray-500 mb-3">{roleFilter ? `기자 ${shownUsers.length}명` : `전체 회원 ${users.length}명`}</p>
+      <p className="text-sm text-gray-500 mb-3">{roleFilter ? `기자·논설위원·편집장 ${shownUsers.length}명 (외부 기고자·옛 기자는 [유령기자] 탭)` : `전체 회원 ${realUsers.length}명`}</p>
       <div className="overflow-x-auto">
         <table className="w-full text-sm border-collapse">
           <thead>
