@@ -53,32 +53,32 @@ enum BannerPlacement {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  email         String    @unique
-  emailVerified DateTime? // NextAuth 요구 필드
-  name          String
-  image         String?
-  role          UserRole  @default(READER)
-  gender        Gender?
-  nickname      String?   @unique // 필수+중복불허 (기능정의서 2번) — 앱 레벨에서 필수 검증, DB는 유니크만 강제
-  bio           String?   @db.Text // 자기소개 — 기사 하단 기자 프로필에 노출 (기능정의서 3.2 신규)
+  id                        String                     @id @default(cuid())
+  email                     String                     @unique
+  emailVerified             DateTime? // NextAuth 요구 필드
+  name                      String
+  image                     String?
+  role                      UserRole                   @default(READER)
+  gender                    Gender?
+  nickname                  String?                    @unique // 필수+중복불허 (기능정의서 2번) — 앱 레벨에서 필수 검증, DB는 유니크만 강제
+  bio                       String?                    @db.Text // 자기소개 — 기사 하단 기자 프로필에 노출 (기능정의서 3.2 신규)
   reporterApplicationStatus ReporterApplicationStatus? // 기자 신청 상태 (기능정의서 3.2.1)
-  newsletterOptIn Boolean @default(false) // 뉴스레터 구독 여부 — 후원 여부와 무관한 별도 옵트인 (기능정의서 6)
-  isDonor       Boolean   @default(false)
-  legacyClaimEmail String? @unique // 옛 기자 임시 계정에만 — 이 구글 이메일로 로그인하면 옛 기사·기자 등급 자동 승계 (2026-10-08)
-  ghost         Boolean   @default(false) // 유령 계정 — 관리자가 [삭제]한 옛 기자: 목록에선 숨기고 옛 기사·이름은 그대로 (2026-10-08)
-  createdAt     DateTime  @default(now())
+  newsletterOptIn           Boolean                    @default(false) // 뉴스레터 구독 여부 — 후원 여부와 무관한 별도 옵트인 (기능정의서 6)
+  isDonor                   Boolean                    @default(false)
+  legacyClaimEmail          String?                    @unique // 옛 기자 임시 계정에만 — 이 구글 이메일로 로그인하면 옛 기사·기자 등급 자동 승계 (2026-10-08)
+  ghost                     Boolean                    @default(false) // 유령 계정 — 관리자가 [삭제]한 옛 기자: 목록에선 숨기고 옛 기사·이름은 그대로 (2026-10-08)
+  createdAt                 DateTime                   @default(now())
 
-  articles      Article[]
-  comments      Comment[]
-  accounts      Account[]
-  sessions      Session[]
-  donations     Donation[]
-  pollVotes     PollVote[]
-  snsLinks      SnsLink[]
-  savedArticles SavedArticle[]
-  photos        Photo[]
-  reporterDonations Donation[] @relation("DonationReporter") // 이 기자를 지정해서 들어온 후원 (기능정의서 7)
+  articles          Article[]
+  comments          Comment[]
+  accounts          Account[]
+  sessions          Session[]
+  donations         Donation[]
+  pollVotes         PollVote[]
+  snsLinks          SnsLink[]
+  savedArticles     SavedArticle[]
+  photos            Photo[]
+  reporterDonations Donation[]     @relation("DonationReporter") // 이 기자를 지정해서 들어온 후원 (기능정의서 7)
 }
 
 // 기자 프로필에 노출되는 SNS 링크 — "+" 버튼으로 여러 개 추가 가능 (기능정의서 3.2.1)
@@ -141,51 +141,52 @@ model Category {
 }
 
 model Article {
-  id              String        @id @default(cuid())
-  legacyId        Int?          @unique // 옛 사이트(다다미디어 CMS) 기사 번호 — 옛 주소(/news/view.php?idx=N 등) 301 리다이렉트용 (2026-10-08 신설)
-  title           String
-  cardTitle       String? // 홈/카테고리 카드 전용 제목 줄바꿈 — 기사 페이지/컴포저 title과 분리
-  subtitle1       String? // 부제목 3줄 (기능정의서 8.2) — 전부 선택 입력
-  subtitle2       String?
-  subtitle3       String?
-  content         String        @db.Text
-  excerpt         String?
-  hoverText       String? // 카드 이미지 마우스 오버 시 이미지가 dimmed되며 표시되는 흰색 문구 (2026-09-11 신설)
-  themeTags       String? // "테마" — 콤마로 구분된 문자열. 아직 기능은 없고 값만 입력받아 저장(추후 사용 예정, 2026-09-11 신설)
-  showOnMain      Boolean   @default(true) // 메인(인덱스) 피드 노출 여부 — 편집장이 카드 호버 (-) 버튼으로 끌 수 있음. 꺼도 키워드/검색 등 다른 화면엔 계속 노출됨 (2026-09-12 신설)
-  recommendCount  Int       @default(0) // "추천" 버튼 클릭 수 — 로그인 불필요, 브라우저당 1회로 클라이언트에서만 제한 (2026-09-12 신설)
-  audioUrl        String? // "읽어주기" — Google Cloud TTS로 생성해둔 오디오 파일 캐시. 본문 수정 시 PUT에서 null로 초기화되어 재생성됨 (2026-09-12 신설)
-  coverImageUrl   String?
-  coverFocalX         Int           @default(50) // 카드 썸네일 object-position 가로 (0=왼쪽, 100=오른쪽)
-  coverFocalY         Int           @default(50) // 카드 썸네일 object-position 세로 (0=위, 100=아래)
-  coverFeatureFocalX  Int           @default(50) // 1면톱(featured) 카드 크롭 가로
-  coverFeatureFocalY  Int           @default(50) // 1면톱(featured) 카드 크롭 세로
-  coverSecondFocalX   Int           @default(50) // 상단 두번째(wide 2열) 카드 크롭 가로
-  coverSecondFocalY   Int           @default(50) // 상단 두번째(wide 2열) 카드 크롭 세로
-  status          ArticleStatus @default(PUBLISHED)
-  viewCount       Int           @default(0)
-  isFrontpageTop  Boolean       @default(false) // 1면톱 - 사이트 전체 1건만 true
+  id                 String        @id @default(cuid())
+  legacyId           Int?          @unique // 옛 사이트(다다미디어 CMS) 기사 번호 — 옛 주소(/news/view.php?idx=N 등) 301 리다이렉트용 (2026-10-08 신설)
+  title              String
+  cardTitle          String? // 홈/카테고리 카드 전용 제목 줄바꿈 — 기사 페이지/컴포저 title과 분리
+  subtitle1          String? // 부제목 3줄 (기능정의서 8.2) — 전부 선택 입력
+  subtitle2          String?
+  subtitle3          String?
+  content            String        @db.Text
+  excerpt            String?
+  hoverText          String? // 카드 이미지 마우스 오버 시 이미지가 dimmed되며 표시되는 흰색 문구 (2026-09-11 신설)
+  themeTags          String? // "테마" — 콤마로 구분된 문자열. 아직 기능은 없고 값만 입력받아 저장(추후 사용 예정, 2026-09-11 신설)
+  showOnMain         Boolean       @default(true) // 메인(인덱스) 피드 노출 여부 — 편집장이 카드 호버 (-) 버튼으로 끌 수 있음. 꺼도 키워드/검색 등 다른 화면엔 계속 노출됨 (2026-09-12 신설)
+  recommendCount     Int           @default(0) // "추천" 버튼 클릭 수 — 로그인 불필요, 브라우저당 1회로 클라이언트에서만 제한 (2026-09-12 신설)
+  audioUrl           String? // "읽어주기" — Google Cloud TTS로 생성해둔 오디오 파일 캐시. 본문 수정 시 PUT에서 null로 초기화되어 재생성됨 (2026-09-12 신설)
+  coverImageUrl      String?
+  coverFocalX        Int           @default(50) // 카드 썸네일 object-position 가로 (0=왼쪽, 100=오른쪽)
+  coverFocalY        Int           @default(50) // 카드 썸네일 object-position 세로 (0=위, 100=아래)
+  coverFeatureFocalX Int           @default(50) // 1면톱(featured) 카드 크롭 가로
+  coverFeatureFocalY Int           @default(50) // 1면톱(featured) 카드 크롭 세로
+  coverSecondFocalX  Int           @default(50) // 상단 두번째(wide 2열) 카드 크롭 가로
+  coverSecondFocalY  Int           @default(50) // 상단 두번째(wide 2열) 카드 크롭 세로
+  status             ArticleStatus @default(PUBLISHED)
+  viewCount          Int           @default(0)
+  isFrontpageTop     Boolean       @default(false) // 1면톱 - 사이트 전체 1건만 true
 
-  authorId   String
-  author     User     @relation(fields: [authorId], references: [id])
+  authorId String
+  author   User   @relation(fields: [authorId], references: [id])
 
   categoryId String?
   category   Category? @relation(fields: [categoryId], references: [id])
 
-  images   ArticleImage[]
-  comments Comment[]
-  keywords Keyword[] // 관리자가 미리 만든 키워드 중 선택 (다대다)
-  poll     Poll?
-  savedBy  SavedArticle[]
+  images    ArticleImage[]
+  comments  Comment[]
+  keywords  Keyword[] // 관리자가 미리 만든 키워드 중 선택 (다대다)
+  poll      Poll?
+  savedBy   SavedArticle[]
   donations Donation[] // 이 기사에서 들어온 후원 (2026-10-08)
 
   // 관련기사 — 작성자가 발행된 기사 중에서 직접 선택 (기능정의서 8.2). 방향성 있는 자기참조 다대다.
   relatedArticles Article[] @relation("RelatedArticles")
   relatedFrom     Article[] @relation("RelatedArticles")
 
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
   publishedAt DateTime?
+  photoUsages PhotoUsage[] // 사진 뱅크 사용 이력 (2026-10-09)
 }
 
 // 독자의 "기사 저장"(북마크) 기능 (기능정의서 3.1)
@@ -212,39 +213,39 @@ model Poll {
 }
 
 model PollOption {
-  id      String     @id @default(cuid())
-  pollId  String
-  poll    Poll       @relation(fields: [pollId], references: [id], onDelete: Cascade)
-  text    String
-  order   Int        @default(0)
-  votes   PollVote[]
+  id     String     @id @default(cuid())
+  pollId String
+  poll   Poll       @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  text   String
+  order  Int        @default(0)
+  votes  PollVote[]
 }
 
 model PollVote {
-  id       String     @id @default(cuid())
-  pollId   String
-  poll     Poll       @relation(fields: [pollId], references: [id], onDelete: Cascade)
-  optionId String
-  option   PollOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
-  userId   String
-  user     User       @relation(fields: [userId], references: [id])
-  createdAt DateTime  @default(now())
+  id        String     @id @default(cuid())
+  pollId    String
+  poll      Poll       @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  optionId  String
+  option    PollOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User       @relation(fields: [userId], references: [id])
+  createdAt DateTime   @default(now())
 
   @@unique([pollId, userId]) // 사용자당 설문 1표
 }
 
 // 관리자가 미리 만들어두는 키워드 목록 (카테고리와 별도 체계) — 여론/단독 등은 이제 카테고리가 아니라 키워드
 model Keyword {
-  id        String    @id @default(cuid())
-  name      String    @unique
-  createdAt DateTime  @default(now())
+  id        String   @id @default(cuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
 
-  articles  Article[]
+  articles Article[]
 }
 
 // 에디터 특수문자 세트 — 편집장이 에디터 안의 레이어(모달)에서 카테고리별로 추가/삭제 (2026-09-11: 관리자 메뉴 → 에디터 내장으로 이동)
 model SpecialCharacter {
-  id       String @id @default(cuid())
+  id       String  @id @default(cuid())
   char     String // 실제 문자 (▶, ■, ※ 등)
   label    String? // 관리용 설명
   category String  @default("자주쓰는") // 모달 상단 탭 — 자주쓰는/화살표/단위 등, 편집장이 새 이름을 입력하면 새 탭이 생김
@@ -325,17 +326,63 @@ model Photo {
   id         String     @id @default(cuid())
   url        String
   filename   String?
-  title      String? // 사진 제목 — 갤러리 모달 업로드 시 입력 (2026-09-11 신설)
+  title      String? // 캡션(초안) — 갤러리 모달 업로드 시 입력 (2026-09-11 신설)
   uploaderId String
   uploader   User       @relation(fields: [uploaderId], references: [id])
-  tags       PhotoTag[]
+  tags       PhotoTag[] // 상황 태그(기자회견·회의·현장·프로필 등) — 2026-10-09 사진 뱅크에서 의미 변경
   createdAt  DateTime   @default(now())
+
+  // ── 사진 뱅크 (2026-10-09, 기능정의 v0.1) — 출처가 확인된 사진만. 옛 갤러리 사진은 sourceType 비어 있음(출처 미입력)
+  sourceType    PhotoSource?
+  license       String? // 공공누리 1유형, CC BY-SA 4.0 등
+  sourceUrl     String? // 원본 페이지
+  viaArticleUrl String? // 타 언론 기사 "제공" 사진이면 그 기사
+  takenAt       DateTime? // 촬영일
+  photographer  String? // 촬영자·기관
+  credit        String? // 사진=○○ (출처 유형별 자동, 수정 가능)
+  people        Person[]
+  usages        PhotoUsage[]
+}
+
+// 사진 출처 유형 (사진 뱅크)
+enum PhotoSource {
+  KOGL // 공공누리
+  PARTY // 정당·의원실 배포
+  PUBLIC_DOMAIN // 퍼블릭 도메인
+  CC // 크리에이티브 커먼즈
+  OWN // 자체 촬영
+  AI_RECON // AI 재구성
+  AI_GEN // AI 생성
 }
 
 model PhotoTag {
   id     String  @id @default(cuid())
   name   String  @unique
   photos Photo[]
+}
+
+// 사진 뱅크 인물 목록 — 편집장이 관리 (2026-10-09)
+model Person {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  aliases     String? // 별칭, 쉼표로 구분
+  affiliation String? // 소속
+  title       String? // 직함
+  photos      Photo[]
+  createdAt   DateTime @default(now())
+}
+
+// 사진 사용 이력 — 기사 저장 때 본문·카드뉴스·커버에 들어 있는 사진을 기록 (2026-10-09)
+model PhotoUsage {
+  id          String   @id @default(cuid())
+  photoId     String
+  photo       Photo    @relation(fields: [photoId], references: [id], onDelete: Cascade)
+  articleId   String
+  article     Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  firstUsedAt DateTime @default(now())
+
+  @@unique([photoId, articleId])
+  @@index([firstUsedAt])
 }
 
 // 정치신세계 자동 영상 카드 — 유튜브 채널에서 가져온 쇼츠/영상/라이브. Article과 별도 모델 (기능정의서 4.2.1)

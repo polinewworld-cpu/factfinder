@@ -15,6 +15,7 @@ const NAV: NavItem[] = [
   { href: '/write', label: '기사 작성' },
   { href: '/admin/articles', label: '전체 기사' },
   { href: '/admin/pending', label: '승인 대기함' },
+  { href: '/admin/photo-bank', label: '사진 뱅크' }, // 2026-10-09 사진 뱅크 v0.1
   { href: '/admin/banners', label: '광고 관리', group: AD_TABS },
   { href: '/admin/members?role=REPORTER', label: '회원/기자관리', group: PEOPLE_TABS },
   { href: '/admin/donations', label: '후원내역' },

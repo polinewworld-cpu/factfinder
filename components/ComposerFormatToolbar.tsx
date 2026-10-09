@@ -51,8 +51,8 @@ export const COMPOSER_FORMAT_ITEMS: FormatToolbarItem[] = [
   {
     id: 'gallery',
     kind: 'button',
-    title: '사진 라이브러리(갤러리)에서 골라 커서 위치에 삽입',
-    label: '갤러리',
+    title: '사진 뱅크에서 골라 커서 위치에 삽입 (캡션·크레디트 자동)',
+    label: '사진 뱅크',
     run: (h) => h.openGallery(),
   },
   { id: 'rule-special', kind: 'rule' },

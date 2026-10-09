@@ -5,6 +5,7 @@ import { getCurrentUser } from '@/lib/session';
 import type { ArticleStatus } from '@prisma/client';
 import { deriveExcerpt } from '@/lib/excerpt';
 import { sanitizeArticleContent } from '@/lib/sanitizeArticle';
+import { enforceAiCaptions, syncPhotoUsage } from '@/lib/photoBank';
 import { resolveAuthorByName } from '@/lib/authorResolve';
 import { clampFocal } from '@/lib/cardImage';
 import { toFrenchBrackets } from '@/lib/frenchBrackets';
@@ -60,7 +61,8 @@ export async function POST(req: NextRequest) {
   } = body;
   // 저장 전 항상 새니타이즈 — 렌더링(app/article/[id]/page.tsx)이 dangerouslySetInnerHTML로
   // 그대로 뿌리기 때문에 여기서 걸러지지 않으면 스크립트 태그 등이 방문자 브라우저에서 그대로 실행됨
-  const safeContent = sanitizeArticleContent(content ?? '');
+  // AI 재구성·생성 사진은 캡션의 "AI" 표시를 지울 수 없게 다시 붙임 (사진 뱅크, 2026-10-09)
+  const safeContent = await enforceAiCaptions(sanitizeArticleContent(content ?? ''));
   // 요약문은 별도 입력을 받지 않고 본문에서 자동 추출 — 화면에는 노출하지 않고 RSS용으로만 사용 (2026-09-11)
   const excerpt = deriveExcerpt(safeContent);
   // 기본은 세션 본인. 편집장만 "글쓴이" 칸으로 다른 이름(외부 기고자 등)을 지정할 수 있음 (2026-10-08)
@@ -134,6 +136,9 @@ export async function POST(req: NextRequest) {
       include: { images: true, keywords: true, relatedArticles: true, poll: { include: { options: true } } },
     });
   });
+
+  // 사진 뱅크 사용 이력 — 본문·커버·카드뉴스에 들어간 사진 (실패해도 저장은 그대로)
+  await syncPhotoUsage(article.id, article.content, [article.coverImageUrl, ...article.images.map((i) => i.url)]).catch(() => {});
 
   return NextResponse.json(article, { status: 201 });
 }
