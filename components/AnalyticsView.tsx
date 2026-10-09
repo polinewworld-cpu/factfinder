@@ -219,7 +219,17 @@ function KeywordList({ rows }: { rows: NonNullable<AnalyticsReport['media']>['ke
   );
 }
 
-// 매체 지면 — 5개 매체 탭
+// 매체별 정치 메인 (1면 아래 "○○ 정치 바로 가기", 2026-10-09)
+const POLITICS: Record<string, { short: string; url: string }> = {
+  '023': { short: '조선', url: 'https://www.chosun.com/politics/' },
+  '025': { short: '중앙', url: 'https://www.joongang.co.kr/politics' },
+  '020': { short: '동아', url: 'https://www.donga.com/news/Politics' },
+  '088': { short: '매일', url: 'https://www.imaeil.com/politics' },
+  '081': { short: '서울', url: 'https://www.seoul.co.kr/newsList/politics/' },
+  '015': { short: '한경', url: 'https://www.hankyung.com/politics' },
+};
+
+// 매체 지면 — 매체 탭
 function OutletTabs({ outlets }: { outlets: NonNullable<AnalyticsReport['media']>['outlets'] }) {
   const [tab, setTab] = useState(0);
   const o = outlets[Math.min(tab, outlets.length - 1)];
@@ -243,7 +253,20 @@ function OutletTabs({ outlets }: { outlets: NonNullable<AnalyticsReport['media']
       </div>
       {o.paperDate && <p className="text-xs text-gray-500 mb-2">{o.paperDate.slice(5).replace('-', '/')} 지면</p>}
       <div className="grid md:grid-cols-3 gap-4">
-        <OutletList title="1면" items={o.newspaper.filter((i) => /^A?1면$/.test(i.page ?? ''))} />
+        <div>
+          <OutletList title="1면" items={o.newspaper.filter((i) => /^A?1면$/.test(i.page ?? ''))} />
+          {POLITICS[o.oid] && (
+            <a
+              href={POLITICS[o.oid].url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-block mt-3 text-xs font-bold border rounded-lg px-3 py-1.5 hover:bg-gray-50"
+              style={{ borderColor: MARK, color: MARK }}
+            >
+              {POLITICS[o.oid].short} 정치 바로 가기 ↗
+            </a>
+          )}
+        </div>
         <OutletList title="많이 본 뉴스" items={o.popular.slice(0, 10)} />
         <OutletList title="댓글 많은 뉴스" items={o.commented.slice(0, 10)} />
       </div>
@@ -321,7 +344,7 @@ export default function AnalyticsView({ view }: { view: 'visits' | 'trends' }) {
           {r &&
             (view === 'trends' ? (
               <p className="text-xs text-gray-500 mt-1">
-                조선·중앙·동아·매일·서울신문 ·{' '}
+                조선·중앙·동아·매일·서울신문·한국경제 ·{' '}
                 {(r.mediaCheckedAt || r.media?.generatedAt) &&
                   `${new Date((r.mediaCheckedAt || r.media?.generatedAt)!).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })} 기준 · `}
                 3시간마다 자동 갱신(06~23시)

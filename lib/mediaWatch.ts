@@ -10,6 +10,7 @@ export const OUTLETS = [
   { oid: '020', name: '동아일보' },
   { oid: '088', name: '매일신문' },
   { oid: '081', name: '서울신문' },
+  { oid: '015', name: '한국경제' }, // 2026-10-09 사장님 추가
 ] as const;
 
 export type MediaItem = { title: string; url: string; rank?: number; page?: string };
