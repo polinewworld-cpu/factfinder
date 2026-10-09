@@ -142,10 +142,10 @@ export function coverHoverPanVars(
   };
 }
 
-// 카드에 쓰는 사진 주소 → 축소본 주소(app/api/blob/[filename]이 처음 요청 때 만들어 저장, 2026-10-09). 우리 저장소(/api/blob/) 사진만, GIF는 움직임이 사라지므로 제외
+// 카드에 쓰는 사진 주소 → 축소본 주소(app/api/blob/[filename]이 처음 요청 때 만들어 저장, 2026-10-09). 우리 저장소(/api/blob/) 사진만. GIF는 움직이는 webp로 줄임
 export const CARD_WIDTHS = [800, 1600] as const;
 export function sizedImage(url: string | null | undefined, width: (typeof CARD_WIDTHS)[number]): string | undefined {
   if (!url) return undefined;
-  if (!url.startsWith('/api/blob/') || url.includes('?') || /\.gif$/i.test(url)) return url;
+  if (!url.startsWith('/api/blob/') || url.includes('?')) return url;
   return `${url}?w=${width}`;
 }

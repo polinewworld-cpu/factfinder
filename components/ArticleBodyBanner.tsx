@@ -1,3 +1,5 @@
+import { sizedImage } from '@/lib/cardImage';
+
 // 기사 본문 삽입 광고 — 관리자가 설정한 개수만큼, 정해진 위치에 노출 (기능정의서 5)
 export default function ArticleBodyBanner({ imageUrl, linkUrl }: { imageUrl: string; linkUrl: string }) {
   return (
@@ -8,7 +10,7 @@ export default function ArticleBodyBanner({ imageUrl, linkUrl }: { imageUrl: str
       style={{ display: 'block', margin: '20px 0' }}
     >
       <span style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--ash)', marginBottom: 4 }}>광고</span>
-      <img src={imageUrl} alt="광고" style={{ width: '100%', borderRadius: 8 }} />
+      <img src={sizedImage(imageUrl, 1600)} alt="광고" loading="lazy" decoding="async" style={{ width: '100%', borderRadius: 8 }} />
     </a>
   );
 }

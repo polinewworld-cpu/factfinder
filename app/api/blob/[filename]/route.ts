@@ -11,7 +11,7 @@ import { CARD_WIDTHS } from '@/lib/cardImage';
 // 2026-10-09: ?w=800|1600 — 카드용 축소본(webp). 홈 사진 60장이 원본 그대로 13MB(한 장 최대 7.8MB)였던 문제.
 // 처음 요청 때 한 번 만들어 저장소에 "w800-원본이름.webp"로 저장하고, 이후엔 그 파일을 그대로 보낸다.
 const CACHE = 'public, max-age=31536000, immutable';
-const RESIZABLE = /\.(jpe?g|png|webp|avif)$/i;
+const RESIZABLE = /\.(jpe?g|png|webp|avif|gif)$/i;
 const making = new Map<string, Promise<{ buf: Buffer; type: string } | null>>();
 
 async function streamFromSupabase(name: string): Promise<Response | 'missing' | null> {
@@ -57,7 +57,7 @@ function makeVariant(name: string, variant: string, width: number) {
       const original = await getBlob(name);
       if (!original) return null;
       const src = Buffer.from(original.data);
-      const out = await resizeToWidth(src, width);
+      const out = await resizeToWidth(src, width, /\.gif$/i.test(name));
       // 줄인 게 더 크면(이미 작은 사진) 원본을 그대로 축소본 자리에 저장 — 다음부턴 바로 전달
       const pick = out.buf.length < src.length ? out : { buf: src, type: original.contentType };
       await putBlob(variant, pick.buf, pick.type).catch(() => {});
