@@ -4,6 +4,9 @@ import { ROLES } from '@/lib/roles';
 import { getCurrentUser } from '@/lib/session';
 
 // 편집장이 특정 회원의 등급을 변경 (예: 독자 -> 기자)
+// 2026-10-09: [편집] — 닉네임·프로필 사진·자기소개·정산 계좌도 같은 요청으로 (보낸 항목만 바꿈)
+const str = (v: unknown, max = 200) => (typeof v === 'string' && v.trim() ? v.trim().slice(0, max) : null);
+
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: '로그인이 필요합니다' }, { status: 401 });
@@ -11,12 +14,27 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     return NextResponse.json({ error: '편집장만 회원 등급을 변경할 수 있습니다' }, { status: 403 });
   }
 
-  const { role } = await req.json();
-  if (!Object.values(ROLES).includes(role)) {
-    return NextResponse.json({ error: '유효하지 않은 등급입니다' }, { status: 400 });
+  const b = await req.json();
+  const has = (k: string) => Object.prototype.hasOwnProperty.call(b, k);
+  const data: Record<string, unknown> = {};
+  if (has('role')) {
+    if (!Object.values(ROLES).includes(b.role)) {
+      return NextResponse.json({ error: '유효하지 않은 등급입니다' }, { status: 400 });
+    }
+    data.role = b.role;
   }
+  if (has('nickname')) {
+    const nickname = str(b.nickname, 30);
+    if (!nickname) return NextResponse.json({ error: '닉네임을 입력하세요' }, { status: 400 });
+    const dup = await prisma.user.findFirst({ where: { nickname, NOT: { id: params.id } }, select: { id: true } });
+    if (dup) return NextResponse.json({ error: `"${nickname}" 닉네임은 이미 있습니다` }, { status: 400 });
+    data.nickname = nickname;
+  }
+  if (has('image')) data.image = str(b.image, 500);
+  if (has('bio')) data.bio = str(b.bio, 2000);
+  for (const k of ['bankName', 'bankAccount', 'accountHolder'] as const) if (has(k)) data[k] = str(b[k], 60);
 
-  const updated = await prisma.user.update({ where: { id: params.id }, data: { role } });
+  const updated = await prisma.user.update({ where: { id: params.id }, data });
   return NextResponse.json(updated);
 }
 

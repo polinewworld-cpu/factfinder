@@ -1,7 +1,8 @@
 'use client';
 
 import AdminTabs, { PEOPLE_TABS } from '@/components/AdminTabs';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { compressImageFile } from '@/lib/imageCompress';
 import { useSearchParams } from 'next/navigation';
 
 // 2026-09-22: 회원/후원회원 구별 폐지(후원 여부는 role이 아니라 isDonor로만 표시) — DONOR_READER는
@@ -17,6 +18,84 @@ const ROLE_LABELS: Record<string, string> = {
 // 관리자가 직접 지정 가능한 등급 — DONOR_READER는 제외
 const ASSIGNABLE_ROLES = ['READER', 'REPORTER', 'COLUMNIST', 'CHIEF_EDITOR'];
 
+// 회원 편집 창 (2026-10-09) — 닉네임(바이라인에 쓰임)·프로필 사진·자기소개·원고료 정산 계좌
+function EditMember({ user, onClose, onSaved }: { user: any; onClose: () => void; onSaved: () => void }) {
+  const [f, setF] = useState({
+    nickname: user.nickname ?? user.name ?? '',
+    image: user.image ?? '',
+    bio: user.bio ?? '',
+    bankName: user.bankName ?? '',
+    bankAccount: user.bankAccount ?? '',
+    accountHolder: user.accountHolder ?? '',
+  });
+  const [msg, setMsg] = useState('');
+  const [busy, setBusy] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const input = 'w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm outline-none focus:border-brand bg-white';
+
+  async function upload(file?: File) {
+    if (!file) return;
+    const fd = new FormData();
+    fd.append('file', await compressImageFile(file));
+    const res = await fetch('/api/upload', { method: 'POST', body: fd });
+    const d = await res.json().catch(() => ({}));
+    if (!res.ok) return setMsg(d.error ?? '사진 업로드 실패');
+    setF((x) => ({ ...x, image: d.url }));
+  }
+  async function save() {
+    setBusy(true);
+    setMsg('');
+    const res = await fetch(`/api/users/${user.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(f) });
+    setBusy(false);
+    if (!res.ok) return setMsg((await res.json().catch(() => ({}))).error ?? '저장 실패');
+    onSaved();
+    onClose();
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/50 z-50 flex justify-end" onClick={onClose}>
+      <div className="bg-white w-full max-w-lg h-full overflow-y-auto p-5 space-y-4" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between">
+          <h3 className="font-bold">회원 정보 편집</h3>
+          <button type="button" onClick={onClose} className="text-gray-400 text-lg">
+            ✕
+          </button>
+        </div>
+        <p className="text-xs text-gray-500">
+          {user.email} · 구글 이름 {user.name}
+        </p>
+        <div className="flex items-center gap-3">
+          {f.image ? <img src={f.image} alt="" className="w-16 h-16 rounded-full object-cover border" /> : <div className="w-16 h-16 rounded-full bg-gray-100 border" />}
+          <button type="button" onClick={() => fileRef.current?.click()} className="text-xs border rounded-lg px-3 py-1.5">
+            프로필 사진 {f.image ? '바꾸기' : '올리기'}
+          </button>
+          <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => upload(e.target.files?.[0])} />
+        </div>
+        <label className="block">
+          <span className="text-xs text-gray-500">닉네임 (기사 바이라인에 나오는 이름)</span>
+          <input value={f.nickname} onChange={(e) => setF({ ...f, nickname: e.target.value })} className={input} maxLength={30} />
+        </label>
+        <label className="block">
+          <span className="text-xs text-gray-500">자기소개 (기사 하단 기자 소개)</span>
+          <textarea value={f.bio} onChange={(e) => setF({ ...f, bio: e.target.value })} rows={4} className={input} />
+        </label>
+        <div className="border-t pt-3 space-y-2">
+          <p className="text-xs font-semibold text-gray-500">원고료 정산 계좌 (편집장만 봄)</p>
+          <div className="grid grid-cols-2 gap-2">
+            <input value={f.bankName} onChange={(e) => setF({ ...f, bankName: e.target.value })} className={input} placeholder="은행" />
+            <input value={f.accountHolder} onChange={(e) => setF({ ...f, accountHolder: e.target.value })} className={input} placeholder="예금주" />
+          </div>
+          <input value={f.bankAccount} onChange={(e) => setF({ ...f, bankAccount: e.target.value })} className={input} placeholder="계좌번호" />
+        </div>
+        {msg && <p className="text-xs text-red-600">{msg}</p>}
+        <button type="button" disabled={busy} onClick={save} className="text-sm font-bold text-white bg-brand rounded-lg px-5 py-2 disabled:opacity-40">
+          {busy ? '저장 중…' : '저장'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function MembersAdminPage() {
   const searchParams = useSearchParams();
   // 관리자 대시보드 "기자관리"에서 ?role=REPORTER 로 진입 — 회원 관리 화면을 재사용해 필터만 적용 (2026-09-11 신설)
@@ -24,6 +103,7 @@ export default function MembersAdminPage() {
   const [me, setMe] = useState<any>('loading');
   const [users, setUsers] = useState<any[]>([]);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [editing, setEditing] = useState<any>(null);
 
   async function load() {
     const res = await fetch('/api/users');
@@ -96,7 +176,10 @@ export default function MembersAdminPage() {
           <tbody>
             {shownUsers.map((u) => (
               <tr key={u.id} className="border-b border-gray-100">
-                <td className="py-2 pr-4 text-gray-900 font-medium whitespace-nowrap">{u.name}</td>
+                <td className="py-2 pr-4 text-gray-900 font-medium whitespace-nowrap">
+                  {u.nickname || u.name}
+                  {u.nickname && u.nickname !== u.name && <span className="ml-1 text-xs font-normal text-gray-400">({u.name})</span>}
+                </td>
                 <td className="py-2 pr-4 text-gray-500 break-all">{u.email}</td>
                 <td className="py-2 pr-4 text-gray-700 whitespace-nowrap">
                   {ROLE_LABELS[u.role] ?? u.role}
@@ -122,6 +205,13 @@ export default function MembersAdminPage() {
                   </select>
                   <button
                     type="button"
+                    onClick={() => setEditing(u)}
+                    className="ml-2 border border-gray-200 rounded-lg px-2 py-1 text-xs text-gray-600 hover:border-brand"
+                  >
+                    편집
+                  </button>
+                  <button
+                    type="button"
                     disabled={busyId === u.id || u.id === me.id}
                     onClick={() => deleteUser(u)}
                     className="ml-2 border border-gray-200 rounded-lg px-2 py-1 text-xs text-gray-500 hover:text-red-600 hover:border-red-300 disabled:opacity-40"
@@ -134,6 +224,7 @@ export default function MembersAdminPage() {
           </tbody>
         </table>
       </div>
+      {editing && <EditMember user={editing} onClose={() => setEditing(null)} onSaved={load} />}
     </main>
   );
 }
