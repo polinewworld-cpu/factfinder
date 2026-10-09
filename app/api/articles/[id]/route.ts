@@ -6,6 +6,7 @@ import { deriveExcerpt } from '@/lib/excerpt';
 import { resolveAuthorByName } from '@/lib/authorResolve';
 import { sanitizeArticleContent } from '@/lib/sanitizeArticle';
 import { syncPhotoUsage } from '@/lib/photoBank';
+import { validGhostWriterId } from '@/lib/ghostWriter';
 import { clampFocal } from '@/lib/cardImage';
 import { toFrenchBrackets } from '@/lib/frenchBrackets';
 
@@ -29,14 +30,15 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
 
 export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
   const body = await req.json();
-  const { keywordIds, relatedArticleIds, intent, images, poll, themeTags, authorName, ...rest } = body; // intent: 'autosave' | 'submit' (글쓰기 화면 전용, 그 외 편집은 기존 방식 그대로) / poll: { question, options: string[] } | null
+  const { keywordIds, relatedArticleIds, intent, images, poll, themeTags, authorName, ghostWriterId, ...rest } = body; // intent: 'autosave' | 'submit' (글쓰기 화면 전용, 그 외 편집은 기존 방식 그대로) / poll: { question, options: string[] } | null
   delete (rest as { cardTitle?: unknown }).cardTitle;
   // 글쓴이는 요청 본문으로 직접 못 바꿈 — 편집장의 "글쓴이" 칸(authorName)으로만 (2026-10-08)
   delete (rest as { authorId?: unknown }).authorId;
-  if (authorName !== undefined) {
+  if (authorName !== undefined || ghostWriterId !== undefined) {
     const me = await getCurrentUser();
     if (me?.role === ROLES.CHIEF_EDITOR) {
-      const id = await resolveAuthorByName(authorName);
+      // 2026-10-09: 유령기자 선택이 우선, 아니면 이름으로
+      const id = (await validGhostWriterId(ghostWriterId)) || (authorName !== undefined ? await resolveAuthorByName(authorName) : null);
       if (id) (rest as { authorId?: string }).authorId = id;
     }
   }

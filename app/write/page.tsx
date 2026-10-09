@@ -43,6 +43,13 @@ export default function WritePage() {
   const [authorName, setAuthorName] = useState('');
   const [reporterNames, setReporterNames] = useState<string[]>([]);
   const originalAuthorRef = useRef(''); // 수정 화면에서 불러온 원래 글쓴이 — 바꾸지 않았으면 글쓴이를 다시 지정하지 않음
+  // 유령기자 (2026-10-09) — 편집장이 자기 계정으로 외부 기고를 올릴 때 글쓴이를 "유령기자"로 고름(원고료 정산도 그 사람 앞으로)
+  const [authorMode, setAuthorMode] = useState<'name' | 'ghost'>('name');
+  const [ghostWriterId, setGhostWriterId] = useState('');
+  const [ghostWriters, setGhostWriters] = useState<{ id: string; displayName: string; writerTitle: string | null }[]>([]);
+  const [newGhost, setNewGhost] = useState<{ name: string; title: string } | null>(null);
+  const [ghostMsg, setGhostMsg] = useState('');
+  const originalGhostRef = useRef('');
   const [keywordIds, setKeywordIds] = useState<string[]>([]);
   // 커버이미지 — 본문에 삽입된 이미지 중 고름 (첫 번째 삽입 이미지가 기본값, 2026-09-11 개편)
   const [coverImageUrl, setCoverImageUrl] = useState('');
@@ -102,14 +109,14 @@ export default function WritePage() {
 
   const stateRef = useRef({
     title, subtitle1, subtitle2, subtitle3, hoverText, themeTags, categoryId, keywordIds, coverImageUrl, coverFocalX, coverFocalY, coverFeatureFocalX, coverFeatureFocalY, coverSecondFocalX, coverSecondFocalY, isFrontpageTop, cardImages,
-    pollEnabled, pollQuestion, pollOptions, relatedSelected, authorName,
+    pollEnabled, pollQuestion, pollOptions, relatedSelected, authorName, authorMode, ghostWriterId,
   });
   useEffect(() => {
     stateRef.current = {
       title, subtitle1, subtitle2, subtitle3, hoverText, themeTags, categoryId, keywordIds, coverImageUrl, coverFocalX, coverFocalY, coverFeatureFocalX, coverFeatureFocalY, coverSecondFocalX, coverSecondFocalY, isFrontpageTop, cardImages,
-      pollEnabled, pollQuestion, pollOptions, relatedSelected, authorName,
+      pollEnabled, pollQuestion, pollOptions, relatedSelected, authorName, authorMode, ghostWriterId,
     };
-  }, [title, subtitle1, subtitle2, subtitle3, hoverText, themeTags, categoryId, keywordIds, coverImageUrl, coverFocalX, coverFocalY, coverFeatureFocalX, coverFeatureFocalY, coverSecondFocalX, coverSecondFocalY, isFrontpageTop, cardImages, pollEnabled, pollQuestion, pollOptions, relatedSelected, authorName]);
+  }, [title, subtitle1, subtitle2, subtitle3, hoverText, themeTags, categoryId, keywordIds, coverImageUrl, coverFocalX, coverFocalY, coverFeatureFocalX, coverFeatureFocalY, coverSecondFocalX, coverSecondFocalY, isFrontpageTop, cardImages, pollEnabled, pollQuestion, pollOptions, relatedSelected, authorName, authorMode, ghostWriterId]);
 
   useLayoutEffect(() => {
     const el = titleRef.current;
@@ -161,6 +168,10 @@ export default function WritePage() {
       if (meData?.role === 'CHIEF_EDITOR') {
         // 새 글의 글쓴이 기본값 = 본인 (수정 화면이면 기사 불러올 때 원래 글쓴이로 덮어씀)
         setAuthorName((prev) => prev || meData.nickname || meData.name || '');
+        fetch('/api/ghost-writers')
+          .then((r) => (r.ok ? r.json() : []))
+          .then(setGhostWriters)
+          .catch(() => {});
         fetch('/api/reporters')
           .then((r) => (r.ok ? r.json() : []))
           .then((list: { name: string; nickname: string | null }[]) =>
@@ -210,6 +221,11 @@ export default function WritePage() {
         setCategoryId(data.categoryId ?? '');
         setAuthorName(data.author?.nickname || data.author?.name || '');
         originalAuthorRef.current = data.author?.nickname || data.author?.name || '';
+        if (data.author?.isGhostWriter) {
+          setAuthorMode('ghost');
+          setGhostWriterId(data.author.id);
+          originalGhostRef.current = data.author.id;
+        }
         setKeywordIds((data.keywords ?? []).map((k: { id: string }) => k.id));
         setCoverImageUrl(data.coverImageUrl ?? '');
         setCoverFocalX(typeof data.coverFocalX === 'number' ? data.coverFocalX : 50);
@@ -304,8 +320,12 @@ export default function WritePage() {
       poll: pollPayload(s),
       intent: 'autosave',
     };
-    if (meRef.current?.role === 'CHIEF_EDITOR' && s.authorName.trim() && s.authorName.trim() !== originalAuthorRef.current) {
-      payload.authorName = s.authorName.trim();
+    if (meRef.current?.role === 'CHIEF_EDITOR') {
+      if (s.authorMode === 'ghost') {
+        if (s.ghostWriterId && s.ghostWriterId !== originalGhostRef.current) payload.ghostWriterId = s.ghostWriterId;
+      } else if (s.authorName.trim() && (s.authorName.trim() !== originalAuthorRef.current || originalGhostRef.current)) {
+        payload.authorName = s.authorName.trim();
+      }
     }
     if (s.categoryId) payload.categoryId = s.categoryId;
 
@@ -724,6 +744,7 @@ export default function WritePage() {
 
     if (!s.title.replace(/\s+/g, '')) return setErrorMsg('제목을 입력해주세요.');
     if (!s.categoryId) return setErrorMsg('카테고리를 선택해주세요.');
+    if (meRef.current?.role === 'CHIEF_EDITOR' && s.authorMode === 'ghost' && !s.ghostWriterId) return setErrorMsg('유령기자를 골라 주세요.');
     if (!plainText) return setErrorMsg('본문을 입력해주세요.');
     if (s.pollEnabled) {
       if (!s.pollQuestion.trim()) return setErrorMsg('설문 질문을 입력해주세요.');
@@ -755,8 +776,12 @@ export default function WritePage() {
       isFrontpageTop: s.isFrontpageTop,
       intent: 'submit',
     };
-    if (meRef.current?.role === 'CHIEF_EDITOR' && s.authorName.trim() && s.authorName.trim() !== originalAuthorRef.current) {
-      payload.authorName = s.authorName.trim();
+    if (meRef.current?.role === 'CHIEF_EDITOR') {
+      if (s.authorMode === 'ghost') {
+        if (s.ghostWriterId && s.ghostWriterId !== originalGhostRef.current) payload.ghostWriterId = s.ghostWriterId;
+      } else if (s.authorName.trim() && (s.authorName.trim() !== originalAuthorRef.current || originalGhostRef.current)) {
+        payload.authorName = s.authorName.trim();
+      }
     }
 
     try {
@@ -1133,24 +1158,106 @@ export default function WritePage() {
       <div className="composer-actions">
         <div className="composer-actions-left">
           {me.role === 'CHIEF_EDITOR' && (
-            <label className="composer-author" title="외부 기고 등 다른 사람 이름으로 낼 때 바꾸세요. 그 사람 앞으로 후원·정산이 기록됩니다.">
+            <div className="composer-author" title="외부 기고는 [유령기자]를 고르세요. 그 사람 이름·직함으로 나가고 원고료·후원 정산도 그 사람 앞으로 기록됩니다.">
               <span>글쓴이</span>
-              <input
-                list="composer-author-options"
-                value={authorName}
-                onChange={(e) => {
-                  setAuthorName(e.target.value);
-                  markDirty();
-                }}
-                placeholder="이름"
-                maxLength={30}
-              />
-              <datalist id="composer-author-options">
-                {reporterNames.map((n) => (
-                  <option key={n} value={n} />
-                ))}
-              </datalist>
-            </label>
+              <label className="inline-flex items-center gap-1 font-normal">
+                <input
+                  type="radio"
+                  className="!w-auto !h-auto"
+                  checked={authorMode === 'name'}
+                  onChange={() => {
+                    setAuthorMode('name');
+                    if (originalGhostRef.current) setAuthorName(me.nickname || me.name || '');
+                    markDirty();
+                  }}
+                />
+                이름
+              </label>
+              {authorMode === 'name' && (
+                <>
+                  <input
+                    list="composer-author-options"
+                    value={authorName}
+                    onChange={(e) => {
+                      setAuthorName(e.target.value);
+                      markDirty();
+                    }}
+                    placeholder="이름"
+                    maxLength={30}
+                  />
+                  <datalist id="composer-author-options">
+                    {reporterNames.map((n) => (
+                      <option key={n} value={n} />
+                    ))}
+                  </datalist>
+                </>
+              )}
+              <label className="inline-flex items-center gap-1 font-normal">
+                <input
+                  type="radio"
+                  className="!w-auto !h-auto"
+                  checked={authorMode === 'ghost'}
+                  onChange={() => {
+                    setAuthorMode('ghost');
+                    markDirty();
+                  }}
+                />
+                유령기자
+              </label>
+              {authorMode === 'ghost' && (
+                <select
+                  value={ghostWriterId}
+                  onChange={(e) => {
+                    if (e.target.value === '__new') {
+                      setNewGhost({ name: '', title: '' });
+                      return;
+                    }
+                    setGhostWriterId(e.target.value);
+                    markDirty();
+                  }}
+                  className="h-8 border border-gray-300 rounded px-2 text-[13px] bg-transparent max-w-[220px]"
+                >
+                  <option value="">고르세요</option>
+                  {ghostWriters.map((g) => (
+                    <option key={g.id} value={g.id}>
+                      {g.displayName}
+                      {g.writerTitle ? ` (${g.writerTitle})` : ''}
+                    </option>
+                  ))}
+                  <option value="__new">+ 새 유령기자</option>
+                </select>
+              )}
+              {newGhost && (
+                <span className="inline-flex items-center gap-1">
+                  <input value={newGhost.name} onChange={(e) => setNewGhost({ ...newGhost, name: e.target.value })} placeholder="이름" maxLength={30} />
+                  <input value={newGhost.title} onChange={(e) => setNewGhost({ ...newGhost, title: e.target.value })} placeholder="직함 (선택)" maxLength={40} />
+                  <button
+                    type="button"
+                    className="text-xs font-bold border rounded px-2 h-8"
+                    onClick={async () => {
+                      setGhostMsg('');
+                      const res = await fetch('/api/ghost-writers', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ name: newGhost.name, writerTitle: newGhost.title }),
+                      });
+                      const d = await res.json().catch(() => ({}));
+                      if (!res.ok) return setGhostMsg(d.error ?? '등록 실패');
+                      setGhostWriters((l) => [...l, { id: d.id, displayName: d.displayName, writerTitle: d.writerTitle }]);
+                      setGhostWriterId(d.id);
+                      setNewGhost(null);
+                      markDirty();
+                    }}
+                  >
+                    등록
+                  </button>
+                  <button type="button" className="text-xs text-gray-500 px-1" onClick={() => setNewGhost(null)}>
+                    취소
+                  </button>
+                </span>
+              )}
+              {ghostMsg && <span className="text-xs text-red-600 font-normal">{ghostMsg}</span>}
+            </div>
           )}
           {me.role !== 'REPORTER' ? (
             <button

@@ -68,6 +68,11 @@ model User {
   legacyClaimEmail          String?                    @unique // 옛 기자 임시 계정에만 — 이 구글 이메일로 로그인하면 옛 기사·기자 등급 자동 승계 (2026-10-08)
   ghost                     Boolean                    @default(false) // 유령 계정 — 관리자가 [삭제]한 옛 기자: 목록에선 숨기고 옛 기사·이름은 그대로 (2026-10-08)
   createdAt                 DateTime                   @default(now())
+  // 유령기자(로그인 없는 필자 — …@legacy.invalid 계정: 외부 기고자·옛 사이트 기자) 프로필·정산 정보 (2026-10-09)
+  writerTitle               String? // 직함 — 바이라인에 "이름 직함"으로 (예: 前 ○○대 교수)
+  bankName                  String? // 원고료 정산용 — 편집장만 열람
+  bankAccount               String?
+  accountHolder             String?
 
   articles          Article[]
   comments          Comment[]
@@ -78,7 +83,18 @@ model User {
   snsLinks          SnsLink[]
   savedArticles     SavedArticle[]
   photos            Photo[]
-  reporterDonations Donation[]     @relation("DonationReporter") // 이 기자를 지정해서 들어온 후원 (기능정의서 7)
+  reporterDonations Donation[]      @relation("DonationReporter") // 이 기자를 지정해서 들어온 후원 (기능정의서 7)
+  idImages          WriterIdImage[]
+}
+
+// 유령기자 주민등록증 사진 — 원고료 원천징수 신고용. 파일은 AES-256-GCM으로 암호화해 저장소(pii-….enc)에 두고, 편집장만 복호화해 열람 (2026-10-09)
+model WriterIdImage {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  blobName  String // 저장소 파일 이름 (pii-<uuid>.enc) — /api/blob으로는 열리지 않음
+  mime      String
+  createdAt DateTime @default(now())
 }
 
 // 기자 프로필에 노출되는 SNS 링크 — "+" 버튼으로 여러 개 추가 가능 (기능정의서 3.2.1)

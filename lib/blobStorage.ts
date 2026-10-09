@@ -71,3 +71,12 @@ export async function getBlob(filename: string): Promise<{ data: ArrayBuffer; co
     return null;
   }
 }
+
+// 파일 지우기 (2026-10-09, 유령기자 신분증 사진 삭제용) — Supabase만 지원, 그 외는 조용히 넘어감
+export async function deleteBlob(filename: string): Promise<void> {
+  if (supabase) {
+    await supabase.storage.from(SUPABASE_BUCKET).remove([filename]);
+    return;
+  }
+  if (!isNetlify) await fs.unlink(path.join(LOCAL_DIR, filename)).catch(() => {});
+}

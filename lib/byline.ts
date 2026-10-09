@@ -1,12 +1,14 @@
 // 기자 이름 표시 규칙 (2026-10-08)
 //  · 이름 = 닉네임 우선(구글 계정 이름이 "NamHoon Kim"처럼 영문인 경우가 있어 사이트에서 정한 닉네임을 씀)
 //  · 직함 = 논설위원 등급은 "논설위원", 그 외 "기자". "인터넷뉴스팀", "팩트파인더"처럼 팀·매체 이름이면 직함 없이
-type Author = { name: string; nickname?: string | null; role?: string | null };
+//  · 2026-10-09: 유령기자에 직함(writerTitle)이 있으면 "이름 직함" (예: 홍길동 前 ○○대 교수)
+type Author = { name: string; nickname?: string | null; role?: string | null; writerTitle?: string | null };
 
 export const authorName = (a: Author) => (a.nickname?.trim() || a.name).trim();
 
 export function bylineOf(a: Author) {
   const name = authorName(a);
+  if (a.writerTitle?.trim()) return `${name} ${a.writerTitle.trim()}`;
   if (/(팀|파인더)$/.test(name)) return name;
   return `${name} ${a.role === 'COLUMNIST' ? '논설위원' : '기자'}`;
 }

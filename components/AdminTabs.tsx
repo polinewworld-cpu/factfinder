@@ -16,6 +16,7 @@ export const AD_TABS: AdminTab[] = [
 export const PEOPLE_TABS: AdminTab[] = [
   { href: '/admin/members?role=REPORTER', label: '기자관리' },
   { href: '/admin/reporter-applications', label: '기자 신청 대기' },
+  { href: '/admin/ghost-writers', label: '유령기자' }, // 로그인 없는 필자·외부 기고자 (2026-10-09)
   { href: '/admin/legacy-reporters', label: '옛 기자 연결' },
   { href: '/admin/members', label: '회원관리' },
 ];
