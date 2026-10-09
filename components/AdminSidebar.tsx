@@ -31,7 +31,10 @@ function isActive(item: NavItem, pathname: string | null, role: string | null) {
   return pathname === path || pathname.startsWith(`${path}/`);
 }
 
-export default function AdminSidebar() {
+// 기자·논설위원에게 보이는 메뉴 (2026-10-09)
+const WRITER_NAV = ['/admin/trends', '/write', '/admin/photo-bank'];
+
+export default function AdminSidebar({ isChief = true }: { isChief?: boolean }) {
   const pathname = usePathname();
   const role = useSearchParams().get('role');
   const { open } = useAdminNav();
@@ -40,11 +43,11 @@ export default function AdminSidebar() {
     <nav className={`admin-sidebar shrink-0 py-8 ${open ? 'w-40' : 'w-10'}`} aria-label="관리자 메뉴">
       <div className="mb-4 flex items-center">
         <AdminSidebarToggle />
-        {open ? <p className="m-0 text-sm font-semibold text-gray-700">관리자</p> : null}
+        {open ? <p className="m-0 text-sm font-semibold text-gray-700">{isChief ? '관리자' : '편집실'}</p> : null}
       </div>
       {open ? (
         <div className="space-y-1">
-          {NAV.map((item) => {
+          {NAV.filter((item) => isChief || WRITER_NAV.includes(item.href)).map((item) => {
             const active = isActive(item, pathname, role);
             return (
               <a

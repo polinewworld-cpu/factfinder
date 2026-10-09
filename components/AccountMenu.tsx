@@ -62,9 +62,10 @@ export default function AccountMenu({
               기사 작성
             </a>
           )}
-          {isChiefEditor && (
-            <a className="account-dropdown-item" href="/admin" role="menuitem">
-              편집실 (관리자)
+          {/* 2026-10-09: 기자·논설위원도 편집실(동향 보고·기사 작성·사진 뱅크) 이용 */}
+          {isWriter && (
+            <a className="account-dropdown-item" href={isChiefEditor ? '/admin' : '/admin/trends'} role="menuitem">
+              {isChiefEditor ? '편집실 (관리자)' : '편집실'}
             </a>
           )}
           <a className="account-dropdown-item" href="/saved" role="menuitem">
