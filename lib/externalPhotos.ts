@@ -28,6 +28,7 @@ export type ExternalItem = {
 export type ExternalResult = { source: ExternalSource; available: boolean; items: ExternalItem[]; error?: string };
 
 const UA = 'FactFinderPhotoBank/1.0 (https://www.factfinder.tv; polinewworld@gmail.com)';
+const NAVER_PROXY = process.env.NAVER_SEARCH_PROXY || 'https://naver-news-proxy.zoohyup.workers.dev';
 const BROWSER_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126 Safari/537.36';
 const strip = (s: string) =>
   s
@@ -226,6 +227,20 @@ async function naverArticles(q: string, pages = [1, 11, 21, 31]): Promise<string
       if (m) urls.add(m[0]);
     }
     return [...urls].slice(0, 40);
+  }
+  // 키가 없으면 정글2의 네이버 뉴스 검색 중계(Cloudflare Worker, 네이버 클라우드 API HUB 키 보유)를 씀 — 2026-10-09
+  // (developers.naver.com 검색 API는 신규 신청 목록에서 빠짐). 수집기는 시간당 몇 번이라 정글2 한도에 영향 거의 없음.
+  try {
+    const res = await fetch(`${NAVER_PROXY}/?query=${encodeURIComponent(q)}&display=100&sort=date`, { signal: AbortSignal.timeout(15_000), cache: 'no-store' });
+    if (res.ok) {
+      for (const it of (await res.json()).items ?? []) {
+        const m = String(it.link ?? '').match(/https:\/\/n\.news\.naver\.com\/mnews\/article\/\d+\/\d+/);
+        if (m) urls.add(m[0]);
+      }
+      if (urls.size) return [...urls].slice(0, 40);
+    }
+  } catch {
+    // 중계가 안 되면 아래 검색 화면 읽기로
   }
   for (const start of pages) {
     const res = await fetch(`https://search.naver.com/search.naver?where=news&sort=1&query=${encodeURIComponent(q)}&start=${start}`, {
