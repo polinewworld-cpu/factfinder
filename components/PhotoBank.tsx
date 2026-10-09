@@ -4,23 +4,18 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { compressImageFile } from '@/lib/imageCompress';
 import PhotoWatermarkEditor from './PhotoWatermarkEditor';
 import {
-  EXPRESSIONS,
   LICENSE_OPTIONS,
   PHOTOGRAPHER_HINT,
   SOURCE_LABEL,
   SOURCE_TYPES,
-  TONES,
   autoCredit,
   blockedAgency,
   checkPhotoInput,
-  isAiSource,
-  reconPrompt,
-  type ReconOptions,
   type SourceType,
 } from '@/lib/photoBankRules';
 
 // 사진 뱅크 (2026-10-09, 기능정의 v0.1) — 관리자 "사진 뱅크" 화면과 기사 작성 화면의 "사진 뱅크에서 고르기" 창이 함께 쓴다.
-// 기존 갤러리(사진·해시태그·워터마크 지우기)를 확장: 출처 유형·라이선스·크레디트·인물·상황 태그·사용 이력.
+// 기존 갤러리(사진·해시태그·워터마크 지우기)를 확장: 출처 유형·라이선스·크레디트·인물·상황 태그·사용 이력. (AI 재구성 기능은 10-09 삭제)
 // mode="pick": 기사에 넣을 사진 고르기 / mode="manage": 관리
 
 export type Person = { id: string; name: string; aliases: string | null; affiliation: string | null; title: string | null; _count?: { photos: number } };
@@ -54,8 +49,6 @@ const BADGE: Record<string, string> = {
   PUBLIC_DOMAIN: '#3b7d4f',
   CC: '#a0662a',
   OWN: '#0d4f55',
-  AI_RECON: '#b03a5b',
-  AI_GEN: '#b03a5b',
 };
 
 // ── 출처 정보 입력 폼 (등록·수정 공용) ──
@@ -209,130 +202,7 @@ function MetaForm({ meta, setMeta, people, tags }: { meta: Meta; setMeta: (m: Me
         <p className="text-xs text-gray-500 mb-1">상황 태그</p>
         <Chips items={tags.map((t) => ({ key: t.name, label: t.name }))} selected={meta.tagNames} onToggle={(k) => set({ tagNames: toggle(meta.tagNames, k) })} />
       </div>
-      {isAiSource(meta.sourceType) && (
-        <p className="text-xs text-gray-500">AI 사진은 기사에 넣을 때 캡션에 &quot;AI 재구성 이미지&quot;(또는 AI 생성) 표시가 자동으로 붙고 지울 수 없습니다.</p>
-      )}
       {blocked && <p className="text-xs font-semibold text-red-600">{blocked} 사진은 사진 뱅크에 넣을 수 없습니다.</p>}
-    </div>
-  );
-}
-
-// ── AI 재구성 프롬프트 + 결과 올리기 ──
-function ReconPanel({ photo, onClose, onSaved }: { photo: BankPhoto; onClose: () => void; onSaved: () => void }) {
-  const [o, setO] = useState<ReconOptions>({ pose: '', expression: '그대로', background: 'keep', tone: '그대로' });
-  const prompt = reconPrompt(o);
-  const [copied, setCopied] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const [msg, setMsg] = useState('');
-  const fileRef = useRef<HTMLInputElement>(null);
-
-  async function upload(files: FileList | null) {
-    const list = Array.from(files ?? []).filter((f) => f.type.startsWith('image/'));
-    if (!list.length) return;
-    setBusy(true);
-    setMsg('');
-    for (const raw of list) {
-      const form = new FormData();
-      form.append('file', await compressImageFile(raw));
-      const up = await fetch('/api/upload', { method: 'POST', body: form }).then((r) => r.json().then((d) => ({ ok: r.ok, d })));
-      if (!up.ok) {
-        setMsg(up.d.error ?? '업로드 실패');
-        continue;
-      }
-      // 원본 파일·원본 URL은 남기지 않고 결과물만 (사장님 결정) — 인물·상황 태그·캡션은 원본에서 이어받음
-      const res = await fetch('/api/photos', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          url: up.d.url,
-          filename: raw.name,
-          sourceType: 'AI_RECON',
-          title: photo.title,
-          credit: '그래픽=팩트파인더',
-          peopleIds: photo.people.map((p) => p.id),
-          tags: photo.tags.map((t) => t.name),
-        }),
-      });
-      if (!res.ok) setMsg((await res.json().catch(() => ({}))).error ?? '저장 실패');
-    }
-    setBusy(false);
-    onSaved();
-  }
-
-  return (
-    <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-white rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto p-5 space-y-4" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between">
-          <h3 className="font-bold">AI 재구성 프롬프트</h3>
-          <button type="button" onClick={onClose} className="text-gray-400 text-lg">
-            ✕
-          </button>
-        </div>
-        <div className="grid sm:grid-cols-[160px_1fr] gap-4">
-          <img src={photo.url} alt="" className="w-full rounded-lg border object-cover" />
-          <div className="space-y-2 text-sm">
-            <p className="text-xs text-gray-500">기본: 20도 쿼터뷰, 약간 로우앵글 (하우스 스타일)</p>
-            <label className="block">
-              <span className="text-xs text-gray-500">포즈·손동작 바꾸기 (선택, 자유롭게)</span>
-              <input value={o.pose} onChange={(e) => setO({ ...o, pose: e.target.value })} className={input} placeholder="예) 오른손을 들어 연단을 가리키는 동작" />
-            </label>
-            <div className="grid grid-cols-2 gap-2">
-              <label className="block">
-                <span className="text-xs text-gray-500">표정</span>
-                <select value={o.expression} onChange={(e) => setO({ ...o, expression: e.target.value })} className={input}>
-                  {EXPRESSIONS.map((x) => (
-                    <option key={x}>{x}</option>
-                  ))}
-                </select>
-              </label>
-              <label className="block">
-                <span className="text-xs text-gray-500">톤·조명</span>
-                <select value={o.tone} onChange={(e) => setO({ ...o, tone: e.target.value })} className={input}>
-                  {TONES.map((x) => (
-                    <option key={x}>{x}</option>
-                  ))}
-                </select>
-              </label>
-            </div>
-            <div className="flex flex-wrap gap-3 text-xs">
-              {(
-                [
-                  ['keep', '배경 그대로'],
-                  ['rearrange', '배경 인물 재배치'],
-                  ['remove', '배경 인물 빼기'],
-                ] as const
-              ).map(([k, label]) => (
-                <label key={k} className="flex items-center gap-1">
-                  <input type="radio" checked={o.background === k} onChange={() => setO({ ...o, background: k })} />
-                  {label}
-                </label>
-              ))}
-            </div>
-          </div>
-        </div>
-        <div>
-          <div className="flex items-center justify-between mb-1">
-            <p className="text-xs font-semibold text-gray-600">프롬프트 — 이미지 생성 도구에 원본 사진과 함께 붙여 넣으세요</p>
-            <button
-              type="button"
-              onClick={() => navigator.clipboard.writeText(prompt).then(() => (setCopied(true), setTimeout(() => setCopied(false), 1500)))}
-              className="text-xs font-bold text-white bg-brand rounded-lg px-3 py-1"
-            >
-              {copied ? '복사됨' : '복사'}
-            </button>
-          </div>
-          <textarea readOnly value={prompt} rows={8} className="w-full border rounded-lg p-3 text-xs font-mono bg-gray-50" />
-        </div>
-        <div className="border-t pt-3">
-          <p className="text-xs font-semibold text-gray-600 mb-1">만든 결과 올리기 (고른 것만)</p>
-          <p className="text-xs text-gray-500 mb-2">출처 &quot;AI 재구성&quot;, 크레디트 &quot;그래픽=팩트파인더&quot;로 저장되고 원본의 인물·상황 태그·캡션을 이어받습니다. 원본 파일·원본 링크는 남기지 않습니다.</p>
-          <button type="button" disabled={busy} onClick={() => fileRef.current?.click()} className="text-xs border rounded-lg px-3 py-1.5 disabled:opacity-40">
-            {busy ? '올리는 중…' : '결과 파일 고르기'}
-          </button>
-          <input ref={fileRef} type="file" accept="image/*" multiple className="hidden" onChange={(e) => upload(e.target.files)} />
-          {msg && <p className="text-xs text-red-600 mt-1">{msg}</p>}
-        </div>
-      </div>
     </div>
   );
 }
@@ -563,7 +433,7 @@ function ManagePanel({ people, tags, reload }: { people: Person[]; tags: Tag[]; 
   );
 }
 
-// ── 상세 (정보·수정·사용 이력·크레디트 복사·AI 재구성·워터마크·삭제) ──
+// ── 상세 (정보·수정·사용 이력·크레디트 복사·워터마크·삭제) ──
 function DetailPanel({
   id,
   people,
@@ -588,7 +458,6 @@ function DetailPanel({
   const [editing, setEditing] = useState(false);
   const [msg, setMsg] = useState('');
   const [copied, setCopied] = useState(false);
-  const [recon, setRecon] = useState(false);
   const [watermark, setWatermark] = useState(false);
 
   async function load() {
@@ -660,11 +529,6 @@ function DetailPanel({
               <button type="button" onClick={() => setEditing((v) => !v)} className="text-xs border rounded-lg px-3 py-1.5">
                 {editing ? '수정 닫기' : '정보 수정'}
               </button>
-              {!isAiSource(d.sourceType) && (
-                <button type="button" onClick={() => setRecon(true)} className="text-xs border rounded-lg px-3 py-1.5">
-                  AI 재구성 프롬프트
-                </button>
-              )}
               <button type="button" onClick={() => setWatermark(true)} className="text-xs border rounded-lg px-3 py-1.5">
                 워터마크 지우기
               </button>
@@ -749,16 +613,6 @@ function DetailPanel({
           </>
         )}
       </div>
-      {recon && d && (
-        <ReconPanel
-          photo={d}
-          onClose={() => setRecon(false)}
-          onSaved={() => {
-            setRecon(false);
-            onChanged();
-          }}
-        />
-      )}
       {watermark && d && (
         <PhotoWatermarkEditor
           photo={{ id: d.id, url: d.url, filename: d.filename, title: d.title, tags: d.tags }}
@@ -1269,7 +1123,6 @@ export function PhotoBankGuide() {
     ['정당·의원실 배포', '정당·의원실이 보도용으로 나눠 준 사진. "사진=○○ 의원실"로 표시'],
     ['퍼블릭 도메인', '저작권이 없는 사진(미국 정부 사진, 기간이 끝난 옛 사진 등). 조건 없이 사용'],
     ['CC', '찍은 사람이 조건부로 허락한 사진. BY=출처 표시, SA=고친 사진도 같은 조건으로 공개. 상업 금지(NC)·변경 금지(ND)는 받지 않음'],
-    ['AI 재구성·생성', 'AI로 다시 그리거나 만든 이미지. 기사 캡션에 "AI" 표시가 자동으로 붙음'],
   ];
   return (
     <dl className="grid sm:grid-cols-2 gap-x-6 gap-y-1 text-xs text-gray-600 mb-5">

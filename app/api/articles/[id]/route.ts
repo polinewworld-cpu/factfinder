@@ -5,7 +5,7 @@ import { ROLES, WRITER_ROLES, initialStatusForRole } from '@/lib/roles';
 import { deriveExcerpt } from '@/lib/excerpt';
 import { resolveAuthorByName } from '@/lib/authorResolve';
 import { sanitizeArticleContent } from '@/lib/sanitizeArticle';
-import { enforceAiCaptions, syncPhotoUsage } from '@/lib/photoBank';
+import { syncPhotoUsage } from '@/lib/photoBank';
 import { clampFocal } from '@/lib/cardImage';
 import { toFrenchBrackets } from '@/lib/frenchBrackets';
 
@@ -52,8 +52,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   // 본문이 바뀌면 "읽어주기"용으로 캐싱해둔 오디오도 더 이상 최신 내용이 아니므로 초기화 — 다음 재생 요청 때 새 본문으로 재생성됨 (2026-09-12)
   if (typeof rest.content === 'string') {
     // 저장 전 항상 새니타이즈 — POST(articles/route.ts)와 동일한 이유
-    // AI 재구성·생성 사진은 캡션의 "AI" 표시를 지울 수 없게 다시 붙임 (사진 뱅크, 2026-10-09)
-    rest.content = await enforceAiCaptions(sanitizeArticleContent(rest.content));
+    rest.content = sanitizeArticleContent(rest.content);
     rest.excerpt = deriveExcerpt(rest.content);
     rest.audioUrl = null;
   }

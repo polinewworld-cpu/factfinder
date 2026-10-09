@@ -1,8 +1,8 @@
 import type { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
-import { SOURCE_TYPES, isAiSource } from '@/lib/photoBankRules';
+import { SOURCE_TYPES } from '@/lib/photoBankRules';
 
-// 사진 뱅크 서버 쪽 (2026-10-09) — 통합 검색, 사용 이력 기록, AI 사진 캡션 표시 강제
+// 사진 뱅크 서버 쪽 (2026-10-09) — 통합 검색, 사용 이력 기록
 
 export const PHOTO_INCLUDE = {
   tags: true,
@@ -105,27 +105,5 @@ export async function syncPhotoUsage(articleId: string, html?: string | null, ex
   await prisma.photoUsage.createMany({
     data: photos.map((p) => ({ photoId: p.id, articleId })),
     skipDuplicates: true,
-  });
-}
-
-// AI 재구성·AI 생성 사진은 본문 캡션에서 "AI" 표시를 지울 수 없게 — 저장할 때 빠져 있으면 다시 붙임
-export async function enforceAiCaptions(html: string) {
-  if (!html.includes('<img')) return html;
-  const srcs = imageSrcs(html);
-  if (!srcs.length) return html;
-  const ai = await prisma.photo.findMany({
-    where: { url: { in: srcs }, sourceType: { in: ['AI_RECON', 'AI_GEN'] } },
-    select: { url: true, sourceType: true },
-  });
-  if (!ai.length) return html;
-  const kind = new Map(ai.map((p) => [p.url, p.sourceType]));
-  return html.replace(/<figure\b[^>]*>[\s\S]*?<\/figure>/gi, (fig) => {
-    const src = fig.match(/<img\b[^>]*\bsrc="([^"]+)"/i)?.[1];
-    const t = src ? kind.get(normalizeUrl(src.replace(/&amp;/g, '&'))) : undefined;
-    if (!t || !isAiSource(t)) return fig;
-    const label = t === 'AI_GEN' ? 'AI 생성 이미지' : 'AI 재구성 이미지';
-    if (/<figcaption\b[^>]*>[\s\S]*AI\s*(재구성|생성)[\s\S]*<\/figcaption>/i.test(fig)) return fig;
-    if (/<figcaption\b[^>]*>/i.test(fig)) return fig.replace(/<\/figcaption>/i, ` (${label})</figcaption>`);
-    return fig.replace(/<\/figure>/i, `<figcaption>(${label})</figcaption></figure>`);
   });
 }
