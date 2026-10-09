@@ -1280,6 +1280,17 @@ export default function PhotoBank({
   const [detailId, setDetailId] = useState<string | null>(null);
   const [checked, setChecked] = useState<string[]>([]);
 
+  // 관리 화면: 사진 바깥 빈 곳에서 드래그한 범위 안 사진 선택 → 일괄 캡션·출처·삭제 (2026-10-09 사장님 요청)
+  const [sel, setSel] = useState<string[]>([]);
+  const [box, setBox] = useState<{ x0: number; y0: number; x1: number; y1: number } | null>(null);
+  const [bulkCaption, setBulkCaption] = useState('');
+  const [bulkSource, setBulkSource] = useState<SourceType | ''>('');
+  const [bulkWho, setBulkWho] = useState('');
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const [bulkMsg, setBulkMsg] = useState('');
+  const rootRef = useRef<HTMLDivElement>(null);
+  const gridRef = useRef<HTMLDivElement>(null);
+
   // 검색·필터·정렬
   const [q, setQ] = useState('');
   const [sources, setSources] = useState<string[]>([]);
@@ -1338,6 +1349,71 @@ export default function PhotoBank({
 
   const toggle = (arr: string[], k: string) => (arr.includes(k) ? arr.filter((x) => x !== k) : [...arr, k]);
   const pickOne = (p: BankPhoto) => onPick?.([{ url: p.url, title: p.title, credit: p.credit, sourceType: p.sourceType }]);
+
+  // 드래그 선택 — 사진 위가 아닌 곳(빈 곳·양옆 여백)에서 누르고 끌면 사각형 안 사진이 선택됨. Shift/Ctrl은 기존 선택에 더함
+  useEffect(() => {
+    if (mode !== 'manage' || tab !== 'bank') return;
+    function down(e: PointerEvent) {
+      if (e.button !== 0 || !rootRef.current || !gridRef.current) return;
+      const t = e.target as HTMLElement;
+      if (t.closest('input,textarea,select,button,a,label,[data-photo-id],[data-no-marquee],nav,header,[role="dialog"],.fixed')) return;
+      const r = rootRef.current.getBoundingClientRect();
+      if (e.clientY < r.top || e.clientY > r.bottom) return; // 사진 뱅크 높이 안에서만(양옆 여백 포함)
+      const additive = e.shiftKey || e.ctrlKey || e.metaKey;
+      const base = additive ? sel : [];
+      const x0 = e.clientX;
+      const y0 = e.clientY;
+      let moved = false;
+      e.preventDefault();
+      function move(ev: PointerEvent) {
+        if (!moved && Math.hypot(ev.clientX - x0, ev.clientY - y0) < 5) return;
+        moved = true;
+        const b = { x0, y0, x1: ev.clientX, y1: ev.clientY };
+        setBox(b);
+        const L = Math.min(b.x0, b.x1), R = Math.max(b.x0, b.x1), T = Math.min(b.y0, b.y1), B = Math.max(b.y0, b.y1);
+        const hit: string[] = [];
+        gridRef.current?.querySelectorAll<HTMLElement>('[data-photo-id]').forEach((el) => {
+          const c = el.getBoundingClientRect();
+          if (c.right >= L && c.left <= R && c.bottom >= T && c.top <= B) hit.push(el.dataset.photoId!);
+        });
+        setSel(Array.from(new Set([...base, ...hit])));
+      }
+      function up() {
+        window.removeEventListener('pointermove', move);
+        window.removeEventListener('pointerup', up);
+        setBox(null);
+        if (!moved && !additive) setSel([]); // 빈 곳 클릭 = 선택 해제
+      }
+      window.addEventListener('pointermove', move);
+      window.addEventListener('pointerup', up);
+    }
+    function key(e: KeyboardEvent) {
+      if (e.key === 'Escape') setSel([]);
+    }
+    document.addEventListener('pointerdown', down);
+    document.addEventListener('keydown', key);
+    return () => {
+      document.removeEventListener('pointerdown', down);
+      document.removeEventListener('keydown', key);
+    };
+  }, [mode, tab, sel]);
+
+  // 목록이 바뀌면 보이지 않는 사진은 선택에서 뺌
+  useEffect(() => {
+    setSel((cur) => cur.filter((id) => photos.some((p) => p.id === id)));
+  }, [photos]);
+
+  async function bulk(body: Record<string, unknown>, method: 'PATCH' | 'DELETE' = 'PATCH') {
+    setBulkBusy(true);
+    setBulkMsg('');
+    const res = await fetch('/api/photos/bulk', { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ photoIds: sel, ...body }) });
+    const d = await res.json().catch(() => ({}));
+    setBulkBusy(false);
+    if (!res.ok) return setBulkMsg(d.error ?? '실패했습니다');
+    setBulkMsg(method === 'DELETE' ? `${d.deleted}장 삭제했습니다` : `${d.updated}장 고쳤습니다${d.updated < sel.length ? ` (본인이 올린 사진만 고칠 수 있어 ${sel.length - d.updated}장은 그대로)` : ''}`);
+    if (method === 'DELETE') setSel([]);
+    loadPhotos();
+  }
   const filterCount = sources.length + (tag ? 1 : 0) + peopleSel.length + (from || to ? 1 : 0) + (usage ? 1 : 0);
 
   const tabs = (
@@ -1378,7 +1454,7 @@ export default function PhotoBank({
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3" ref={rootRef}>
       {tabs}
       <div className="flex flex-wrap gap-2">
         <input value={q} onChange={(e) => setQ(e.target.value)} className={`${input} flex-1 min-w-[200px]`} placeholder="인물·주제로 검색 — 내 뱅크와 외부에서 안전한 사진만" />
@@ -1505,14 +1581,68 @@ export default function PhotoBank({
           <span className="text-amber-700"> · 출처 미입력 {unverified}장은 안전 확인 전이라 검색에서 빠졌습니다{mode === 'manage' ? ' (필터 → 출처 미입력에서 출처를 넣어 주세요)' : ''}</span>
         )}
       </p>
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 gap-3">
+      {mode === 'manage' && (
+        <p className="text-[11px] text-gray-400">사진 바깥 빈 곳에서 끌어 범위를 그리면 여러 장이 선택됩니다 · Ctrl/Shift+클릭으로 한 장씩 더하기 · Esc로 해제</p>
+      )}
+      {mode === 'manage' && sel.length > 0 && (
+        <div data-no-marquee className="sticky top-0 z-20 border rounded-xl p-3 bg-white shadow-sm flex flex-wrap items-center gap-2 text-xs">
+          <b className="text-sm">선택 {sel.length}장</b>
+          <span className="flex items-center gap-1">
+            <input value={bulkCaption} onChange={(e) => setBulkCaption(e.target.value)} className="border border-gray-200 rounded-lg px-2 py-1 w-56" placeholder="캡션 일괄 입력" />
+            <button type="button" disabled={bulkBusy || !bulkCaption.trim()} onClick={() => bulk({ title: bulkCaption.trim() })} className="border rounded-lg px-2 py-1 disabled:opacity-40">
+              캡션 일괄 수정
+            </button>
+          </span>
+          <span className="flex items-center gap-1">
+            <select value={bulkSource} onChange={(e) => setBulkSource(e.target.value as SourceType | '')} className="border border-gray-200 rounded-lg px-1 py-1">
+              <option value="">출처 유형…</option>
+              {SOURCE_TYPES.map((t) => (
+                <option key={t} value={t}>
+                  {SOURCE_LABEL[t]}
+                </option>
+              ))}
+            </select>
+            <input value={bulkWho} onChange={(e) => setBulkWho(e.target.value)} className="border border-gray-200 rounded-lg px-2 py-1 w-36" placeholder={bulkSource ? PHOTOGRAPHER_HINT[bulkSource] : '촬영자·기관'} />
+            <button
+              type="button"
+              disabled={bulkBusy || !bulkSource}
+              onClick={() => bulk({ sourceType: bulkSource, photographer: bulkWho })}
+              className="border rounded-lg px-2 py-1 disabled:opacity-40"
+              title={bulkSource ? `크레디트: ${autoCredit(bulkSource, bulkWho) || '(촬영자·기관을 넣으면 자동)'}` : ''}
+            >
+              출처 일괄 지정
+            </button>
+          </span>
+          {isChief && (
+            <button
+              type="button"
+              disabled={bulkBusy}
+              onClick={() => confirm(`선택한 ${sel.length}장을 사진 뱅크에서 삭제할까요? 되돌릴 수 없습니다. (이미 기사에 들어간 사진은 기사에 그대로 남습니다)`) && bulk({}, 'DELETE')}
+              className="border border-red-200 text-red-600 rounded-lg px-2 py-1 disabled:opacity-40"
+            >
+              선택 삭제
+            </button>
+          )}
+          <button type="button" onClick={() => setSel([])} className="ml-auto underline text-gray-500">
+            선택 해제
+          </button>
+          {bulkMsg && <span className="basis-full text-gray-700">{bulkMsg}</span>}
+        </div>
+      )}
+      <div ref={gridRef} className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 gap-3">
         {photos.map((p) => {
-          const on = checked.includes(p.id);
+          const on = checked.includes(p.id) || sel.includes(p.id);
           return (
-            <div key={p.id} className={`group relative rounded-lg overflow-hidden border-2 bg-white ${on ? 'border-brand' : 'border-transparent'}`}>
+            <div key={p.id} data-photo-id={p.id} className={`group relative rounded-lg overflow-hidden border-2 bg-white ${on ? 'border-brand' : 'border-transparent'}`}>
               <button
                 type="button"
-                onClick={() => (mode === 'pick' && multiple ? setChecked(toggle(checked, p.id)) : setDetailId(p.id))}
+                onClick={(e) =>
+                  mode === 'pick' && multiple
+                    ? setChecked(toggle(checked, p.id))
+                    : mode === 'manage' && (e.ctrlKey || e.metaKey || e.shiftKey || sel.length > 0)
+                      ? setSel(toggle(sel, p.id))
+                      : setDetailId(p.id)
+                }
                 className="block w-full text-left"
                 title={[p.title, p.credit].filter(Boolean).join(' · ')}
               >
@@ -1548,6 +1678,13 @@ export default function PhotoBank({
           );
         })}
       </div>
+
+      {box && (
+        <div
+          className="fixed z-30 border-2 border-brand bg-brand/10 pointer-events-none"
+          style={{ left: Math.min(box.x0, box.x1), top: Math.min(box.y0, box.y1), width: Math.abs(box.x1 - box.x0), height: Math.abs(box.y1 - box.y0) }}
+        />
+      )}
 
       <ExternalResults
         q={q}
