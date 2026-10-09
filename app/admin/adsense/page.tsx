@@ -99,6 +99,9 @@ export default function AdSenseAdminPage() {
             <a href={AUTO_ADS_URL} target="_blank" rel="noopener noreferrer" className="inline-block underline text-brand">
               애드센스 자동광고 설정 열기 ↗
             </a>
+            <p className="text-xs text-gray-500">
+              &quot;액세스가 거부되었습니다&quot;가 뜨면 브라우저에 로그인된 다른 구글 계정으로 열린 것입니다. 오른쪽 위 프로필에서 <b>polinewworld@gmail.com</b>으로 바꾸세요 (관리 권한 있음).
+            </p>
             <p className="text-xs text-gray-400">게시자 ID: ca-{PUB_ID} · 광고는 factfinder.tv 주소에서만 나오고, 지금 테스트 주소(onrender.com)에서는 나오지 않습니다.</p>
           </section>
         </div>
