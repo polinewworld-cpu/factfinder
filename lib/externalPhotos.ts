@@ -61,19 +61,78 @@ function wikimediaLicense(short: string): { type: SourceType; license: string } 
   return null;
 }
 
-async function searchWikimedia(q: string): Promise<ExternalItem[]> {
+// 위키데이터로 검색어의 정식 이름(영문 표기·별칭)과 항목 번호를 찾음 — "한동훈" → Han Dong-hoon, Q97199071
+// 사람(P31=Q5)일 때만 — "국방부"가 미국 국방부로 잡히는 식의 오인 방지
+async function wikidataNames(q: string): Promise<{ qid: string | null; names: string[] }> {
+  try {
+    const s0 = await getJson(
+      `https://www.wikidata.org/w/api.php?action=wbsearchentities&format=json&type=item&limit=1&language=ko&uselang=ko&search=${encodeURIComponent(q)}`,
+    );
+    const qid: string | undefined = s0.search?.[0]?.id;
+    if (!qid) return { qid: null, names: [] };
+    const e = await getJson(`https://www.wikidata.org/w/api.php?action=wbgetentities&format=json&props=labels|aliases|claims&languages=en|ko&ids=${qid}`);
+    const ent = e.entities?.[qid] ?? {};
+    const human = (ent.claims?.P31 ?? []).some((c: any) => c.mainsnak?.datavalue?.value?.id === 'Q5');
+    if (!human) return { qid: null, names: [] };
+    const names = [
+      ent.labels?.en?.value,
+      ent.labels?.ko?.value,
+      ...(ent.aliases?.en ?? []).map((x: any) => x.value),
+      ...(ent.aliases?.ko ?? []).map((x: any) => x.value),
+    ].filter((x): x is string => typeof x === 'string' && x.trim().length >= 2);
+    return { qid, names: Array.from(new Set(names)) };
+  } catch {
+    return { qid: null, names: [] };
+  }
+}
+
+// 띄어쓰기·하이픈·대소문자 무시하고 비교 ("Han Dong-hoon" = "han donghoon")
+const norm = (t: string) => t.toLowerCase().replace(/[^0-9a-z가-힣]/g, '');
+
+async function commonsSearch(query: string, limit = 40): Promise<any[]> {
   const url =
-    'https://commons.wikimedia.org/w/api.php?action=query&format=json&generator=search&gsrnamespace=6&gsrlimit=40' +
-    `&gsrsearch=${encodeURIComponent(`${q} filetype:bitmap`)}` +
+    `https://commons.wikimedia.org/w/api.php?action=query&format=json&generator=search&gsrnamespace=6&gsrlimit=${limit}` +
+    `&gsrsearch=${encodeURIComponent(`${query} filetype:bitmap`)}` +
     '&prop=imageinfo&iiprop=url|extmetadata|size&iiurlwidth=1600' +
-    '&iiextmetadatafilter=LicenseShortName|Artist|DateTimeOriginal|ImageDescription|ObjectName';
+    '&iiextmetadatafilter=LicenseShortName|Artist|DateTimeOriginal|ImageDescription|ObjectName|Categories';
   const d = await getJson(url);
-  const pages = Object.values<any>(d.query?.pages ?? {}).sort((a, b) => (a.index ?? 0) - (b.index ?? 0));
+  return Object.values<any>(d.query?.pages ?? {}).sort((a, b) => (a.index ?? 0) - (b.index ?? 0));
+}
+
+// 위키미디어는 검색어를 넓게 풀어(다른 언어·비슷한 글자) 엉뚱한 사진이 섞임 — 2026-10-09 "한동훈" 검색에 배우·조개 사진이 섞인 문제
+// → ① 위키데이터 "이 사진에 나온 인물(depicts)"로 등록된 사진을 맨 앞에 ② 정식 이름(영문 포함)으로 다시 찾고
+//   ③ 글자 검색 결과는 제목·설명·분류에 그 이름이 실제로 들어 있는 것만 남김
+async function searchWikimedia(q: string): Promise<ExternalItem[]> {
+  const { qid, names } = await wikidataNames(q);
+  const terms = Array.from(new Set([q, ...names])).map(norm).filter((t) => t.length >= 2);
+  const [depicts, byName, byText] = await Promise.all([
+    qid ? commonsSearch(`haswbstatement:P180=${qid}`).catch(() => []) : Promise.resolve([]),
+    names[0] && norm(names[0]) !== norm(q) ? commonsSearch(`"${names[0]}"`).catch(() => []) : Promise.resolve([]),
+    commonsSearch(q),
+  ]);
+  const seen = new Set<number>();
+  const pages: { p: any; trusted: boolean }[] = [];
+  for (const [list, trusted] of [
+    [depicts, true],
+    [byName, false],
+    [byText, false],
+  ] as const) {
+    for (const p of list) {
+      if (seen.has(p.pageid)) continue;
+      seen.add(p.pageid);
+      pages.push({ p, trusted });
+    }
+  }
+
   const items: ExternalItem[] = [];
-  for (const p of pages) {
+  for (const { p, trusted } of pages) {
     const ii = p.imageinfo?.[0];
     if (!ii) continue;
     const m = ii.extmetadata ?? {};
+    if (!trusted) {
+      const hay = norm(`${p.title} ${strip(m.ImageDescription?.value ?? '')} ${strip(m.ObjectName?.value ?? '')} ${m.Categories?.value ?? ''}`);
+      if (!terms.some((t) => hay.includes(t))) continue;
+    }
     const lic = wikimediaLicense(m.LicenseShortName?.value ?? '');
     if (!lic) continue;
     const author = strip(m.Artist?.value ?? '') || '위키미디어 커먼즈';
