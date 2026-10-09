@@ -240,11 +240,22 @@ function SettlementTab() {
 
   // 체크한 건 기준 기자별 집계
   const summary = useMemo(() => {
-    const map = new Map<string, { name: string; count: number; total: number }>();
+    type G = { id: string | null; name: string; ghost: boolean; bankName: string | null; bankAccount: string | null; accountHolder: string | null; count: number; total: number };
+    const map = new Map<string, G>();
     for (const d of rows ?? []) {
       if (!checked.has(d.id)) continue;
       const key = d.reporter?.id ?? '__none__';
-      const g = map.get(key) ?? { name: d.reporter?.name ?? '미지정 (사이트 전체 후원)', count: 0, total: 0 };
+      const r = d.reporter;
+      const g: G = map.get(key) ?? {
+        id: r?.id ?? null,
+        name: r ? r.nickname || r.name : '미지정 (사이트 전체 후원)',
+        ghost: !!r?.isGhostWriter,
+        bankName: r?.bankName ?? null,
+        bankAccount: r?.bankAccount ?? null,
+        accountHolder: r?.accountHolder ?? null,
+        count: 0,
+        total: 0,
+      };
       g.count += 1;
       g.total += d.amount;
       map.set(key, g);
@@ -254,6 +265,20 @@ function SettlementTab() {
   const sumCount = summary.reduce((s, g) => s + g.count, 0);
   const sumTotal = summary.reduce((s, g) => s + g.total, 0);
   const fee = (n: number) => Math.round(n * FEE_RATE);
+
+  // 입금 계좌 바로 넣기·고치기 (2026-10-09 — 유령기자 포함, 지급할 때 계좌를 찾으러 다니지 않게)
+  const [editAcc, setEditAcc] = useState<{ id: string; bankName: string; bankAccount: string; accountHolder: string } | null>(null);
+  async function saveAccount() {
+    if (!editAcc) return;
+    const res = await fetch('/api/admin/payout-info', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: editAcc.id, bankName: editAcc.bankName, bankAccount: editAcc.bankAccount, accountHolder: editAcc.accountHolder }),
+    });
+    if (!res.ok) return setMessage({ ok: false, text: (await res.json().catch(() => ({}))).error ?? '계좌 저장 실패' });
+    setEditAcc(null);
+    await load(from, to);
+  }
 
   function toggle(id: string) {
     setChecked((prev) => {
@@ -330,17 +355,56 @@ function SettlementTab() {
                 <th className="py-1.5 pr-4 font-semibold text-right">건수</th>
                 <th className="py-1.5 pr-4 font-semibold text-right">후원 합계</th>
                 <th className="py-1.5 pr-4 font-semibold text-right">공제(30%)</th>
-                <th className="py-1.5 font-semibold text-right">지급액</th>
+                <th className="py-1.5 pr-4 font-semibold text-right">지급액</th>
+                <th className="py-1.5 font-semibold">입금 계좌</th>
               </tr>
             </thead>
             <tbody>
               {summary.map((g) => (
-                <tr key={g.name} className="border-b border-gray-100">
-                  <td className="py-1.5 pr-4 text-gray-900 font-medium">{g.name}</td>
+                <tr key={g.id ?? g.name} className="border-b border-gray-100 align-top">
+                  <td className="py-1.5 pr-4 text-gray-900 font-medium whitespace-nowrap">
+                    {g.name}
+                    {g.ghost && <span className="ml-1 text-[11px] font-normal text-gray-400">유령기자</span>}
+                  </td>
                   <td className="py-1.5 pr-4 text-right text-gray-600">{g.count}</td>
                   <td className="py-1.5 pr-4 text-right text-gray-900">{g.total.toLocaleString()}원</td>
                   <td className="py-1.5 pr-4 text-right text-gray-400">-{fee(g.total).toLocaleString()}원</td>
-                  <td className="py-1.5 text-right font-bold text-brand">{(g.total - fee(g.total)).toLocaleString()}원</td>
+                  <td className="py-1.5 pr-4 text-right font-bold text-brand">{(g.total - fee(g.total)).toLocaleString()}원</td>
+                  <td className="py-1.5 text-gray-700">
+                    {!g.id ? (
+                      <span className="text-gray-300">-</span>
+                    ) : editAcc?.id === g.id ? (
+                      <span className="flex flex-wrap items-center gap-1">
+                        <input value={editAcc.bankName} onChange={(e) => setEditAcc({ ...editAcc, bankName: e.target.value })} placeholder="은행" className="border rounded px-1.5 py-0.5 w-20" />
+                        <input value={editAcc.bankAccount} onChange={(e) => setEditAcc({ ...editAcc, bankAccount: e.target.value })} placeholder="계좌번호" className="border rounded px-1.5 py-0.5 w-36" />
+                        <input value={editAcc.accountHolder} onChange={(e) => setEditAcc({ ...editAcc, accountHolder: e.target.value })} placeholder="예금주" className="border rounded px-1.5 py-0.5 w-20" />
+                        <button type="button" onClick={saveAccount} className="text-xs font-bold text-white bg-brand rounded px-2 py-0.5">
+                          저장
+                        </button>
+                        <button type="button" onClick={() => setEditAcc(null)} className="text-xs text-gray-500">
+                          취소
+                        </button>
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-2">
+                        {g.bankAccount ? (
+                          <span className="whitespace-nowrap">
+                            {g.bankName} {g.bankAccount}
+                            {g.accountHolder ? ` (${g.accountHolder})` : ''}
+                          </span>
+                        ) : (
+                          <span className="text-gray-400">계좌 없음</span>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => setEditAcc({ id: g.id!, bankName: g.bankName ?? '', bankAccount: g.bankAccount ?? '', accountHolder: g.accountHolder ?? '' })}
+                          className="text-xs underline text-gray-500"
+                        >
+                          {g.bankAccount ? '고치기' : '넣기'}
+                        </button>
+                      </span>
+                    )}
+                  </td>
                 </tr>
               ))}
               <tr className="font-semibold">
@@ -348,7 +412,8 @@ function SettlementTab() {
                 <td className="py-1.5 pr-4 text-right text-gray-700">{sumCount}</td>
                 <td className="py-1.5 pr-4 text-right text-gray-900">{sumTotal.toLocaleString()}원</td>
                 <td className="py-1.5 pr-4 text-right text-gray-400">-{fee(sumTotal).toLocaleString()}원</td>
-                <td className="py-1.5 text-right text-brand">{(sumTotal - fee(sumTotal)).toLocaleString()}원</td>
+                <td className="py-1.5 pr-4 text-right text-brand">{(sumTotal - fee(sumTotal)).toLocaleString()}원</td>
+                <td />
               </tr>
             </tbody>
           </table>

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { isGhostWriterEmail } from '@/lib/ghostWriter';
 import { prisma } from '@/lib/prisma';
 import { ROLES } from '@/lib/roles';
 import { getCurrentUser } from '@/lib/session';
@@ -31,12 +32,20 @@ export async function GET(req: NextRequest) {
     include: {
       // 후원리스트에 닉네임·프로필사진·이메일·연락처를 함께 노출하기 위해 확장 (2026-09-12)
       user: { select: { id: true, name: true, nickname: true, image: true, email: true } },
-      reporter: { select: { id: true, name: true, nickname: true } },
+      // 정산 탭에서 바로 입금할 수 있게 계좌·유령기자 여부까지 (2026-10-09)
+      reporter: { select: { id: true, name: true, nickname: true, email: true, bankName: true, bankAccount: true, accountHolder: true } },
       article: { select: { id: true, title: true, legacyId: true } },
     },
     orderBy: { startedAt: 'desc' },
     take: 1000,
   });
 
-  return NextResponse.json(donations);
+  // 기자 이메일은 내보내지 않고 유령기자 여부만
+  return NextResponse.json(
+    donations.map((d) => {
+      if (!d.reporter) return d;
+      const { email, ...reporter } = d.reporter;
+      return { ...d, reporter: { ...reporter, isGhostWriter: isGhostWriterEmail(email) } };
+    }),
+  );
 }
