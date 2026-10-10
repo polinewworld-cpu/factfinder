@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import DailyDraftEditor from '@/components/DailyDraftEditor';
 import { toFrenchBrackets } from '@/lib/frenchBrackets';
 
 type Item = { id: string; title: string; publishedAt: string | null; category: string | null; author: string | null };
@@ -54,34 +55,6 @@ export default function NewsletterAdminPage() {
     await load();
     setBusy(false);
   }
-  const [dailyMsg, setDailyMsg] = useState('');
-  const [dailyBusy, setDailyBusy] = useState(false);
-  const [dailyDate, setDailyDate] = useState(''); // 비우면 오늘 아침 기준, 지정하면 그 날짜 아침 기준(방송이 있던 날 시험용)
-  // 일간 아침 브리핑 샘플을 편집장 본인 메일로만 (2026-10-10) — 방송 영상 분석이 있어 1~4분 걸릴 수 있음
-  async function dailyTest() {
-    setDailyBusy(true);
-    setDailyMsg('만들기 시작했어요. 방송 내용을 요약하느라 몇 분 걸릴 수 있습니다. 이 화면을 열어 두세요…');
-    try {
-      const start = await fetch('/api/newsletter/daily-test', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dailyDate ? { date: dailyDate } : {}) });
-      if (!start.ok) throw new Error((await start.json().catch(() => ({}))).error ?? '시작하지 못했습니다');
-      // 4초마다 진행 확인(최대 12분)
-      for (let i = 0; i < 180; i++) {
-        await new Promise((r) => setTimeout(r, 4000));
-        const d = await fetch('/api/newsletter/daily-test').then((r) => r.json()).catch(() => null);
-        if (!d || d.state === 'running') continue;
-        if (d.state === 'error') setDailyMsg(`실패: ${d.message ?? '알 수 없는 오류'}`);
-        else if (d.skipped) setDailyMsg(`${d.note} (방송이 있던 날 다음 날짜를 골라 다시 시험해 보세요)`);
-        else setDailyMsg(`${d.to}로 보냈습니다. 방송 ${d.info.broadcasts}건(요약 방식: ${d.info.summarySources.map((s: string) => (s === 'video' ? '영상 분석' : s === 'description' ? '설명란' : '요약 없음')).join(', ')}) · 기사 ${d.info.articles}건${d.info.usedPersonas ? ' · 기자 브리핑 포함' : ''}`);
-        setDailyBusy(false);
-        return;
-      }
-      setDailyMsg('아직 끝나지 않았어요. 잠시 뒤 메일함을 확인해 보세요.');
-    } catch (e) {
-      setDailyMsg(e instanceof Error ? e.message : '테스트 발송 중 오류가 났습니다.');
-    }
-    setDailyBusy(false);
-  }
-
   async function testSend(useSelection: boolean) {
     setBusy(true);
     setAutoMsg('');
@@ -162,19 +135,8 @@ export default function NewsletterAdminPage() {
         {info.lastSentAt && <> · 마지막 발송 {new Date(info.lastSentAt).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</>}
       </p>
 
-      {/* 일간 아침 브리핑 샘플 (2026-10-10) — 구독자 발송은 아직 연결 전, 편집장 본인에게만 */}
-      <section className="border rounded-xl p-4 mb-6">
-        <h2 className="text-sm font-semibold mb-1">일간 아침 브리핑 샘플 (정치신세계 어제 방송)</h2>
-        <p className="text-xs text-gray-500 mb-3">평일 아침 8시 기준 · 어제 방송을 요약해서 보여주고, 어제 기사가 있으면 기사를 없으면 오진실·김정신 브리핑을 &quot;정신줄님&quot; 호칭으로 싣습니다. 방송이 없던 날은 건너뜁니다. 아직 구독자에게는 나가지 않습니다.</p>
-        <label className="text-xs text-gray-500 mr-2">
-          기준 날짜(비우면 오늘 아침)
-          <input type="date" value={dailyDate} onChange={(e) => setDailyDate(e.target.value)} className="ml-1 border rounded px-2 py-1 text-sm" />
-        </label>
-        <button type="button" disabled={dailyBusy || !info.gmail.connected} onClick={dailyTest} className="text-sm border rounded-lg px-4 py-2 disabled:opacity-40">
-          {dailyBusy ? '만드는 중…' : '일간 샘플을 내 메일로 받기'}
-        </button>
-        {dailyMsg && <p className="text-sm text-brand mt-2">{dailyMsg}</p>}
-      </section>
+      {/* 일간 아침 브리핑 초안 (2026-10-10) — 구독자 발송은 아직 연결 전, 편집장 본인에게만 */}
+      <DailyDraftEditor gmailConnected={info.gmail.connected} />
 
       {/* 토요일 자동 발송 (2026-10-10) */}
       <section className="border rounded-xl p-4 mb-6 space-y-4">
