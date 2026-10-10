@@ -19,7 +19,40 @@ export const FOREIGN_FEEDS = [
   { name: 'DW', url: 'https://rss.dw.com/rdf/rss-en-asia' },
   { name: 'The Washington Post', url: 'https://feeds.washingtonpost.com/rss/world' },
   { name: 'WSJ', url: 'https://feeds.content.dowjones.io/public/rss/RSSWorldNews' },
+  { name: 'France 24', url: 'https://www.france24.com/en/rss' },
 ] as const;
+
+// 특파원이 그날 "있는 곳" — 매체 본사 도시. 매일(회차마다) 기사가 있는 나라로 바뀜. 날씨는 이 좌표로 실측값을 가져온다.
+const OUTLET_CITY: Record<string, { ko: string; lat: number; lon: number }> = {
+  BBC: { ko: '런던', lat: 51.5074, lon: -0.1278 },
+  'The Guardian': { ko: '런던', lat: 51.5074, lon: -0.1278 },
+  'The New York Times': { ko: '뉴욕', lat: 40.7128, lon: -74.006 },
+  WSJ: { ko: '뉴욕', lat: 40.7128, lon: -74.006 },
+  NPR: { ko: '워싱턴', lat: 38.9072, lon: -77.0369 },
+  'The Washington Post': { ko: '워싱턴', lat: 38.9072, lon: -77.0369 },
+  CNN: { ko: '홍콩', lat: 22.3193, lon: 114.1694 },
+  'Al Jazeera': { ko: '도하', lat: 25.2854, lon: 51.531 },
+  DW: { ko: '베를린', lat: 52.52, lon: 13.405 },
+  'France 24': { ko: '파리', lat: 48.8566, lon: 2.3522 },
+};
+
+const WEATHER_KO = (code: number) =>
+  code === 0 ? '맑음' : code <= 3 ? '구름 낀 하늘' : code <= 48 ? '안개' : code <= 57 ? '이슬비' : code <= 67 ? '비' : code <= 77 ? '눈' : code <= 82 ? '소나기' : code <= 86 ? '눈보라' : '뇌우';
+
+async function fetchWeather(lat: number, lon: number): Promise<{ text: string; temp: number } | null> {
+  try {
+    const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code&timezone=auto`, {
+      signal: AbortSignal.timeout(8_000),
+      cache: 'no-store',
+    });
+    if (!res.ok) return null;
+    const c = (await res.json())?.current;
+    if (typeof c?.temperature_2m !== 'number') return null;
+    return { text: WEATHER_KO(Number(c.weather_code)), temp: Math.round(c.temperature_2m) };
+  } catch {
+    return null; // 날씨를 못 받아도 보고는 올림(날씨 이야기만 뺌)
+  }
+}
 
 export type ForeignPick = {
   priority: number; // 1~3 (1이 가장 먼저)
@@ -45,6 +78,8 @@ export type ForeignNewsReport = {
   slot: number; // 보고 시각(한국시간 7·13·19, 0은 새벽 수동 갱신)
   greeting: string; // 특파원 인사(화면에는 표시하지 않음)
   overview: string; // 이번 회차 종합(존댓말, 여러 이슈를 폭넓게)
+  place?: { city: string; weather: string | null; temp: number | null }; // 그날 특파원이 있는 곳(실측 날씨)
+  localColor?: string; // 현지 분위기 이야기(날씨·현지 소식·연예계 등, 재미있게)
   closing?: string; // 마무리 인사(말미에 한두 문장, 편집국을 챙기는 따뜻한 한마디)
   briefs: ForeignBrief[]; // 한 줄 브리핑 — 다양한 이슈를 한 줄씩(링크 포함)
   picks: ForeignPick[];
@@ -153,7 +188,7 @@ export async function buildForeignNews(slot: number): Promise<ForeignNewsReport>
   const report: ForeignNewsReport = {
     generatedAt: new Date().toISOString(),
     slot,
-    greeting: `${when} 보고드립니다. 김정신 특파원입니다.`,
+    greeting: '편집장님. 김정신 특파원입니다.',
     overview: '',
     briefs: [],
     picks: [],
@@ -189,6 +224,20 @@ export async function buildForeignNews(slot: number): Promise<ForeignNewsReport>
     return report;
   }
 
+  // 오늘 있는 곳: 후보 기사가 있는 매체들의 도시 중에서 날짜·회차로 돌려가며 고름
+  const cities = Array.from(new Set(candidates.map((c) => OUTLET_CITY[c.outlet]?.ko).filter(Boolean))) as string[];
+  const dayNum = Math.floor((Date.now() + 9 * 3600_000) / 86400_000);
+  const cityKo = cities.length ? cities[(dayNum * 3 + REPORT_SLOTS.indexOf(slot) + 1) % cities.length] : null;
+  const cityInfo = Object.values(OUTLET_CITY).find((c) => c.ko === cityKo) ?? null;
+  const weather = cityInfo ? await fetchWeather(cityInfo.lat, cityInfo.lon) : null;
+  if (cityKo) report.place = { city: cityKo, weather: weather?.text ?? null, temp: weather?.temp ?? null };
+  // 현지 분위기 재료 — 그 도시 매체의 한국 무관 헤드라인(파업·행사·연예 등) 최대 25개
+  const localHeads = all
+    .filter((r) => cityKo && OUTLET_CITY[r.outlet]?.ko === cityKo && !KOREA_RE.test(`${r.title} ${r.summary}`))
+    .slice(0, 25)
+    .map((r) => `(${r.outlet}) ${r.title}`);
+  const todayKo = new Date(Date.now() + 9 * 3600_000).toISOString().slice(0, 10);
+
   const hoursAgo = (iso: string | null) => (iso ? `${Math.max(0, Math.round((Date.now() - Date.parse(iso)) / 3600_000))}시간 전` : '시각 미상');
   const list = candidates.map((c, i) => `[${i}] (${c.outlet}, ${hoursAgo(c.publishedAt)}) ${c.title}\n    ${c.summary}`).join('\n');
   const prompt = `당신은 한국 인터넷신문 "팩트파인더"(중도주의 관점으로 정치·사회를 다룸)의 김정신 특파원입니다. 현지 주요 언론이 한국 관련 이슈를 어떻게 다루는지 살펴 편집국에 ${when} 보고를 올립니다.
@@ -204,10 +253,15 @@ export async function buildForeignNews(slot: number): Promise<ForeignNewsReport>
 4. 말투(중요): 편집장님과 선배 기자님들께 말하듯 **따뜻하고 재치 있는 존댓말**로 씁니다. 딱딱한 보고서체는 금지입니다. "~이에요", "~해요", "~거든요", "~하세요"를 자연스럽게 섞고, 위트는 한 스푼만 넣습니다. 이유를 곁들여 권하고 강조할 건 강조하세요. 예) "이 건은 미국 쪽 시각이 갈려서 이런 이유로 더 챙겨보세요. 여기가 포인트라서 이건 꼭 강조하셔야 해요."
 
 5. 각 상세 보고 기사에는 편집국이 어떤 방향으로 쓰면 좋을지 **권고**(advice)를 위 말투로 한두 문장 씁니다. 예: "미국 쪽 시각과 우리 정부 입장을 나란히 놓고 쟁점을 정리해 보세요. 그래야 진영 싸움으로 안 보이거든요." 팩트파인더는 진영논리를 벗어난 중도 관점입니다.
+   현지 이야기(localColor): 보고 맨 앞에 붙는 3~6문장. 오늘 ${cityKo ?? '현지'} 현지에서 막 쓰는 것처럼 **재미있고 가볍게**, 현지 느낌을 냅니다. 재료는 위에 준 **실측 날씨**와 **현지 헤드라인**뿐입니다. 날씨를 한마디 하고, 헤드라인에서 보이는 파업·행사·기념일·사건, 그리고 연예계·문화 소식이 있으면 "나도 봤다"는 식으로 수다 떨듯 소개하세요. 예) "여긴 오늘 비가 와서 다들 우산 쓰고 종종걸음이에요. 현지 뉴스를 보니 철도 파업 얘기가 한창이고요, 연예면에서 ○○ 소식도 눈에 띄었어요. 저도 괜히 한참 들여다봤네요." 규칙: 노래·영화·인물·차트 순위·기념일·파업 같은 **구체적 사실은 위 재료에 있을 때만** 말하고, 없으면 지어내지 마세요(가벼운 개인 일화는 허용: 커피, 우산, 흥얼거림 등. 단 곡명·순위처럼 확인 가능한 사실은 재료에 있을 때만). 오늘 날짜에 **확실히 알려진** 공휴일·기념일은 한마디 해도 되지만 확실하지 않으면 생략하세요.
    마무리 인사(closing): 보고 끝에 붙이는 인간적인 한두 문장. 날씨·계절·분위기 같은 가벼운 안부로 편집국을 챙기는 말을 합니다. 예) "환절기라 감기들 조심하세요. 저는 오늘도 커피 한 잔 더 하고 마저 챙겨볼게요." 단, 현지에서 실제로 벌어지는 구체적 사실(질병 유행, 사건, 통계 등)을 지어내서 단정하지 마세요. 기사 목록에 근거가 있으면 "~라고 하네요" 정도로만 가볍게 인용합니다.
 6. 기사 본문은 주어지지 않았습니다. 제목과 소개글에 없는 사실을 지어내지 마세요. 확실하지 않으면 "소개글 기준으로는"이라고 쓰세요. 직접 현지에서 취재했다거나 본 것처럼 쓰지 마세요.
 7. 출력은 JSON 객체 하나만(설명·코드블록 금지):
-{"overview": "종합 5~7문장(위 말투)", "closing": "마무리 인사 1~2문장", "briefs": [{"idx": 번호, "text": "한 문장(위 말투)"}], "items": [{"idx": 번호, "priority": 1~3, "titleKo": "자연스러운 한국어 제목", "summaryKo": "한국어 2문장 요약", "whyKorea": "한국과 어떻게 관련되는지 한 문장", "tone": "현지 언론이 이 이슈를 어떤 시각·관심으로 다루는지 한 문장", "advice": "권고 한두 문장(위 말투)"}]}
+{"localColor": "현지 이야기 3~6문장", "overview": "종합 5~7문장(위 말투)", "closing": "마무리 인사 1~2문장", "briefs": [{"idx": 번호, "text": "한 문장(위 말투)"}], "items": [{"idx": 번호, "priority": 1~3, "titleKo": "자연스러운 한국어 제목", "summaryKo": "한국어 2문장 요약", "whyKorea": "한국과 어떻게 관련되는지 한 문장", "tone": "현지 언론이 이 이슈를 어떤 시각·관심으로 다루는지 한 문장", "advice": "권고 한두 문장(위 말투)"}]}
+
+오늘 특파원이 있는 곳: ${cityKo ?? '(정해지지 않음)'} / 오늘 날짜(한국시간): ${todayKo} / 실측 날씨: ${weather ? `${weather.text}, ${weather.temp}도` : '(못 받음)'}
+현지 매체의 오늘 헤드라인(현지 분위기 재료, 한국과 무관한 것들):
+${localHeads.length ? localHeads.map((h) => `- ${h}`).join('\n') : '(없음)'}
 
 기사 목록:
 ${list}`;
@@ -234,6 +288,7 @@ ${list}`;
     report.picks = picks.sort((a, b) => a.priority - b.priority).slice(0, 15);
     report.overview = String(parsed?.overview ?? '');
     report.closing = String(parsed?.closing ?? '').trim();
+    report.localColor = String(parsed?.localColor ?? '').trim();
     const briefs: ForeignBrief[] = [];
     for (const b of Array.isArray(parsed?.briefs) ? parsed.briefs : []) {
       const c = candidates[Number(b?.idx)];

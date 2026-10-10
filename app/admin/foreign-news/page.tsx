@@ -57,6 +57,15 @@ function PickCard({ p }: { p: ForeignPick }) {
 function Report({ r }: { r: ForeignNewsReport }) {
   return (
     <div>
+      {r.greeting && <p className="text-sm font-semibold text-gray-900 mb-1">{r.greeting}</p>}
+      {r.place && (
+        <p className="text-xs text-gray-500 mb-2">
+          {r.place.city}
+          {r.place.weather ? ` · ${r.place.weather}` : ''}
+          {r.place.temp !== null && r.place.temp !== undefined ? ` ${r.place.temp}℃` : ''}
+        </p>
+      )}
+      {r.localColor && <p className="text-sm text-gray-800 leading-relaxed mb-3">{r.localColor}</p>}
       {r.overview && <p className="text-sm text-gray-800 leading-relaxed mb-4">{r.overview}</p>}
       {r.aiError && <p className="text-amber-700 text-xs mb-3">{r.aiError}</p>}
       {(r.briefs ?? []).length > 0 && (
