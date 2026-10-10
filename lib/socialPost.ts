@@ -195,3 +195,12 @@ export async function recentYoutubeKits(limit = 10) {
     image: imageUrl(a),
   }));
 }
+
+// 시험 게시 — 연결이 되는지 확인용(편집장이 버튼을 눌렀을 때만). 올라간 글은 직접 지우면 됨
+export async function testPost(ch: Channel): Promise<string> {
+  if (!channelReady(ch)) throw new Error('아직 연결되지 않았습니다');
+  const a: Art = { id: '', title: '[시험] 팩트파인더 자동 게시 연결 확인', excerpt: '이 글은 연결 시험용입니다. 곧 지워집니다.', content: '', coverImageUrl: null };
+  if (ch === 'x') return postX({ ...a, id: 'test' });
+  if (ch === 'threads') return postThreads({ ...a, id: 'test' });
+  throw new Error('인스타그램은 사진이 필요해 시험 게시를 지원하지 않습니다');
+}

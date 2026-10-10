@@ -27,6 +27,14 @@ export default function SocialAdminPage() {
     load();
   }, []);
 
+  const [testMsg, setTestMsg] = useState('');
+  async function test(c: Ch) {
+    setTestMsg(`${c.label} 시험 게시 중…`);
+    const res = await fetch('/api/admin/social', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ test: c.key }) });
+    const d = await res.json().catch(() => ({}));
+    setTestMsg(res.ok ? `${c.label}: ✓ 올라갔어요. 해당 SNS에서 확인하고 글은 직접 지우세요.` : `${c.label}: ✗ ${d.error ?? '실패'}`);
+  }
+
   async function toggle(c: Ch) {
     await fetch('/api/admin/social', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ [c.key]: !c.enabled }) });
     load();
@@ -47,6 +55,7 @@ export default function SocialAdminPage() {
       <h1 className="text-xl font-bold">SNS 자동 게시</h1>
       <p className="text-sm text-gray-900/70">기사가 발행되면 켜 둔 곳에 제목·요약·링크가 자동으로 올라갑니다(발행 후 최대 10분 안). 켜기 전에 나간 기사는 올리지 않아요.</p>
       {err && <p className="text-sm text-red-600">{err}</p>}
+      {testMsg && <p className="text-sm font-semibold">{testMsg}</p>}
       <div className="grid gap-3 md:grid-cols-3">
         {chs.map((c) => (
           <section key={c.key} className="border rounded-xl p-4">
@@ -60,6 +69,11 @@ export default function SocialAdminPage() {
               {c.enabled ? '자동 게시 끄기' : '자동 게시 켜기'}
             </button>
             <span className="ml-2 text-sm">{c.enabled ? '켜짐' : '꺼짐'}</span>
+            {c.ready && c.key !== 'instagram' && (
+              <button type="button" onClick={() => test(c)} className="mt-2 block border rounded-lg px-3 py-1 text-xs">
+                시험 게시 (연결 확인)
+              </button>
+            )}
           </section>
         ))}
       </div>
