@@ -19,6 +19,13 @@ enum UserRole {
   CHIEF_EDITOR
 }
 
+// 로그인 없는 필자의 종류 (2026-10-10 사장님 정의)
+enum WriterKind {
+  NONMEMBER // 비회원 기자 — 원고를 보내면 편집장이 올리고 글쓴이·직함·사진만 바꿔 줌. 글쓰기 고르기 창에 나옴
+  RETURNING // 돌아올 기자 — 예전에 로그인해 쓰던 기자, 가입·로그인하면 옛 기사와 연결
+  GHOST // 유령기자 — 과거 1회성, 끊어진 기자. 지난 기사에 이름만 남음
+}
+
 enum Gender {
   MALE
   FEMALE
@@ -60,7 +67,7 @@ model User {
   image                     String?
   role                      UserRole                   @default(READER)
   gender                    Gender?
-  nickname                  String?                    @unique // 필수+중복불허 (기능정의서 2번) — 앱 레벨에서 필수 검증, DB는 유니크만 강제
+  nickname                  String? // 바이라인 이름 — 2026-10-10 사장님: 같은 이름 허용(중복 금지 해제)
   bio                       String?                    @db.Text // 자기소개 — 기사 하단 기자 프로필에 노출 (기능정의서 3.2 신규)
   reporterApplicationStatus ReporterApplicationStatus? // 기자 신청 상태 (기능정의서 3.2.1)
   newsletterOptIn           Boolean                    @default(false) // 뉴스레터 구독 여부 — 후원 여부와 무관한 별도 옵트인 (기능정의서 6)
@@ -71,6 +78,7 @@ model User {
   // 유령기자(로그인 없는 필자 — …@legacy.invalid 계정: 외부 기고자·옛 사이트 기자) 프로필·정산 정보 (2026-10-09)
   writerTitle               String? // 직함 — 바이라인에 "이름 직함"으로 (예: 前 ○○대 교수)
   writerMemo                String? // 편집장용 짧은 메모(20자) — 유령기자 고를 때 구분용, 사이트엔 안 나옴 (2026-10-10)
+  writerKind                WriterKind? // 로그인 없는 필자(…@legacy.invalid)의 종류 — 실제 로그인 기자는 null (2026-10-10)
   bankName                  String? // 원고료 정산용 — 편집장만 열람
   bankAccount               String?
   accountHolder             String?

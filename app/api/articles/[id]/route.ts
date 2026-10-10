@@ -6,7 +6,7 @@ import { deriveExcerpt } from '@/lib/excerpt';
 import { resolveAuthorByName } from '@/lib/authorResolve';
 import { sanitizeArticleContent } from '@/lib/sanitizeArticle';
 import { syncPhotoUsage } from '@/lib/photoBank';
-import { validGhostWriterId } from '@/lib/ghostWriter';
+import { validNonMemberWriterId } from '@/lib/ghostWriter';
 import { clampFocal } from '@/lib/cardImage';
 import { toFrenchBrackets } from '@/lib/frenchBrackets';
 import { PUBLIC_AUTHOR_SELECT } from '@/lib/publicFields';
@@ -70,9 +70,9 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   for (const key of EDITABLE_FIELDS) if (body[key] !== undefined) data[key] = body[key];
   for (const key of FOCAL_FIELDS) if (data[key] !== undefined) data[key] = clampFocal(data[key]);
 
-  // 글쓴이는 편집장의 "글쓴이" 칸(authorName)·유령기자 선택(ghostWriterId)으로만 (2026-10-08, 10-09)
+  // 글쓴이는 편집장의 "글쓴이" 칸(authorName)·비회원 기자 선택(ghostWriterId)으로만 (2026-10-08, 10-09)
   if (isChief && (authorName !== undefined || ghostWriterId !== undefined)) {
-    const id = (await validGhostWriterId(ghostWriterId)) || (authorName !== undefined ? await resolveAuthorByName(authorName) : null);
+    const id = (await validNonMemberWriterId(ghostWriterId)) || (authorName !== undefined ? await resolveAuthorByName(authorName) : null);
     if (id) data.authorId = id;
   }
 

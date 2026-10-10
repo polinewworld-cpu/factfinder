@@ -240,7 +240,7 @@ function SettlementTab() {
 
   // 체크한 건 기준 기자별 집계
   const summary = useMemo(() => {
-    type G = { id: string | null; name: string; ghost: boolean; bankName: string | null; bankAccount: string | null; accountHolder: string | null; count: number; total: number };
+    type G = { id: string | null; name: string; kindLabel: string | null; bankName: string | null; bankAccount: string | null; accountHolder: string | null; count: number; total: number };
     const map = new Map<string, G>();
     for (const d of rows ?? []) {
       if (!checked.has(d.id)) continue;
@@ -249,7 +249,7 @@ function SettlementTab() {
       const g: G = map.get(key) ?? {
         id: r?.id ?? null,
         name: r ? r.nickname || r.name : '미지정 (사이트 전체 후원)',
-        ghost: !!r?.isGhostWriter,
+        kindLabel: r?.kindLabel ?? null,
         bankName: r?.bankName ?? null,
         bankAccount: r?.bankAccount ?? null,
         accountHolder: r?.accountHolder ?? null,
@@ -266,7 +266,7 @@ function SettlementTab() {
   const sumTotal = summary.reduce((s, g) => s + g.total, 0);
   const fee = (n: number) => Math.round(n * FEE_RATE);
 
-  // 입금 계좌 바로 넣기·고치기 (2026-10-09 — 유령기자 포함, 지급할 때 계좌를 찾으러 다니지 않게)
+  // 입금 계좌 바로 넣기·고치기 (2026-10-09 — 비회원 기자 포함, 지급할 때 계좌를 찾으러 다니지 않게)
   const [editAcc, setEditAcc] = useState<{ id: string; bankName: string; bankAccount: string; accountHolder: string } | null>(null);
   async function saveAccount() {
     if (!editAcc) return;
@@ -364,7 +364,7 @@ function SettlementTab() {
                 <tr key={g.id ?? g.name} className="border-b border-gray-100 align-top">
                   <td className="py-1.5 pr-4 text-gray-900 font-medium whitespace-nowrap">
                     {g.name}
-                    {g.ghost && <span className="ml-1 text-[11px] font-normal text-gray-400">유령기자</span>}
+                    {g.kindLabel && <span className="ml-1 text-[11px] font-normal text-gray-400">{g.kindLabel}</span>}
                   </td>
                   <td className="py-1.5 pr-4 text-right text-gray-600">{g.count}</td>
                   <td className="py-1.5 pr-4 text-right text-gray-900">{g.total.toLocaleString()}원</td>

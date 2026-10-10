@@ -4,8 +4,16 @@ import { useEffect, useRef, useState } from 'react';
 import AdminTabs, { PEOPLE_TABS } from '@/components/AdminTabs';
 import { compressImageFile } from '@/lib/imageCompress';
 import { closeOnBackdrop } from '@/lib/backdrop';
+import { useSearchParams } from 'next/navigation';
 
-// 회원/기자관리 → 유령기자 (2026-10-09 사장님 정의) — 로그인 없이 이름으로만 존재하는 필자(외부 기고자·옛 사이트 기자).
+// 종류 바꾸기 선택지 (2026-10-10 사장님 정의) — lib/ghostWriter.ts WRITER_KIND_LABEL과 같음
+const KIND_OPTIONS = [
+  { value: 'NONMEMBER', label: '비회원 기자' },
+  { value: 'RETURNING', label: '돌아올 기자' },
+  { value: 'GHOST', label: '유령기자' },
+];
+
+// 회원/기자관리 → 비회원 기자(기본)·유령기자(?kind=GHOST) 탭 (2026-10-09, 10-10 재정의) — 로그인 없는 필자.
 // 이름·직함·프로필 사진(바이라인), 원고료 정산용 계좌. (주민등록증 사진 기능은 10-09 삭제)
 type Row = { id: string; displayName: string; writerTitle: string | null; writerMemo: string | null; image: string | null; articleCount: number; hasBank: boolean };
 type Detail = {
@@ -72,7 +80,7 @@ function EditPanel({ id, onClose, onChanged }: { id: string; onClose: () => void
 
   async function hide() {
     const n = d?.articleCount ?? 0;
-    // 2026-10-10 사장님: 삭제는 영원히. 나간 기사엔 기자 이름만 그대로, 필요하면 나중에 새 유령기자로 다시 등록
+    // 2026-10-10 사장님: 삭제는 영원히. 나간 기사엔 기자 이름만 그대로, 필요하면 나중에 새 비회원 기자로 다시 등록
     const ask = n > 0
       ? `"${d?.displayName}"을(를) 영구히 삭제할까요?
 
@@ -89,7 +97,7 @@ function EditPanel({ id, onClose, onChanged }: { id: string; onClose: () => void
     <div className="fixed inset-0 bg-black/50 z-50 flex justify-end" {...closeOnBackdrop(onClose)}>
       <div className="bg-white w-full max-w-lg h-full overflow-y-auto p-5 space-y-5" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between">
-          <h3 className="font-bold">유령기자 정보</h3>
+          <h3 className="font-bold">기자 정보</h3>
           <button type="button" onClick={onClose} className="text-gray-400 text-lg">
             ✕
           </button>
@@ -163,6 +171,7 @@ function EditPanel({ id, onClose, onChanged }: { id: string; onClose: () => void
 }
 
 export default function GhostWritersPage() {
+  const kind = useSearchParams().get('kind') === 'GHOST' ? 'GHOST' : 'NONMEMBER';
   const [rows, setRows] = useState<Row[] | null>(null);
   const [q, setQ] = useState('');
   const [editId, setEditId] = useState<string | null>(null);
@@ -170,12 +179,24 @@ export default function GhostWritersPage() {
   const [msg, setMsg] = useState('');
 
   async function load() {
-    const res = await fetch('/api/ghost-writers');
+    const res = await fetch(`/api/ghost-writers?kind=${kind}`);
     setRows(res.ok ? await res.json() : []);
   }
   useEffect(() => {
+    setRows(null);
     load();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [kind]);
+
+  // 종류 바꾸기 — 바꾸면 이 탭 목록에서 빠지고 해당 탭으로 옮겨 감
+  async function changeKind(r: Row, next: string) {
+    if (next === kind) return;
+    const label = KIND_OPTIONS.find((o) => o.value === next)?.label;
+    const res = await fetch(`/api/ghost-writers/${r.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ writerKind: next }) });
+    if (!res.ok) return setMsg((await res.json().catch(() => ({}))).error ?? '종류 바꾸기 실패');
+    setMsg(`${r.displayName} → ${label}(으)로 옮겼습니다.`);
+    await load();
+  }
 
   async function create() {
     setMsg('');
@@ -193,18 +214,26 @@ export default function GhostWritersPage() {
     <main className="max-w-5xl mx-auto px-4 py-8">
       <AdminTabs title="회원/기자관리" tabs={PEOPLE_TABS} />
       <p className="text-sm text-gray-500 mb-4">
-        로그인 계정 없이 이름으로만 있는 필자입니다(외부 기고자·옛 사이트 기자). 글쓰기 화면 글쓴이에서 <b>[유령기자]</b>를 고르면 그 사람 이름·직함으로 나가고 원고료·후원 정산도 그 사람 앞으로 기록됩니다.
+        {kind === 'NONMEMBER' ? (
+          <>
+            원고를 보내오면 편집장이 올려 주는 필자입니다. 글쓰기 화면 글쓴이에서 <b>[비회원 기자]</b>를 고르면 그 사람 이름·직함·사진으로 나가고 원고료·후원 정산도 그 사람 앞으로 기록됩니다.
+          </>
+        ) : (
+          <>과거에 기사를 썼지만 끊어진 기자입니다. 지난 기사에 이름만 남아 있고 글쓰기 화면에는 나오지 않습니다. 다시 원고를 보내오면 종류를 [비회원 기자]로 바꾸세요.</>
+        )}
       </p>
 
       <div className="border rounded-xl p-3 mb-4 flex flex-wrap items-center gap-2">
-        <span className="text-sm font-semibold">새 유령기자</span>
+        {kind === 'NONMEMBER' && <>
+        <span className="text-sm font-semibold">새 비회원 기자</span>
         <input value={newForm.name} onChange={(e) => setNewForm({ ...newForm, name: e.target.value })} className="border rounded-lg px-2 py-1 text-sm w-36" placeholder="이름" maxLength={30} />
         <input value={newForm.writerTitle} onChange={(e) => setNewForm({ ...newForm, writerTitle: e.target.value })} className="border rounded-lg px-2 py-1 text-sm w-48" placeholder="직함 (선택)" maxLength={40} />
         <input value={newForm.writerMemo} onChange={(e) => setNewForm({ ...newForm, writerMemo: e.target.value })} className="border rounded-lg px-2 py-1 text-sm w-44" placeholder="메모 20자 (선택)" maxLength={20} />
         <button type="button" onClick={create} disabled={!newForm.name.trim()} className="text-xs font-bold text-white bg-brand rounded-lg px-3 py-1.5 disabled:opacity-40">
           등록
         </button>
-        {msg && <span className="text-xs text-red-600">{msg}</span>}
+        </>}
+        {msg && <span className="text-xs text-gray-600">{msg}</span>}
         <input value={q} onChange={(e) => setQ(e.target.value)} className="ml-auto border rounded-lg px-2 py-1 text-sm w-40" placeholder="이름 찾기" />
       </div>
 
@@ -220,6 +249,7 @@ export default function GhostWritersPage() {
                 <th className="py-2 pr-3">메모</th>
                 <th className="py-2 pr-3 text-right">기사</th>
                 <th className="py-2 pr-3">계좌</th>
+                <th className="py-2 pr-3">종류</th>
                 <th className="py-2"></th>
               </tr>
             </thead>
@@ -236,6 +266,15 @@ export default function GhostWritersPage() {
                   <td className="py-2 pr-3 text-gray-500 text-xs">{r.writerMemo ?? ''}</td>
                   <td className="py-2 pr-3 text-right tabular-nums">{r.articleCount.toLocaleString()}</td>
                   <td className="py-2 pr-3">{r.hasBank ? '등록' : <span className="text-gray-400">없음</span>}</td>
+                  <td className="py-2 pr-3">
+                    <select value={kind} onChange={(e) => changeKind(r, e.target.value)} className="border border-gray-200 rounded-lg px-1 py-1 text-xs">
+                      {KIND_OPTIONS.map((o) => (
+                        <option key={o.value} value={o.value}>
+                          {o.label}
+                        </option>
+                      ))}
+                    </select>
+                  </td>
                   <td className="py-2 text-right">
                     <button type="button" onClick={() => setEditId(r.id)} className="text-xs border rounded-lg px-3 py-1">
                       관리
@@ -245,7 +284,7 @@ export default function GhostWritersPage() {
               ))}
             </tbody>
           </table>
-          {!shown.length && <p className="text-sm text-gray-400 py-4">해당하는 유령기자가 없습니다.</p>}
+          {!shown.length && <p className="text-sm text-gray-400 py-4">해당하는 기자가 없습니다.</p>}
         </div>
       )}
 

@@ -1,33 +1,36 @@
 import { prisma } from '@/lib/prisma';
 import { randomBytes } from 'crypto';
+import type { WriterKind } from '@prisma/client';
 
-// 유령기자 (2026-10-09 사장님 정의) — 로그인 계정 없이 이름으로만 존재하는 필자.
-// 편집장이 자기 계정으로 로그인한 채 외부 기고를 올릴 때 글쓴이로 고르고, 원고료 정산도 이 사람 앞으로.
-// 실제 데이터 = 로그인 불가 계정(이메일 …@legacy.invalid, 기자 등급, ghost=false): 옛 사이트 임시 기자 + 글쓴이 칸으로 만든 기고자 + 새로 등록한 유령기자.
-// (User.ghost=true는 "삭제해서 목록에서 숨긴" 계정 — 이름이 비슷하지만 다른 개념)
+// 로그인 없는 필자 (2026-10-10 사장님 재정의) — 계정은 이메일 …@legacy.invalid, 종류는 User.writerKind
+//  · 비회원 기자(NONMEMBER): 원고를 보내면 편집장이 올리고 글쓴이·직함·사진만 바꿔 줌 → 글쓰기 고르기 창에 나옴, 원고료 정산 대상
+//  · 돌아올 기자(RETURNING): 예전에 로그인해 쓰던 기자 → 가입·로그인하면 옛 기사와 연결(옛 기자 연결 화면)
+//  · 유령기자(GHOST): 과거 1회성, 끊어진 기자 → 지난 기사에 이름만 남음. 새로 등록하지 않음
+// 실제로 로그인하는 기자는 writerKind 없음. (User.ghost=true는 "삭제한" 계정 — 기사엔 이름만 남고 어디에도 안 나옴)
+// 이름 중복 허용 (2026-10-10 사장님) — 같은 이름이 여럿이어도 됨
 
-export const GHOST_EMAIL_SUFFIX = '@legacy.invalid';
-export const isGhostWriterEmail = (email?: string | null) => !!email && email.endsWith(GHOST_EMAIL_SUFFIX);
+export const LOGINLESS_SUFFIX = '@legacy.invalid';
+export const isLoginlessEmail = (email?: string | null) => !!email && email.endsWith(LOGINLESS_SUFFIX);
 
-export const GHOST_WHERE = { email: { endsWith: GHOST_EMAIL_SUFFIX }, ghost: false } as const;
+export const WRITER_KINDS: WriterKind[] = ['NONMEMBER', 'RETURNING', 'GHOST'];
+export const WRITER_KIND_LABEL: Record<WriterKind, string> = { NONMEMBER: '비회원 기자', RETURNING: '돌아올 기자', GHOST: '유령기자' };
+
+/** 삭제하지 않은 로그인 없는 필자 (종류 무관) */
+export const LOGINLESS_WHERE = { email: { endsWith: LOGINLESS_SUFFIX }, ghost: false } as const;
+export const kindWhere = (kind: WriterKind) => ({ ...LOGINLESS_WHERE, writerKind: kind });
 
 export const MEMO_MAX = 20; // 편집장 메모(구분용) 글자 수 (2026-10-10)
 
-export async function createGhostWriter(name: string, writerTitle?: string | null, image?: string | null, memo?: string | null) {
+export async function createNonMemberWriter(name: string, writerTitle?: string | null, image?: string | null, memo?: string | null) {
   const clean = name.trim().slice(0, 30);
   if (!clean) throw new Error('이름을 입력하세요');
-  // 같은 이름이 이미 있으면 닉네임 충돌 — 숫자를 붙이지 않고 알려 줌
-  // 숨긴 계정까지 포함해 확인 — 삭제한 계정은 닉네임이 비워지므로 같은 이름으로 새로 등록 가능 (2026-10-10)
-  const holder = await prisma.user.findFirst({ where: { nickname: clean }, select: { id: true } });
-  if (holder) {
-    throw new Error(`"${clean}" 이름이 이미 있습니다. 목록에서 고르거나 다른 이름을 쓰세요`);
-  }
   return prisma.user.create({
     data: {
-      email: `ghost-${randomBytes(6).toString('hex')}${GHOST_EMAIL_SUFFIX}`,
+      email: `writer-${randomBytes(6).toString('hex')}${LOGINLESS_SUFFIX}`,
       name: clean,
       nickname: clean,
       role: 'REPORTER',
+      writerKind: 'NONMEMBER',
       writerTitle: writerTitle?.trim() || null,
       image: image?.trim() || null,
       writerMemo: memo?.trim().slice(0, MEMO_MAX) || null,
@@ -35,9 +38,9 @@ export async function createGhostWriter(name: string, writerTitle?: string | nul
   });
 }
 
-// 글쓰기 화면에서 고른 유령기자 id가 진짜 유령기자인지
-export async function validGhostWriterId(id: unknown): Promise<string | null> {
+// 글쓰기 화면에서 고른 id가 비회원 기자인지
+export async function validNonMemberWriterId(id: unknown): Promise<string | null> {
   if (typeof id !== 'string' || !id) return null;
-  const u = await prisma.user.findFirst({ where: { id, ...GHOST_WHERE }, select: { id: true } });
+  const u = await prisma.user.findFirst({ where: { id, ...kindWhere('NONMEMBER') }, select: { id: true } });
   return u?.id ?? null;
 }

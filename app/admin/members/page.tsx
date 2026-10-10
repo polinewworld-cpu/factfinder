@@ -31,8 +31,6 @@ function EditMember({ user, onClose, onSaved }: { user: any; onClose: () => void
   });
   const [msg, setMsg] = useState('');
   const [busy, setBusy] = useState(false);
-  // 닉네임을 숨긴 옛 기자 계정이 쓰고 있을 때 — 같은 사람이면 합쳐서 옛 기사와 이름을 이 회원에게 (2026-10-10)
-  const [conflict, setConflict] = useState<{ id: string; name: string; legacy: boolean; articleCount: number } | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const input = 'w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm outline-none focus:border-brand bg-white';
 
@@ -48,32 +46,13 @@ function EditMember({ user, onClose, onSaved }: { user: any; onClose: () => void
   async function save() {
     setBusy(true);
     setMsg('');
-    setConflict(null);
     const res = await fetch(`/api/users/${user.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(f) });
     setBusy(false);
-    if (!res.ok) {
-      const d = await res.json().catch(() => ({}));
-      setMsg(d.error ?? '저장 실패');
-      if (d.conflict?.legacy) setConflict(d.conflict);
-      return;
-    }
+    if (!res.ok) return setMsg((await res.json().catch(() => ({}))).error ?? '저장 실패');
     onSaved();
     onClose();
   }
-  async function mergeLegacy() {
-    if (!conflict) return;
-    if (!confirm(`옛 기자 "${conflict.name}"이(가) 이 회원(${user.email})과 같은 사람인가요?
 
-합치면 옛 기사 ${conflict.articleCount.toLocaleString()}건이 이 회원 것으로 옮겨지고, "${conflict.name}" 이름을 이 회원 닉네임으로 쓸 수 있습니다.`)) return;
-    setBusy(true);
-    const res = await fetch('/api/admin/legacy-reporters', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ legacyId: conflict.id, targetId: user.id }) });
-    const d = await res.json().catch(() => ({}));
-    setBusy(false);
-    if (!res.ok) return setMsg(d.error ?? '합치기 실패');
-    setConflict(null);
-    setMsg('');
-    await save(); // 이름이 비었으니 입력한 닉네임 그대로 다시 저장
-  }
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex justify-end" {...closeOnBackdrop(onClose)}>
@@ -111,11 +90,6 @@ function EditMember({ user, onClose, onSaved }: { user: any; onClose: () => void
           <input value={f.bankAccount} onChange={(e) => setF({ ...f, bankAccount: e.target.value })} className={input} placeholder="계좌번호" />
         </div>
         {msg && <p className="text-xs text-red-600">{msg}</p>}
-        {conflict && (
-          <button type="button" disabled={busy} onClick={mergeLegacy} className="block text-xs font-semibold border border-brand text-brand rounded-lg px-3 py-1.5 disabled:opacity-40">
-            같은 사람이면 합치기 — 옛 기사 {conflict.articleCount.toLocaleString()}건을 이 회원에게
-          </button>
-        )}
         <button type="button" disabled={busy} onClick={save} className="text-sm font-bold text-white bg-brand rounded-lg px-5 py-2 disabled:opacity-40">
           {busy ? '저장 중…' : '저장'}
         </button>
@@ -183,14 +157,14 @@ export default function MembersAdminPage() {
   }
 
   // 2026-10-09: 기자관리 = 로그인하는 실제 기자·논설위원·편집장 전부(등급이 REPORTER인 것만 보이던 문제).
-  // 옛 사이트 임시 계정·외부 기고자(…@legacy.invalid)는 [유령기자] 탭에서 관리 — 여기 두 목록에선 뺌
+  // 로그인 없는 필자(…@legacy.invalid)는 [비회원 기자]·[돌아올 기자]·[유령기자] 탭에서 관리 — 여기 두 목록에선 뺌
   const realUsers = users.filter((u) => !String(u.email ?? '').endsWith('@legacy.invalid'));
   const shownUsers = roleFilter ? realUsers.filter((u) => ['REPORTER', 'COLUMNIST', 'CHIEF_EDITOR'].includes(u.role)) : realUsers;
 
   return (
     <main className="max-w-3xl mx-auto px-4 py-8">
       <AdminTabs title="회원/기자관리" tabs={PEOPLE_TABS} />
-      <p className="text-sm text-gray-500 mb-3">{roleFilter ? `기자·논설위원·편집장 ${shownUsers.length}명 (외부 기고자·옛 기자는 [유령기자] 탭)` : `전체 회원 ${realUsers.length}명`}</p>
+      <p className="text-sm text-gray-500 mb-3">{roleFilter ? `기자·논설위원·편집장 ${shownUsers.length}명 (로그인 없는 필자는 비회원·돌아올·유령기자 탭)` : `전체 회원 ${realUsers.length}명`}</p>
       <div className="overflow-x-auto">
         <table className="w-full text-sm border-collapse">
           <thead>

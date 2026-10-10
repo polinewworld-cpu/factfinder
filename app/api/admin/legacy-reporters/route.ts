@@ -5,7 +5,7 @@ import { getCurrentUser } from '@/lib/session';
 import { mergeLegacyReporter } from '@/lib/legacyReporter';
 import { deleteOrRetire } from '@/lib/retireUser';
 
-// 옛 기자 계정 연결 (2026-10-08) — 옛 사이트 기사를 옮길 때 만든 "로그인 불가 임시 기자 계정"(…@legacy.invalid)을
+// 돌아올 기자 연결 (2026-10-08, 10-10 "옛 기자 연결" → "돌아올 기자") — 옛 사이트 기사를 옮길 때 만든 "로그인 불가 임시 기자 계정"(…@legacy.invalid)을
 // 실제로 구글 가입한 기자 계정에 합침: 기사·후원 지정을 실제 계정으로 옮기고 빈 임시 계정은 정리.
 const LEGACY = { endsWith: '@legacy.invalid' };
 
@@ -22,7 +22,7 @@ export async function GET() {
   if (denied) return denied;
   const [legacy, members] = await Promise.all([
     prisma.user.findMany({
-      where: { email: LEGACY, ghost: false }, // 삭제한 옛 기자는 영구히 목록에서 빠짐
+      where: { email: LEGACY, ghost: false, writerKind: 'RETURNING' }, // 돌아올 기자만 (2026-10-10 종류 재정의), 삭제한 계정 제외
       select: { id: true, name: true, legacyClaimEmail: true, _count: { select: { articles: true } } },
       orderBy: { articles: { _count: 'desc' } },
     }),

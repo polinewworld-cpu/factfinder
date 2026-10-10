@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { isGhostWriterEmail } from '@/lib/ghostWriter';
+
 import { prisma } from '@/lib/prisma';
 import { ROLES } from '@/lib/roles';
 import { getCurrentUser } from '@/lib/session';
@@ -13,7 +13,7 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
   const article = await prisma.article.findUnique({
     where: { id: params.id },
     include: {
-      author: { select: { id: true, name: true, nickname: true, email: true, ghost: true } },
+      author: { select: { id: true, name: true, nickname: true, email: true, ghost: true, writerKind: true } },
       category: true,
       images: { orderBy: { order: 'asc' } },
       keywords: true,
@@ -29,7 +29,7 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
     return NextResponse.json({ error: '본인이 작성했거나 편집장인 경우에만 수정할 수 있습니다' }, { status: 403 });
   }
 
-  // 글쓴이가 유령기자(로그인 없는 필자)인지 — 글쓰기 화면의 "유령기자" 라디오 버튼 상태용. 이메일은 내보내지 않음 (2026-10-09)
-  const { email, ghost, ...author } = article.author;
-  return NextResponse.json({ ...article, author: { ...author, isGhostWriter: isGhostWriterEmail(email) && !ghost } });
+  // 글쓴이가 비회원 기자면 글쓰기 화면이 [비회원 기자] 고르기 상태로 열림. 이메일은 내보내지 않음 (2026-10-09, 10-10)
+  const { email: _email, ghost, writerKind, ...author } = article.author;
+  return NextResponse.json({ ...article, author: { ...author, isGhostWriter: writerKind === 'NONMEMBER' && !ghost } });
 }

@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { ROLES } from '@/lib/roles';
 import { getCurrentUser } from '@/lib/session';
-import { nicknameHolder } from '@/lib/nicknameHolder';
 import { retiredUserData } from '@/lib/retireUser';
 
 // 편집장이 특정 회원의 등급을 변경 (예: 독자 -> 기자)
@@ -28,9 +27,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   if (has('nickname')) {
     const nickname = str(b.nickname, 30);
     if (!nickname) return NextResponse.json({ error: '닉네임을 입력하세요' }, { status: 400 });
-    // 누가 쓰는지까지 알려 줌 — 숨긴 옛 기자 계정이면 화면에서 [합치기]로 이어짐 (2026-10-10)
-    const holder = await nicknameHolder(nickname, params.id);
-    if (holder) return NextResponse.json({ error: holder.message, conflict: holder.conflict }, { status: 409 });
+    // 같은 이름 허용 (2026-10-10 사장님)
     data.nickname = nickname;
   }
   if (has('image')) data.image = str(b.image, 500);

@@ -4,8 +4,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { UserAvatar } from './InitialAvatar';
 import { closeOnBackdrop } from '@/lib/backdrop';
 
-// 글쓰기 화면 글쓴이 → [유령기자] 고르기 레이어 (2026-10-10 사장님: 드롭박스가 불편 — 이름과 프로필 사진이 함께 뜨게)
-// 이름·직함·메모로 찾기, 사진 카드로 고르기, 새 유령기자도 여기서 바로 등록.
+// 글쓰기 화면 글쓴이 → [비회원 기자] 고르기 레이어(10-10 종류 재정의 — 비회원 기자만 나옴) (2026-10-10 사장님: 드롭박스가 불편 — 이름과 프로필 사진이 함께 뜨게)
+// 이름·직함·메모로 찾기, 사진 카드로 고르기, 새 비회원 기자도 여기서 바로 등록. 같은 이름 허용.
 export type GhostWriterOption = {
   id: string;
   displayName: string;
@@ -77,9 +77,9 @@ export default function GhostWriterPicker({
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" {...closeOnBackdrop(onClose)}>
-      <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[85vh] flex flex-col overflow-hidden" role="dialog" aria-label="유령기자 고르기">
+      <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[85vh] flex flex-col overflow-hidden" role="dialog" aria-label="비회원 기자 고르기">
         <div className="p-4 border-b border-gray-100 flex items-center gap-3">
-          <h3 className="font-bold text-gray-900 shrink-0">유령기자 고르기</h3>
+          <h3 className="font-bold text-gray-900 shrink-0">비회원 기자 고르기</h3>
           <input
             ref={searchRef}
             value={q}
@@ -114,7 +114,7 @@ export default function GhostWriterPicker({
               </span>
             </button>
           ))}
-          {!shown.length && <p className="col-span-full text-sm text-gray-400 py-6 text-center">찾는 유령기자가 없습니다. 아래에서 새로 등록하세요.</p>}
+          {!shown.length && <p className="col-span-full text-sm text-gray-400 py-6 text-center">찾는 비회원 기자가 없습니다. 아래에서 새로 등록하세요.</p>}
         </div>
 
         <div className="p-4 border-t border-gray-100">
@@ -127,7 +127,7 @@ export default function GhostWriterPicker({
               }}
               className="text-sm font-semibold text-brand"
             >
-              + 새 유령기자 등록
+              + 새 비회원 기자 등록
             </button>
           ) : (
             <div className="flex flex-wrap items-center gap-2">

@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { ROLES } from '@/lib/roles';
 import { getCurrentUser } from '@/lib/session';
 
-// 정산용 입금 계좌 저장 (2026-10-09) — 후원내역 → 기자별 정산내역에서 기자·유령기자 누구든 계좌를 바로 넣고 고침. 편집장 전용.
+// 정산용 입금 계좌 저장 (2026-10-09) — 후원내역 → 기자별 정산내역에서 기자·비회원 기자 누구든 계좌를 바로 넣고 고침. 편집장 전용.
 const str = (v: unknown) => (typeof v === 'string' && v.trim() ? v.trim().slice(0, 60) : null);
 
 export async function PATCH(req: NextRequest) {

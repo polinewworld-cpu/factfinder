@@ -45,11 +45,11 @@ export default function WritePage() {
   const [authorName, setAuthorName] = useState('');
   const [reporterNames, setReporterNames] = useState<string[]>([]);
   const originalAuthorRef = useRef(''); // 수정 화면에서 불러온 원래 글쓴이 — 바꾸지 않았으면 글쓴이를 다시 지정하지 않음
-  // 유령기자 (2026-10-09) — 편집장이 자기 계정으로 외부 기고를 올릴 때 글쓴이를 "유령기자"로 고름(원고료 정산도 그 사람 앞으로)
+  // 비회원 기자 (2026-10-09 유령기자 → 10-10 이름 변경) — 편집장이 자기 계정으로 외부 기고를 올릴 때 글쓴이로 고름(원고료 정산도 그 사람 앞으로)
   const [authorMode, setAuthorMode] = useState<'name' | 'ghost'>('name');
   const [ghostWriterId, setGhostWriterId] = useState('');
   const [ghostWriters, setGhostWriters] = useState<GhostWriterOption[]>([]);
-  const [ghostPickerOpen, setGhostPickerOpen] = useState(false); // 유령기자 고르기 레이어 (2026-10-10, 드롭박스 대체)
+  const [ghostPickerOpen, setGhostPickerOpen] = useState(false); // 비회원 기자 고르기 레이어 (2026-10-10, 드롭박스 대체)
   const [ghostMsg, setGhostMsg] = useState('');
   const originalGhostRef = useRef('');
   const [keywordIds, setKeywordIds] = useState<string[]>([]);
@@ -763,7 +763,7 @@ export default function WritePage() {
 
     if (!s.title.replace(/\s+/g, '')) return setErrorMsg('제목을 입력해주세요.');
     if (!s.categoryId) return setErrorMsg('카테고리를 선택해주세요.');
-    if (meRef.current?.role === 'CHIEF_EDITOR' && s.authorMode === 'ghost' && !s.ghostWriterId) return setErrorMsg('유령기자를 골라 주세요.');
+    if (meRef.current?.role === 'CHIEF_EDITOR' && s.authorMode === 'ghost' && !s.ghostWriterId) return setErrorMsg('비회원 기자를 골라 주세요.');
     if (!plainText) return setErrorMsg('본문을 입력해주세요.');
     if (s.pollEnabled) {
       if (!s.pollQuestion.trim()) return setErrorMsg('설문 질문을 입력해주세요.');
@@ -1177,7 +1177,7 @@ export default function WritePage() {
       <div className="composer-actions">
         <div className="composer-actions-left">
           {me.role === 'CHIEF_EDITOR' && (
-            <div className="composer-author" title="외부 기고는 [유령기자]를 고르세요. 그 사람 이름·직함으로 나가고 원고료·후원 정산도 그 사람 앞으로 기록됩니다.">
+            <div className="composer-author" title="외부 기고는 [비회원 기자]를 고르세요. 그 사람 이름·직함으로 나가고 원고료·후원 정산도 그 사람 앞으로 기록됩니다.">
               <span>글쓴이</span>
               <label className="inline-flex items-center gap-1 font-normal">
                 <input
@@ -1222,7 +1222,7 @@ export default function WritePage() {
                     markDirty();
                   }}
                 />
-                유령기자
+                비회원 기자
               </label>
               {authorMode === 'ghost' && (() => {
                 const g = ghostWriters.find((w) => w.id === ghostWriterId);
@@ -1240,8 +1240,10 @@ export default function WritePage() {
                           {g.writerTitle ? ` · ${g.writerTitle}` : ''}
                         </span>
                       </>
+                    ) : ghostWriterId && authorName ? (
+                      <span className="truncate">{authorName}</span>
                     ) : (
-                      <span className="text-gray-500">유령기자 고르기…</span>
+                      <span className="text-gray-500">비회원 기자 고르기…</span>
                     )}
                   </button>
                 );

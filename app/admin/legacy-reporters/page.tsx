@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 type Legacy = { id: string; name: string; claimEmail: string | null; articleCount: number };
 type Member = { id: string; name: string; nickname: string | null; email: string; role: string };
 
-// 옛 기자 계정 연결 (2026-10-08) — 옛 사이트 기자가 2.0에 구글로 가입하면, 여기서 그 사람의 옛 기사를 새 계정으로 옮김
+// 돌아올 기자 (2026-10-08 옛 기자 연결 → 10-10 이름 변경) — 예전에 로그인해 쓰던 기자가 구글로 가입하면, 여기서 그 사람의 옛 기사를 새 계정으로 옮김
 export default function LegacyReportersPage() {
   const [data, setData] = useState<{ legacy: Legacy[]; members: Member[] } | null>(null);
   const [pick, setPick] = useState<Record<string, string>>({});
@@ -68,6 +68,16 @@ export default function LegacyReportersPage() {
     if (res.ok) await load();
   }
 
+  // 종류 바꾸기 — 비회원 기자·유령기자로 옮기면 이 목록에서 빠짐 (2026-10-10)
+  async function changeKind(l: Legacy, next: string) {
+    if (next === 'RETURNING') return;
+    setBusy(l.id);
+    const res = await fetch(`/api/ghost-writers/${l.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ writerKind: next }) });
+    setBusy(null);
+    setMessage(res.ok ? `${l.name} → ${next === 'NONMEMBER' ? '비회원 기자' : '유령기자'}(으)로 옮겼습니다.` : '종류 바꾸기에 실패했습니다.');
+    if (res.ok) await load();
+  }
+
   async function remove(l: Legacy) {
     // 2026-10-10: 삭제 = 영구 삭제(되살리기 없음). 옛 기사엔 기자 이름만 그대로 남음
     if (!confirm(l.articleCount > 0
@@ -87,24 +97,24 @@ export default function LegacyReportersPage() {
     <main className="max-w-5xl mx-auto px-4 py-8">
       <AdminTabs title="회원/기자관리" tabs={PEOPLE_TABS} />
       <p className="text-sm text-gray-500 mb-5">
-        옛 사이트 기사는 로그인할 수 없는 임시 기자 이름으로 들어와 있습니다. <b>기자의 구글 이메일을 미리 등록</b>해 두면 그 사람이
-        처음 로그인할 때 옛 기사와 기자 등급이 자동으로 이어집니다. 이미 가입한 사람은 계정을 골라 [연결]을 누르세요(이름이 같은 회원은
-        미리 골라 둡니다). 연결하면 독자 등급은 기자로 올라갑니다.
+        예전에 로그인해서 기사를 쓰던 기자입니다. <b>기자의 구글 이메일을 미리 등록</b>해 두면 그 사람이 처음 로그인할 때 옛 기사와 기자 등급이
+        자동으로 이어집니다. 이미 가입한 사람은 계정을 골라 [연결]을 누르세요(이름이 같은 회원은 미리 골라 둡니다).
       </p>
       {message && <p className="text-sm text-brand mb-3">{message}</p>}
       {!data ? (
         <p className="text-sm text-gray-400">불러오는 중…</p>
       ) : data.legacy.length === 0 ? (
-        <p className="text-sm text-gray-400">연결할 옛 기자가 없습니다.</p>
+        <p className="text-sm text-gray-400">돌아올 기자가 없습니다. 비회원 기자·유령기자 탭에서 종류를 [돌아올 기자]로 바꾸면 여기에 나옵니다.</p>
       ) : (
         <div className="overflow-x-auto border border-gray-200 rounded-xl">
           <table className="w-full text-sm border-collapse">
             <thead>
               <tr className="text-left text-gray-400 border-b border-gray-200 bg-gray-50 whitespace-nowrap">
-                <th className="py-2 pl-4 pr-4 font-semibold">옛 기자</th>
+                <th className="py-2 pl-4 pr-4 font-semibold">돌아올 기자</th>
                 <th className="py-2 pr-4 font-semibold text-right">기사</th>
                 <th className="py-2 pr-4 font-semibold">구글 이메일 미리 등록</th>
                 <th className="py-2 pr-4 font-semibold">이미 가입했으면 계정 선택</th>
+                <th className="py-2 pr-4 font-semibold">종류</th>
                 <th className="py-2 pr-4 whitespace-nowrap" />
               </tr>
             </thead>
@@ -145,6 +155,13 @@ export default function LegacyReportersPage() {
                           {m.nickname ?? m.name} ({m.email})
                         </option>
                       ))}
+                    </select>
+                  </td>
+                  <td className="py-2 pr-4">
+                    <select value="RETURNING" disabled={busy === l.id} onChange={(e) => changeKind(l, e.target.value)} className="border border-gray-200 rounded-lg px-1 py-1 text-xs">
+                      <option value="RETURNING">돌아올 기자</option>
+                      <option value="NONMEMBER">비회원 기자</option>
+                      <option value="GHOST">유령기자</option>
                     </select>
                   </td>
                   <td className="py-2 pr-4 whitespace-nowrap">

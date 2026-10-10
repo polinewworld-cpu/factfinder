@@ -23,7 +23,7 @@ export async function resolveAuthorByName(rawName: unknown): Promise<string | nu
   const user = await prisma.user.upsert({
     where: { email },
     update: { ghost: false },
-    create: { email, name, nickname: name, role: 'REPORTER' },
+    create: { email, name, nickname: name, role: 'REPORTER', writerKind: 'NONMEMBER' }, // 글쓴이 칸으로 만든 기고자 = 비회원 기자 (2026-10-10)
     select: { id: true },
   });
   return user.id;
