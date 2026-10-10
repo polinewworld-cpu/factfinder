@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { ForeignBrief, ForeignNewsReport, ForeignPick } from '@/lib/foreignNews';
 import { compressImageFile } from '@/lib/imageCompress';
 
@@ -110,6 +110,8 @@ export default function ForeignNewsPage() {
   const [error, setError] = useState('');
   const [avatarBusy, setAvatarBusy] = useState(false);
 
+  const autoRefreshed = useRef(false);
+
   async function load(refresh = false) {
     setLoading(true);
     setError('');
@@ -120,6 +122,12 @@ export default function ForeignNewsPage() {
       setReports(data.reports ?? []);
       setAvatarUrl(data.avatarUrl ?? null);
       setCanEditAvatar(!!data.canEditAvatar);
+      // 옛 형식(현지 이야기가 없는) 최신 보고라면 새 형식으로 딱 한 번 다시 만든다 — 실패해도 되풀이하지 않음
+      if (!refresh && !autoRefreshed.current && data.reports?.[0] && !data.reports[0].localColor) {
+        autoRefreshed.current = true;
+        await load(true);
+        return;
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : '불러오지 못했습니다');
     }
