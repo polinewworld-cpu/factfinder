@@ -80,6 +80,7 @@ function Report({ r }: { r: ForeignNewsReport }) {
           <PickCard key={p.url} p={p} />
         ))}
       </ul>
+      {r.closing && <p className="text-sm text-gray-800 leading-relaxed mt-5">{r.closing}</p>}
       {r.picks.length > 0 && (
         <p className="text-xs text-gray-400 mt-3">
           참고한 현지 언론: {Array.from(new Set(r.picks.map((p) => p.outlet))).join(' · ')} — 외신 {r.fetched}건 중 한국 관련 후보 {r.candidates}건
