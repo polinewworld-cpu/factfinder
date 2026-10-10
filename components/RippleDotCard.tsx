@@ -59,7 +59,7 @@ export default function RippleDotCard({
     let raf = 0;
     const render = () => {
       ctx.clearRect(0, 0, width, height);
-      ctx.fillStyle = 'rgba(13, 79, 85, 0.16)'; // Z-Board 청록 점 (2026-10-08)
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.16)'; // 글래스 카드 위의 연한 흰 점 (2026-10-10, 이전: Z-Board 청록)
       for (const dot of dots) {
         const dist = Math.hypot(mouse.x - dot.x, mouse.y - dot.y);
         const target = dist < maxDist ? baseRadius + (1 - dist / maxDist) * 4 : baseRadius;

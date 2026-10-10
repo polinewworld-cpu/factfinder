@@ -3165,3 +3165,58 @@ button.brand-admin {
 /* 관리·글쓰기 화면의 로고 색 = 관리자에서 쓰는 어두운 진청록 (2026-10-10 지시) */
 .brand-admin .logo-mark polygon { fill: #0d4f55; }
 .brand-admin:hover .logo-mark polygon { fill: #14656c; }
+
+/* ───────── 관리자 대시보드: 사진 배경 + 글래스 모피즘 (2026-10-10) ─────────
+   대시보드 화면(.admin-dashboard)이 열려 있을 때만 적용 — 다른 관리자 화면은 그대로 베이지 뉴모피즘.
+   배경 사진은 public/admin-bg.webp(오른쪽 아래 AI 표시는 잘라 낸 것) 위에 어두운 막을 한 겹 덮어 글자가 읽히게 함. */
+html:has(.admin-dashboard) {
+  background: linear-gradient(rgba(9, 13, 15, 0.58), rgba(9, 13, 15, 0.68)), url('/admin-bg.webp') center top / cover no-repeat fixed #0b0f10;
+}
+body:has(.admin-dashboard) { background: transparent; }
+body:has(.admin-dashboard) .site-header,
+body:has(.admin-dashboard) .site-footer { background: transparent; }
+body:has(.admin-dashboard) .site-header .text-gray-900 { color: #fff; }
+body:has(.admin-dashboard) .site-header .text-gray-500 { color: rgba(255, 255, 255, 0.72); }
+body:has(.admin-dashboard) .site-footer,
+body:has(.admin-dashboard) .site-footer a { color: rgba(255, 255, 255, 0.72); }
+body:has(.admin-dashboard) .brand-admin .logo-mark { filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.55)); }
+
+/* 글자색 — 어두운 사진 위라 밝은색으로 (관리자 색 변수를 이 화면에서만 바꿈) */
+.zb-admin:has(.admin-dashboard) {
+  --zb-ink: #f3f6f6;
+  --zb-ink-sub: rgba(255, 255, 255, 0.76);
+  --zb-ink-dis: rgba(255, 255, 255, 0.52);
+  --zb-line: rgba(255, 255, 255, 0.24);
+  --zb-teal: #8fd6dc;
+  --zb-teal-hi: #c0ecef;
+  --zb-teal-soft: rgba(143, 214, 220, 0.24);
+  color: var(--zb-ink);
+}
+.zb-admin:has(.admin-dashboard) h1 { color: #fff; text-shadow: 0 2px 14px rgba(0, 0, 0, 0.5); }
+.zb-admin:has(.admin-dashboard) .text-gray-900\/50,
+.zb-admin:has(.admin-dashboard) .text-gray-900\/60,
+.zb-admin:has(.admin-dashboard) .text-gray-900\/70,
+.zb-admin:has(.admin-dashboard) .text-gray-900\/80,
+.zb-admin:has(.admin-dashboard) .zb-dot-card .text-gray-900\/50,
+.zb-admin:has(.admin-dashboard) .zb-dot-card .text-gray-900\/60,
+.zb-admin:has(.admin-dashboard) .zb-dot-card .text-gray-900\/70 { color: var(--zb-ink-sub); }
+.zb-admin:has(.admin-dashboard) .hover\:text-gray-900:hover { color: #fff; }
+
+/* 카드·왼쪽 메뉴 = 유리 */
+.zb-admin:has(.admin-dashboard) .zb-dot-card,
+.zb-admin:has(.admin-dashboard) .rounded-xl.border,
+.zb-admin:has(.admin-dashboard) .border.rounded-xl,
+.zb-admin:has(.admin-dashboard) .zb-card,
+.zb-admin:has(.admin-dashboard) .admin-sidebar {
+  background: rgba(255, 255, 255, 0.12);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+  backdrop-filter: blur(18px) saturate(150%);
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  border-radius: 18px;
+  box-shadow: 0 10px 34px rgba(0, 0, 0, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.28);
+  color: var(--zb-ink);
+}
+.zb-admin:has(.admin-dashboard) .admin-sidebar { padding-left: 10px; padding-right: 10px; }
+.zb-admin:has(.admin-dashboard) .zb-dot-card:hover { background: rgba(255, 255, 255, 0.17); }
+.zb-admin:has(.admin-dashboard) .admin-sidebar a.bg-brand { background: rgba(255, 255, 255, 0.2); color: #fff; }
+.zb-admin:has(.admin-dashboard) .admin-mobilebar { border-bottom-color: rgba(255, 255, 255, 0.24); }
