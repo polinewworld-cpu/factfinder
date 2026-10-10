@@ -9,7 +9,7 @@ export default function UnsubscribedPage({ searchParams }: { searchParams: { err
       <p style={{ color: '#666', lineHeight: 1.7 }}>
         {failed
           ? '메일에 있는 링크를 다시 눌러 주시거나, 로그인 후 내 정보에서 뉴스레터 받기를 끄실 수 있습니다.'
-          : '더 이상 팩트파인더 뉴스레터를 보내지 않습니다. 다시 받고 싶으시면 로그인 후 내 정보에서 켜 주세요.'}
+          : '더 이상 팩트파인더 주간 뉴스레터를 보내지 않습니다. 다시 받고 싶으시면 로그인 후 내 정보에서 켜 주세요.'}
       </p>
       <p style={{ marginTop: 24 }}>
         <a href="/" style={{ color: 'var(--accent)', fontWeight: 600 }}>팩트파인더 홈으로</a>

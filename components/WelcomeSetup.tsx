@@ -9,7 +9,7 @@ import { usableAvatarUrl } from '@/lib/avatarGradient';
 // 닉네임(필수, 10-10부터 중복 허용) + 프로필사진(구글 사진 기본값) 설정 → 저장하면 새로고침되어 원래 보던 페이지로 복귀.
 // 이후 수정은 /profile(내 프로필)에서.
 // 2026-10-08: 마지막 단계에서 [독자회원가입] / [기자회원가입] 선택 —
-//   독자 = 매일 아침 뉴스레터 수신(newsletterOptIn) / 기자 = 기자 신청(편집장 승인 대기, 기존 /api/reporter-application)
+//   독자 = 토요일 아침 뉴스레터 수신(newsletterOptIn) / 기자 = 기자 신청(편집장 승인 대기, 기존 /api/reporter-application)
 export default function WelcomeSetup({
   defaultImage,
   name,
@@ -131,7 +131,7 @@ export default function WelcomeSetup({
           </button>
         </div>
         <ul className="mt-4 space-y-1.5 text-sm text-gray-600 list-disc pl-5">
-          <li>독자회원으로 가입하면 매일 아침 가입한 이메일로 뉴스레터를 보내드립니다.</li>
+          <li>독자회원으로 가입하면 토요일 아침마다 가입한 이메일로 뉴스레터를 보내드립니다.</li>
           <li>로그인해서 보시면 맘에 드는 기사를 저장하실 수 있습니다.</li>
         </ul>
         <p className="mt-3 text-xs text-gray-400">

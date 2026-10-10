@@ -71,7 +71,7 @@ export default function NewsletterAdminPage() {
     } else setAutoMsg(msg);
   }
   async function disconnect() {
-    if (!confirm('뉴스레터 발송 지메일 연결을 끊을까요? 끊으면 매일 아침 자동 발송도 멈춥니다.')) return;
+    if (!confirm('뉴스레터 발송 지메일 연결을 끊을까요? 끊으면 토요일 자동 발송도 멈춥니다.')) return;
     await fetch('/api/admin/gmail', { method: 'DELETE' });
     await load();
   }
@@ -134,15 +134,15 @@ export default function NewsletterAdminPage() {
         {info.lastSentAt && <> · 마지막 발송 {new Date(info.lastSentAt).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</>}
       </p>
 
-      {/* 매일 아침 자동 발송 (2026-10-10 주간 → 일간) */}
+      {/* 토요일 자동 발송 (2026-10-10) */}
       <section className="border rounded-xl p-4 mb-6 space-y-4">
         <div className="flex flex-wrap items-center gap-3">
-          <h2 className="text-sm font-semibold">매일 아침 8시 자동 발송</h2>
+          <h2 className="text-sm font-semibold">토요일 아침 7시 자동 발송</h2>
           <label className="inline-flex items-center gap-1.5 text-sm">
             <input type="checkbox" className="w-4 h-4" checked={info.auto.enabled} disabled={busy} onChange={(e) => settings({ auto: e.target.checked })} />
             {info.auto.enabled ? '켜짐' : '꺼짐'}
           </label>
-          <span className="text-xs text-gray-500">지난 24시간 기사 중 1면톱 + 많이 본 기사를 카테고리가 섞이게 최대 5개, 인사말은 AI가 씁니다. 기사가 없는 날은 건너뜁니다.</span>
+          <span className="text-xs text-gray-500">지난 한 주(토~금) 기사 중 1면톱 + 많이 본 기사를 카테고리가 섞이게 최대 8개, 인사말은 AI가 씁니다.</span>
         </div>
 
         <div className="flex flex-wrap items-center gap-2 text-sm">
@@ -168,15 +168,15 @@ export default function NewsletterAdminPage() {
         <div className="bg-gray-50 rounded-lg p-3">
           <div className="flex flex-wrap items-center gap-2 mb-2">
             <b className="text-sm">
-              이번 발송: {info.auto.weekLabel} 아침 8시
+              이번 발송: {info.auto.week} (토) · {info.auto.weekLabel}
             </b>
             <span className="text-xs text-gray-500">
               {info.auto.alreadySent
-                ? '오늘 처리 끝남(아래 이력)'
+                ? '이번 주 처리 끝남(아래 이력)'
                 : !info.auto.enabled
                   ? '자동 발송 꺼짐'
                   : info.auto.skipped
-                    ? '오늘 건너뜀'
+                    ? '이번 주 건너뜀'
                     : !info.gmail.connected
                       ? '지메일 연결 필요'
                       : `구독자 ${info.subscriberCount}명에게 발송 예정`}
@@ -184,7 +184,7 @@ export default function NewsletterAdminPage() {
             <span className="ml-auto flex flex-wrap gap-1">
               {!info.auto.alreadySent && (
                 <button type="button" disabled={busy} onClick={() => settings({ skipThisWeek: !info.auto.skipped })} className="text-xs border rounded-lg px-2 py-1 bg-white">
-                  {info.auto.skipped ? '건너뛰기 취소' : '오늘 건너뛰기'}
+                  {info.auto.skipped ? '건너뛰기 취소' : '이번 주 건너뛰기'}
                 </button>
               )}
               <button type="button" disabled={busy || !info.gmail.connected || !info.auto.ids.length} onClick={() => testSend(false)} className="text-xs border rounded-lg px-2 py-1 bg-white disabled:opacity-40">
@@ -203,7 +203,7 @@ export default function NewsletterAdminPage() {
               })}
             </ol>
           ) : (
-            <p className="text-sm text-gray-400">오늘 아침에 보낼 기사가 없습니다(어제 8시 이후 발행 기사 없음).</p>
+            <p className="text-sm text-gray-400">아직 이번 주에 고를 기사가 없습니다(지난 토요일 이후 발행 기사 없음).</p>
           )}
         </div>
 
@@ -247,7 +247,7 @@ export default function NewsletterAdminPage() {
             </h2>
             <div className="flex gap-1">
               <button type="button" onClick={() => setSelected(new Set(info.defaultIds))} className="border rounded-lg px-2 py-1 text-xs">
-                오늘 아침 기사
+                이번 주 기사
               </button>
               <button type="button" onClick={() => setSelected(new Set())} className="border rounded-lg px-2 py-1 text-xs">
                 모두 해제

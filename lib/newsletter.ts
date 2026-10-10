@@ -11,23 +11,10 @@ const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replac
 const KST = 9 * 3600_000;
 export const UNSUBSCRIBE_PLACEHOLDER = '{{UNSUBSCRIBE}}';
 export const WEEKLY_MAX = 8;
-export const DAILY_MAX = 5; // 2026-10-10: 매일 아침 뉴스레터로 전환 — 하루 최대 5건
 
 // ── 날짜 ─────────────────────────────────────────────
 // 한국 날짜 YYYY-MM-DD
 export const kstDate = (d = new Date()) => new Date(d.getTime() + KST).toISOString().slice(0, 10);
-
-// 매일 아침 뉴스레터(2026-10-10): 발송 날짜(한국) 오전 8시 기준 지난 24시간 — 어제 8시 ~ 오늘 8시
-export function dailyRangeFor(dateKey: string) {
-  const end = new Date(`${dateKey}T08:00:00+09:00`);
-  return { start: new Date(end.getTime() - 86400_000), end };
-}
-
-// "10월 11일(일)"
-export function dailyLabel(dateKey: string) {
-  const d = new Date(`${dateKey}T00:00:00Z`);
-  return `${d.getUTCMonth() + 1}월 ${d.getUTCDate()}일(${['일', '월', '화', '수', '목', '금', '토'][d.getUTCDay()]})`;
-}
 
 // 발송 토요일 기준 지난 한 주: 지난 토요일 0시 ~ 금요일 24시(한국시간)
 export function weekRangeFor(saturdayKey: string) {
@@ -72,17 +59,8 @@ export async function selectedArticles(ids: string[]) {
 }
 
 // 자동 선정: 그 주 발행 기사 중 1면톱 먼저, 나머지는 조회수 순으로 카테고리가 골고루 섞이게 최대 8개 (후원하기 제외)
-export async function dailyPicks(dateKey: string) {
-  const { start, end } = dailyRangeFor(dateKey);
-  return pickArticles(start, end, DAILY_MAX);
-}
-
 export async function weeklyPicks(saturdayKey: string) {
   const { start, end } = weekRangeFor(saturdayKey);
-  return pickArticles(start, end, WEEKLY_MAX);
-}
-
-async function pickArticles(start: Date, end: Date, max: number) {
   const rows = await prisma.article.findMany({
     where: { status: 'PUBLISHED', publishedAt: { gte: start, lt: end }, NOT: { category: { name: '후원하기' } } },
     select: { id: true, viewCount: true, isFrontpageTop: true, category: { select: { name: true } } },
@@ -97,17 +75,17 @@ async function pickArticles(start: Date, end: Date, max: number) {
   }
   // 카테고리마다 조회수 1등부터 돌아가며 한 개씩 (많이 읽힌 카테고리 먼저)
   const order = [...queues.entries()].sort((a, b) => (rows.find((r) => r.id === b[1][0])?.viewCount ?? 0) - (rows.find((r) => r.id === a[1][0])?.viewCount ?? 0));
-  while (picked.length < max && order.some(([, q]) => q.length)) {
+  while (picked.length < WEEKLY_MAX && order.some(([, q]) => q.length)) {
     for (const [, q] of order) {
       const id = q.shift();
-      if (id && picked.length < max) picked.push(id);
+      if (id && picked.length < WEEKLY_MAX) picked.push(id);
     }
   }
   return picked;
 }
 
 // ── 인사말 ───────────────────────────────────────────
-export const DEFAULT_GREETING = '구독자 여러분, 안녕하세요. 팩트파인더입니다.\n지난 하루 팩트파인더가 전한 주요 기사를 모았습니다. 좋은 하루 보내세요.';
+export const DEFAULT_GREETING = '구독자 여러분, 안녕하세요. 팩트파인더입니다.\n지난 한 주 팩트파인더가 전한 주요 기사를 모았습니다. 편안한 주말 보내세요.';
 
 export function plainText(html: string, max = 1200) {
   return html
@@ -128,14 +106,14 @@ export function greetingPrompt(articles: { title: string; content: string }[]) {
   const list = articles
     .map((a, i) => `[${i + 1}] 제목: ${toFrenchBrackets(a.title)}\n본문(앞부분): ${plainText(a.content, articles.length > 10 ? 600 : 1200)}`)
     .join('\n\n');
-  return `당신은 인터넷신문 "팩트파인더"(정치·사회 중심)의 편집장입니다. 구독자에게 매일 아침 보내는 뉴스레터 맨 앞 인사말을 쓰세요.
+  return `당신은 인터넷신문 "팩트파인더"(정치·사회 중심)의 편집장입니다. 구독자에게 보내는 주간 뉴스레터 맨 앞 인사말을 쓰세요.
 아래는 이번 뉴스레터에 담는 기사들입니다. 각 기사의 핵심을 간략히 정리해 인사말에 녹이세요.
 
 형식:
 - 첫 문장: 구독자에게 건네는 짧은 인사 (예: "구독자 여러분, 안녕하세요. 팩트파인더입니다.")
 - 이어서 2~3개 문단: 기사들의 핵심 내용을 한두 문장씩, 비슷한 주제는 묶어서 자연스럽게
 - 마지막 문장: 짧은 맺음말
-- 전체 250~500자, 존댓말, 평문(마크다운·글머리표·이모지·따옴표 강조 없이)
+- 전체 400~700자, 존댓말, 평문(마크다운·글머리표·이모지·따옴표 강조 없이)
 
 규칙: 기사에 없는 사실을 만들지 말 것. 특정 정당·정치인을 지지하거나 비난하는 표현 없이 담담하게. 과장 금지.
 
@@ -182,7 +160,7 @@ export function buildNewsletterHtml(articles: MailArticle[], greeting: string, o
   <h1 style="font-size:20px;margin:16px 0 4px;color:#111;">${esc(opts.title)}</h1>
   <p style="margin:0 0 18px;color:#999;font-size:12px;">진영에 기대지 않는 중도의 시선</p>
   ${greet}
-  <table role="presentation" style="width:100%;border-collapse:collapse;">${items || '<tr><td style="padding:16px 0;color:#999;">기사가 없습니다.</td></tr>'}</table>
+  <table role="presentation" style="width:100%;border-collapse:collapse;">${items || '<tr><td style="padding:16px 0;color:#999;">이번 주 기사가 없습니다.</td></tr>'}</table>
   <div style="margin:24px 0 0;padding:16px;border:1px solid #f3c6d6;border-radius:10px;text-align:center;">
     <p style="margin:0 0 10px;color:#333;font-size:14px;">진영에 기대지 않는 저널리즘은 독자 여러분의 후원으로 지켜집니다.</p>
     <a href="${SITE_URL}/donate?utm_source=newsletter&utm_medium=email&utm_campaign=${opts.campaign}" style="display:inline-block;background:#ec1561;color:#fff;font-weight:700;font-size:14px;padding:8px 18px;border-radius:999px;text-decoration:none;">팩트파인더 후원하기</a>
@@ -195,12 +173,12 @@ export function buildNewsletterHtml(articles: MailArticle[], greeting: string, o
 }
 
 // 편집장이 직접 고른 기사 + 인사말 (뉴스레터 관리 화면 미리보기·발송)
-export async function buildNewsletter(ids: string[], greeting: string, dateKey = kstDate()) {
+export async function buildNewsletter(ids: string[], greeting: string, saturdayKey = upcomingSaturday()) {
   const articles = await selectedArticles(ids);
   const top = articles[0] ? ` — ${toFrenchBrackets(articles[0].title).replace(/\s+/g, ' ').slice(0, 40)}` : '';
-  const title = `팩트파인더 오늘 · ${dailyLabel(dateKey)}`;
-  const subject = `[팩트파인더 오늘] ${dailyLabel(dateKey)}${top}`;
-  const html = buildNewsletterHtml(articles, greeting, { title, campaign: `daily-${dateKey.replace(/-/g, '')}` });
+  const title = `팩트파인더 주간 · ${weekLabel(saturdayKey)}`;
+  const subject = `[팩트파인더 주간] ${weekLabel(saturdayKey)}${top}`;
+  const html = buildNewsletterHtml(articles, greeting, { title, campaign: `weekly-${saturdayKey.replace(/-/g, '')}` });
   return { articles, subject, html };
 }
 
