@@ -76,9 +76,6 @@ export default function VideoMasonryCard({
           fallbackAxis={video.kind === 'SHORT' ? 'y' : 'x'}
           contentAspect={square ? frameAspect : undefined}
         />
-        <div className="pin-badges">
-          <span className="pin-badge-chip">정치신세계</span>
-        </div>
         <div className="pin-overlay">
           {isChiefEditor && (
             <button
