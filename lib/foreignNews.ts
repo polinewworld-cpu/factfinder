@@ -94,7 +94,6 @@ type Raw = { outlet: string; title: string; url: string; summary: string; publis
 
 export const REPORT_SLOTS = [7, 13, 19]; // 하루 3번(한국시간)
 const ID_PREFIX = '0-fn-';
-const KEEP_REPORTS = 30; // 최근 30회차(약 열흘)만 보관
 const MAX_AGE_MS = 48 * 3600_000;
 const MAX_CANDIDATES = 70;
 
@@ -319,7 +318,7 @@ ${list}`;
 
 let inFlight: Promise<ForeignNewsReport> | null = null;
 
-// 한 회차를 새로 만들어 저장(같은 회차가 있으면 덮어씀) — 수동 "지금 새로 받기"도 이걸 씀
+// 한 회차를 새로 만들어 저장(같은 회차가 있으면 덮어씀, 지난 회차는 지우지 않고 계속 보관 — 추억으로 간직, 2026-10-10) — 수동 "지금 새로 받기"도 이걸 씀
 export function refreshForeignNews(): Promise<ForeignNewsReport> {
   if (!inFlight) {
     inFlight = (async () => {
@@ -331,14 +330,6 @@ export function refreshForeignNews(): Promise<ForeignNewsReport> {
         update: { data: report as any, createdAt: new Date() },
         create: { id, data: report as any },
       });
-      // 오래된 회차 정리
-      const old = await prisma.analyticsSnapshot.findMany({
-        where: { id: { startsWith: ID_PREFIX } },
-        orderBy: { id: 'desc' },
-        skip: KEEP_REPORTS,
-        select: { id: true },
-      });
-      if (old.length) await prisma.analyticsSnapshot.deleteMany({ where: { id: { in: old.map((o) => o.id) } } });
       return report;
     })().finally(() => {
       inFlight = null;
@@ -357,7 +348,7 @@ export async function getForeignAvatar(): Promise<string | null> {
 }
 
 // 최근 보고서들(최신 먼저)
-export async function recentForeignReports(limit = 6): Promise<ForeignNewsReport[]> {
+export async function recentForeignReports(limit = 120): Promise<ForeignNewsReport[]> {
   const rows = await prisma.analyticsSnapshot.findMany({
     where: { id: { startsWith: ID_PREFIX } },
     orderBy: { id: 'desc' },

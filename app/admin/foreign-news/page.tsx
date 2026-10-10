@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { ForeignNewsReport, ForeignPick } from '@/lib/foreignNews';
 import PersonaHeader from '@/components/PersonaHeader';
 import LinkedText from '@/components/LinkedText';
+import PastReportsButton, { type PastItem } from '@/components/PastReportsButton';
 
 // 관리자 "김정신 특파원" (2026-10-10) — 영미 주요 외신 중 한국 관련 이슈를 현지 언론이 어떻게 다루는지 살핀 보고서.
 // 하루 3번(07·13·19시) 올라오고, 존댓말 권고와 근거가 된 현지 언론 기사 링크가 항상 붙는다.
@@ -160,7 +161,11 @@ export default function ForeignNewsPage() {
     load();
   }, []);
 
-  const [latest, ...earlier] = reports;
+  const [latest] = reports;
+  const pastItems: PastItem[] = reports.map((r) => {
+    const kst = new Date(Date.parse(r.generatedAt) + 9 * 3600_000).toISOString();
+    return { id: r.generatedAt, date: kst.slice(0, 10), order: `${kst.slice(0, 10)}-${String(r.slot).padStart(2, '0')}-${kst.slice(11, 16)}`, label: SLOT_LABEL[r.slot] ?? '보고', node: <Report r={r} /> };
+  });
 
   return (
     <main className="py-8 space-y-4">
@@ -168,32 +173,18 @@ export default function ForeignNewsPage() {
         <div>
           <PersonaHeader personaKey="kim" name="김정신 특파원" alt="김정신 특파원(AI가 만든 가상 인물)" />
         </div>
-        <button type="button" onClick={() => load(true)} disabled={loading} className="border rounded-lg px-3 py-1.5 text-sm disabled:opacity-40">
-          {loading ? '새로 받는 중… (1분쯤)' : '지금 새로고침'}
-        </button>
+        <div className="flex items-center gap-2">
+          <button type="button" onClick={() => load(true)} disabled={loading} className="border rounded-lg px-3 py-1.5 text-sm disabled:opacity-40">
+            {loading ? '새로 받는 중… (1분쯤)' : '지금 새로고침'}
+          </button>
+          <PastReportsButton items={pastItems} />
+        </div>
       </div>
 
       {error && <p className="text-sm text-red-600">{error}</p>}
       {loading && !latest && <p className="text-sm text-gray-500">외신을 살펴보는 중입니다. 처음에는 1분 가까이 걸릴 수 있습니다…</p>}
 
       {latest && <Report r={latest} />}
-
-      {earlier.length > 0 && (
-        <Card title="지난 보고">
-          <div className="space-y-2">
-            {earlier.map((r) => (
-              <details key={r.generatedAt} className="border rounded-lg px-3 py-2">
-                <summary className="cursor-pointer text-sm font-semibold text-gray-700">
-                  {when(r.generatedAt)} {SLOT_LABEL[r.slot] ?? ''} <span className="font-normal text-gray-400">· 추천 {r.picks.length}건</span>
-                </summary>
-                <div className="mt-3">
-                  <Report r={r} showMeta={false} />
-                </div>
-              </details>
-            ))}
-          </div>
-        </Card>
-      )}
 
       {!loading && reports.length === 0 && !error && <p className="text-sm text-gray-400">아직 올라온 보고가 없습니다.</p>}
     </main>

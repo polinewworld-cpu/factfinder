@@ -50,7 +50,23 @@ async function save(report: AnalyticsReport) {
     update: { data: report as any, createdAt: new Date() },
     create: { id, data: report as any },
   });
+  // 오진실 기자의 편지(첫 인사·수다·요약·마무리)는 갱신 때마다 덮어쓰지 않고 시각별로 따로 보관 — 추억으로 간직 (2026-10-10)
+  // id '0-oh-날짜-시'는 날짜 id(2026-…)보다 앞이라 방문 분석 화면의 "최신 보고서" 조회에 섞이지 않음
+  if (report.ai) {
+    const hour = String(kstHour()).padStart(2, '0');
+    const logId = `0-oh-${id}-${hour}`;
+    const letter = { savedAt: new Date().toISOString(), ai: report.ai };
+    await prisma.analyticsSnapshot
+      .upsert({ where: { id: logId }, update: { data: letter as any, createdAt: new Date() }, create: { id: logId, data: letter as any } })
+      .catch(() => {});
+  }
   return report;
+}
+
+// 지난 오진실 편지들(최신 먼저)
+export async function pastOhLetters(limit = 200) {
+  const rows = await prisma.analyticsSnapshot.findMany({ where: { id: { startsWith: '0-oh-' } }, orderBy: { id: 'desc' }, take: limit });
+  return rows.map((r) => ({ id: r.id, ...(r.data as any) })) as { id: string; savedAt: string; ai: NonNullable<AnalyticsReport['ai']> }[];
 }
 
 export function buildAndSaveToday(): Promise<AnalyticsReport> {

@@ -2,6 +2,7 @@
 
 import PersonaHeader from '@/components/PersonaHeader';
 import LinkedText from '@/components/LinkedText';
+import PastLetters from '@/components/PastLetters';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { AnalyticsReport } from '@/lib/gaReport';
 
@@ -355,9 +356,12 @@ export default function AnalyticsView({ view }: { view: 'visits' | 'trends' }) {
             ))}
         </div>
         {view === 'trends' ? (
-          <button type="button" onClick={reloadMedia} disabled={mediaBusy} className="border rounded-lg px-3 py-1.5 text-sm disabled:opacity-40">
-            {mediaBusy ? '새로 받는 중… (1분쯤)' : '지금 새로고침'}
-          </button>
+          <div className="flex items-center gap-2">
+            <button type="button" onClick={reloadMedia} disabled={mediaBusy} className="border rounded-lg px-3 py-1.5 text-sm disabled:opacity-40">
+              {mediaBusy ? '새로 받는 중… (1분쯤)' : '지금 새로고침'}
+            </button>
+            <PastLetters />
+          </div>
         ) : (
           <button type="button" onClick={() => load(true)} disabled={busy} className="border rounded-lg px-3 py-1.5 text-sm disabled:opacity-40">
             {busy ? '분석 중…' : '지금 새로 분석'}
@@ -440,6 +444,7 @@ export default function AnalyticsView({ view }: { view: 'visits' | 'trends' }) {
           )}
 
           {r.ai?.closing && <p className="text-sm text-gray-800 leading-relaxed">{r.ai.closing}</p>}
+
 
             </>
           )}

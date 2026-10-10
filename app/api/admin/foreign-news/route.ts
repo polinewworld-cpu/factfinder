@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
 
   try {
     if (req.nextUrl.searchParams.get('refresh') === '1') await refreshForeignNews();
-    let reports = await recentForeignReports(6);
+    let reports = await recentForeignReports(120);
     if (!reports.length) reports = [await refreshForeignNews()];
     return NextResponse.json({ reports, avatarUrl: await getForeignAvatar() });
   } catch (e) {
