@@ -375,7 +375,14 @@ export default function AnalyticsView({ view }: { view: 'visits' | 'trends' }) {
         <>
           {view === 'trends' && (
             <>
-          <p className="text-sm font-semibold text-gray-900 leading-relaxed">{r.ai?.opening || '편집장님, 선배님들. 오진실 기자입니다.'}</p>
+          <div className="space-y-1">
+            <p className="text-sm font-semibold text-gray-900 leading-relaxed">편집장님, 선배님들. 오진실 기자입니다.</p>
+            {r.ai?.opening && (
+              <p className="text-sm text-gray-800 leading-relaxed">
+                <LinkedText text={r.ai.opening} />
+              </p>
+            )}
+          </div>
 
           {r.ai?.chatter && r.ai.chatter.length > 0 && (
             <section className="border rounded-xl p-4">

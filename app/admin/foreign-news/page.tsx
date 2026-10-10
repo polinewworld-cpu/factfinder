@@ -21,11 +21,6 @@ function ago(iso: string | null) {
   return `${Math.round(m / 1440)}일 전`;
 }
 
-function when(iso: string) {
-  const d = new Date(Date.parse(iso) + 9 * 3600_000);
-  return `${d.getUTCMonth() + 1}월 ${d.getUTCDate()}일`;
-}
-
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="border rounded-xl p-4">
@@ -60,27 +55,20 @@ function PickCard({ p }: { p: ForeignPick }) {
   );
 }
 
-function Report({ r, showMeta = true }: { r: ForeignNewsReport; showMeta?: boolean }) {
-  const place = r.place
-    ? `${r.place.city}${r.place.weather ? ` · ${r.place.weather}` : ''}${r.place.temp !== null && r.place.temp !== undefined ? ` ${r.place.temp}℃` : ''}`
-    : '';
+function Report({ r }: { r: ForeignNewsReport }) {
   return (
     <div className="space-y-4">
-      {r.greeting && <p className="text-sm font-semibold text-gray-900 leading-relaxed">{r.greeting}</p>}
+      <div className="space-y-1">
+        {r.greeting && <p className="text-sm font-semibold text-gray-900 leading-relaxed">{r.greeting}</p>}
+        {r.localColor && (
+          <p className="text-sm text-gray-800 leading-relaxed">
+            <LinkedText text={r.localColor} />
+          </p>
+        )}
+      </div>
 
-      {(r.localColor || r.overview || (r.overviewItems ?? []).length > 0) && (
-        <Card title="오늘 현지 이야기">
-          {showMeta && (
-            <p className="text-xs text-gray-400 mb-2">
-              {when(r.generatedAt)} {SLOT_LABEL[r.slot] ?? ''} · {ago(r.generatedAt)}
-              {place ? ` · ${place}` : ''}
-            </p>
-          )}
-          {r.localColor && (
-            <p className="text-sm text-gray-800 leading-relaxed mb-3">
-              <LinkedText text={r.localColor} />
-            </p>
-          )}
+      {((r.overviewItems ?? []).length > 0 || r.overview) && (
+        <Card title="오늘의 이슈">
           {(r.overviewItems ?? []).length > 0 ? (
             <ul className="space-y-1.5">
               {(r.overviewItems ?? []).map((t, i) => (
@@ -90,11 +78,9 @@ function Report({ r, showMeta = true }: { r: ForeignNewsReport; showMeta?: boole
               ))}
             </ul>
           ) : (
-            r.overview && (
-              <p className="text-sm text-gray-800 leading-relaxed">
-                <LinkedText text={r.overview} />
-              </p>
-            )
+            <p className="text-sm text-gray-800 leading-relaxed">
+              <LinkedText text={r.overview} />
+            </p>
           )}
         </Card>
       )}
