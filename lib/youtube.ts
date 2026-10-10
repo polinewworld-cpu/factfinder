@@ -65,14 +65,17 @@ let inFlightSync: Promise<SyncResult> | null = null;
 //
 // 판별(유튜브 API에 "진짜 라이브" 표시가 따로 없어 실제 데이터로 확인한 규칙):
 //  - liveStreamingDetails 없음 → 일반 업로드/쇼츠
-//  - 영상 길이 0(P0D) → 아직 방송 전이거나 방송 중인 진짜 라이브 (프리미어는 미리 올린 영상이라 길이가 있음)
+//  - 영상 길이 0(P0D) → 아직 방송 전이거나 방송 중인 진짜 라이브
+//  - 길이 정보 자체가 없음 → 공개 예약된 프리미어(미리 올린 영상) — 2026-10-10 실제 확인: 예약 프리미어 4건이
+//    duration 없이 scheduledStartTime만 있었음. 예전엔 이걸 라이브로 봐서 프리미어가 계속 들어왔음
 //  - 길이 있음 + 게시 시각이 방송 시작 이후 → 끝난 라이브의 다시보기 (방송 끝나고 게시됨, 예: 10:01 시작 → 11:08 게시)
 //  - 길이 있음 + 게시 시각이 방송 시작과 같거나 이전 → 프리미어 (예: 03:00 게시 = 03:00 시작)
 function isLiveBroadcast(video: any): boolean {
   const live = video.liveStreamingDetails;
   if (!live) return false;
   const duration = video.contentDetails?.duration as string | undefined;
-  if (!duration || duration === 'P0D') return true;
+  if (duration === 'P0D') return true;
+  if (!duration) return false;
   if (!live.actualStartTime) return false;
   const publishedAt = new Date(video.snippet.publishedAt).getTime();
   return publishedAt > new Date(live.actualStartTime).getTime() + 60_000;
