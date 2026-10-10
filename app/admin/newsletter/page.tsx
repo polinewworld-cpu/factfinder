@@ -60,15 +60,24 @@ export default function NewsletterAdminPage() {
   // 일간 아침 브리핑 샘플을 편집장 본인 메일로만 (2026-10-10) — 방송 영상 분석이 있어 1~4분 걸릴 수 있음
   async function dailyTest() {
     setDailyBusy(true);
-    setDailyMsg('만드는 중입니다… 방송 내용을 요약하느라 몇 분 걸릴 수 있어요.');
+    setDailyMsg('만들기 시작했어요. 방송 내용을 요약하느라 몇 분 걸릴 수 있습니다. 이 화면을 열어 두세요…');
     try {
-      const res = await fetch('/api/newsletter/daily-test', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dailyDate ? { date: dailyDate } : {}) });
-      const d = await res.json().catch(() => ({}));
-      if (!res.ok) setDailyMsg(d.error ?? '테스트 발송 실패');
-      else if (d.skipped) setDailyMsg(`${d.note} (방송이 있던 날 다음 날짜를 골라 다시 시험해 보세요)`);
-      else setDailyMsg(`${d.to}로 보냈습니다. 방송 ${d.info.broadcasts}건(요약 방식: ${d.info.summarySources.map((s: string) => (s === 'video' ? '영상 분석' : s === 'description' ? '설명란' : '요약 없음')).join(', ')}) · 기사 ${d.info.articles}건${d.info.usedPersonas ? ' · 기자 브리핑 포함' : ''}`);
-    } catch {
-      setDailyMsg('테스트 발송 중 오류가 났습니다.');
+      const start = await fetch('/api/newsletter/daily-test', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dailyDate ? { date: dailyDate } : {}) });
+      if (!start.ok) throw new Error((await start.json().catch(() => ({}))).error ?? '시작하지 못했습니다');
+      // 4초마다 진행 확인(최대 12분)
+      for (let i = 0; i < 180; i++) {
+        await new Promise((r) => setTimeout(r, 4000));
+        const d = await fetch('/api/newsletter/daily-test').then((r) => r.json()).catch(() => null);
+        if (!d || d.state === 'running') continue;
+        if (d.state === 'error') setDailyMsg(`실패: ${d.message ?? '알 수 없는 오류'}`);
+        else if (d.skipped) setDailyMsg(`${d.note} (방송이 있던 날 다음 날짜를 골라 다시 시험해 보세요)`);
+        else setDailyMsg(`${d.to}로 보냈습니다. 방송 ${d.info.broadcasts}건(요약 방식: ${d.info.summarySources.map((s: string) => (s === 'video' ? '영상 분석' : s === 'description' ? '설명란' : '요약 없음')).join(', ')}) · 기사 ${d.info.articles}건${d.info.usedPersonas ? ' · 기자 브리핑 포함' : ''}`);
+        setDailyBusy(false);
+        return;
+      }
+      setDailyMsg('아직 끝나지 않았어요. 잠시 뒤 메일함을 확인해 보세요.');
+    } catch (e) {
+      setDailyMsg(e instanceof Error ? e.message : '테스트 발송 중 오류가 났습니다.');
     }
     setDailyBusy(false);
   }
