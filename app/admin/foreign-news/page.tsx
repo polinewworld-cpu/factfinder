@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import type { ForeignNewsReport, ForeignPick } from '@/lib/foreignNews';
+import type { ForeignBrief, ForeignNewsReport, ForeignPick } from '@/lib/foreignNews';
 import { compressImageFile } from '@/lib/imageCompress';
 
 // 관리자 "김정신 특파원" (2026-10-10) — 영미 주요 외신 중 한국 관련 이슈를 현지 언론이 어떻게 다루는지 살핀 보고서.
@@ -57,9 +57,24 @@ function PickCard({ p }: { p: ForeignPick }) {
 function Report({ r }: { r: ForeignNewsReport }) {
   return (
     <div>
-      <p className="text-sm font-semibold text-gray-900 mb-1">{r.greeting}</p>
-      {r.overview && <p className="text-sm text-gray-700 mb-3">{r.overview}</p>}
+      {r.overview && <p className="text-sm text-gray-800 leading-relaxed mb-4">{r.overview}</p>}
       {r.aiError && <p className="text-amber-700 text-xs mb-3">{r.aiError}</p>}
+      {(r.briefs ?? []).length > 0 && (
+        <div className="mb-5">
+          <h3 className="text-sm font-bold text-gray-900 mb-2">한 줄 브리핑</h3>
+          <ul className="space-y-1.5">
+            {(r.briefs as ForeignBrief[]).map((b) => (
+              <li key={b.url} className="text-sm text-gray-800 leading-snug">
+                · {b.text}{' '}
+                <a href={b.url} target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-brand underline whitespace-nowrap">
+                  {b.outlet} ↗
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {r.picks.length > 0 && <h3 className="text-sm font-bold text-gray-900 mb-2">상세 보고</h3>}
       <ul className="space-y-3">
         {r.picks.map((p) => (
           <PickCard key={p.url} p={p} />
@@ -136,8 +151,6 @@ export default function ForeignNewsPage() {
         <Avatar url={avatarUrl} size={88} />
         <div className="min-w-0 flex-1">
           <h1 className="text-xl font-bold text-gray-900">김정신 특파원</h1>
-          <p className="text-sm text-gray-600">팩트파인더 특파원 · 현지 주요 언론이 한국 이슈를 어떻게 다루는지 살펴 하루 세 번(아침·낮·저녁) 보고드립니다.</p>
-          <p className="text-xs text-gray-400 mt-1">프로필 사진은 AI가 만든 가상 인물이며, 보고서는 외신 제목·소개글을 바탕으로 AI가 작성한 내부 참고 자료입니다.</p>
         </div>
       </section>
       <div className="flex items-center gap-2 mb-6">

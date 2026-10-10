@@ -34,11 +34,18 @@ export type ForeignPick = {
   publishedAt: string | null;
 };
 
+export type ForeignBrief = {
+  text: string; // 한 줄(존댓말)
+  outlet: string;
+  url: string; // 현지 언론 기사 링크 — 항상 있음
+};
+
 export type ForeignNewsReport = {
   generatedAt: string;
   slot: number; // 보고 시각(한국시간 7·13·19, 0은 새벽 수동 갱신)
-  greeting: string; // 특파원 인사
-  overview: string; // 이번 회차 종합(존댓말)
+  greeting: string; // 특파원 인사(화면에는 표시하지 않음)
+  overview: string; // 이번 회차 종합(존댓말, 여러 이슈를 폭넓게)
+  briefs: ForeignBrief[]; // 한 줄 브리핑 — 다양한 이슈를 한 줄씩(링크 포함)
   picks: ForeignPick[];
   fetched: number; // 모은 기사 수
   candidates: number; // 한국 관련 1차 후보 수
@@ -52,7 +59,7 @@ export const REPORT_SLOTS = [7, 13, 19]; // 하루 3번(한국시간)
 const ID_PREFIX = '0-fn-';
 const KEEP_REPORTS = 30; // 최근 30회차(약 열흘)만 보관
 const MAX_AGE_MS = 48 * 3600_000;
-const MAX_CANDIDATES = 40;
+const MAX_CANDIDATES = 70;
 
 // 한국 관련 1차 거름 — 놓치지 않으려고 넓게, 진짜 관련성은 제미나이가 가림
 const KOREA_RE =
@@ -147,6 +154,7 @@ export async function buildForeignNews(slot: number): Promise<ForeignNewsReport>
     slot,
     greeting: `${when} 보고드립니다. 김정신 특파원입니다.`,
     overview: '',
+    briefs: [],
     picks: [],
     fetched: all.length,
     candidates: candidates.length,
@@ -160,7 +168,7 @@ export async function buildForeignNews(slot: number): Promise<ForeignNewsReport>
 
   // 자동 선별이 안 될 때도 현지 언론 기사 링크는 그대로 보여 드림
   const fallback = () =>
-    candidates.slice(0, 10).map((c, i): ForeignPick => ({
+    candidates.slice(0, 15).map((c, i): ForeignPick => ({
       priority: i < 3 ? 1 : i < 6 ? 2 : 3,
       outlet: c.outlet,
       originalTitle: c.title,
@@ -180,17 +188,23 @@ export async function buildForeignNews(slot: number): Promise<ForeignNewsReport>
     return report;
   }
 
-  const list = candidates.map((c, i) => `[${i}] (${c.outlet}) ${c.title}\n    ${c.summary}`).join('\n');
+  const hoursAgo = (iso: string | null) => (iso ? `${Math.max(0, Math.round((Date.now() - Date.parse(iso)) / 3600_000))}시간 전` : '시각 미상');
+  const list = candidates.map((c, i) => `[${i}] (${c.outlet}, ${hoursAgo(c.publishedAt)}) ${c.title}\n    ${c.summary}`).join('\n');
   const prompt = `당신은 한국 인터넷신문 "팩트파인더"(중도주의 관점으로 정치·사회를 다룸)의 김정신 특파원입니다. 현지 주요 언론이 한국 관련 이슈를 어떻게 다루는지 살펴 편집국에 ${when} 보고를 올립니다.
 아래는 영미 주요 외신의 최근 기사 목록(번호, 매체, 제목, 짧은 소개글)입니다.
 
 할 일:
-1. 한국이 직접 주제이거나 한국의 정치·외교·안보·경제·사회 이슈를 의미 있게 다룬 기사만 최대 8개 고릅니다. 한국이 지나가듯 한 번 언급되는 기사, 연예·스포츠 단신은 제외합니다.
-2. 말투는 **반드시 존댓말**(예: "~입니다", "~로 보입니다", "~하시길 권합니다")을 쓰고, 편집국에 보고하는 정중한 어조로 씁니다.
-3. 각 기사마다 편집국이 어떤 방향으로 쓰면 좋을지 **권고**(advice)를 존댓말로 한 문장 씁니다. 예: "미국 쪽 시각과 우리 정부 입장을 나란히 놓고 쟁점을 정리하는 방향으로 쓰시길 권합니다." 팩트파인더는 진영논리를 벗어난 중도 관점입니다.
-4. 기사 본문은 주어지지 않았습니다. 제목과 소개글에 없는 사실을 지어내지 마세요. 확실하지 않으면 "소개글 기준으로는"이라고 쓰세요. 직접 현지에서 취재했다거나 본 것처럼 쓰지 마세요.
-5. 출력은 JSON 객체 하나만(설명·코드블록 금지):
-{"overview": "이번 회차 종합 2~3문장(존댓말)", "items": [{"idx": 번호, "priority": 1~3(1이 가장 먼저), "titleKo": "자연스러운 한국어 제목", "summaryKo": "한국어 2~3문장 요약", "whyKorea": "한국과 어떻게 관련되는지 한 문장", "tone": "현지 언론이 이 이슈를 어떤 시각·관심으로 다루는지 한 문장", "advice": "권고 한 문장(존댓말)"}]}
+1. 한국이 직접 주제이거나 한국의 정치·외교·안보·경제·사회·문화 이슈를 의미 있게 다룬 기사를 폭넓게 고릅니다. 한국이 지나가듯 한 번 언급되는 기사, 연예·스포츠 단신은 제외합니다. 같은 사건을 여러 매체가 다뤘다면 한 이슈로 묶되 매체 시각 차이를 언급합니다.
+2. 보고서는 세 부분입니다.
+   - overview: 이번 회차 종합. 서로 다른 이슈를 폭넓게 짚어 5~7문장으로 씁니다.
+   - briefs: 한 줄 브리핑 12개 안팎. 정치·외교·안보·경제·사회·문화 등 **서로 다른 이야기**를 한 문장씩(존댓말) 담습니다. 각 항목은 해당 기사 번호(idx)를 가집니다.
+   - items: 상세 보고 최대 15개. 편집국이 쓸 가치가 큰 순서로 priority(1~3, 1이 가장 먼저)를 줍니다.
+3. 최근 기사를 우선합니다. 기사 목록의 "N시간 전"을 참고하세요. 하루 이상 지난 기사는 정말 중요한 경우만 포함합니다.
+4. 말투는 **반드시 존댓말**(예: "~입니다", "~로 보입니다", "~하시길 권합니다")을 쓰고, 편집국에 보고하는 정중한 어조로 씁니다.
+5. 각 상세 보고 기사에는 편집국이 어떤 방향으로 쓰면 좋을지 **권고**(advice)를 존댓말로 한 문장 씁니다. 예: "미국 쪽 시각과 우리 정부 입장을 나란히 놓고 쟁점을 정리하는 방향으로 쓰시길 권합니다." 팩트파인더는 진영논리를 벗어난 중도 관점입니다.
+6. 기사 본문은 주어지지 않았습니다. 제목과 소개글에 없는 사실을 지어내지 마세요. 확실하지 않으면 "소개글 기준으로는"이라고 쓰세요. 직접 현지에서 취재했다거나 본 것처럼 쓰지 마세요.
+7. 출력은 JSON 객체 하나만(설명·코드블록 금지):
+{"overview": "종합 5~7문장(존댓말)", "briefs": [{"idx": 번호, "text": "한 문장(존댓말)"}], "items": [{"idx": 번호, "priority": 1~3, "titleKo": "자연스러운 한국어 제목", "summaryKo": "한국어 2문장 요약", "whyKorea": "한국과 어떻게 관련되는지 한 문장", "tone": "현지 언론이 이 이슈를 어떤 시각·관심으로 다루는지 한 문장", "advice": "권고 한 문장(존댓말)"}]}
 
 기사 목록:
 ${list}`;
@@ -214,8 +228,16 @@ ${list}`;
         publishedAt: c.publishedAt,
       });
     }
-    report.picks = picks.sort((a, b) => a.priority - b.priority).slice(0, 8);
+    report.picks = picks.sort((a, b) => a.priority - b.priority).slice(0, 15);
     report.overview = String(parsed?.overview ?? '');
+    const briefs: ForeignBrief[] = [];
+    for (const b of Array.isArray(parsed?.briefs) ? parsed.briefs : []) {
+      const c = candidates[Number(b?.idx)];
+      const text = String(b?.text ?? '').trim();
+      if (!c || !text) continue; // 링크 없는 한 줄은 싣지 않음
+      briefs.push({ text, outlet: c.outlet, url: c.url });
+    }
+    report.briefs = briefs.slice(0, 15);
     if (!report.picks.length) {
       report.overview ||= '이번 회차에는 한국과 관련해 보고드릴 만한 현지 기사를 찾지 못했습니다.';
     }
@@ -223,6 +245,7 @@ ${list}`;
     report.aiError = e instanceof Error ? e.message : '자동 선별 실패';
     report.overview = '자동 요약에 실패해 후보 기사 목록만 올립니다.';
     report.picks = fallback();
+    report.briefs = [];
   }
   return report;
 }
