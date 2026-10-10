@@ -4,6 +4,7 @@ import PersonaHeader from '@/components/PersonaHeader';
 import LinkedText from '@/components/LinkedText';
 import PastLetters from '@/components/PastLetters';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import DismissX from '@/components/DismissX';
 import type { AnalyticsReport } from '@/lib/gaReport';
 
 // 관리자 "방문 분석" (2026-10-08) — 구글 애널리틱스를 열지 않아도 핵심 지표·인기 기사·유입·시간대와 자동 인사이트를 한 화면에.
@@ -173,17 +174,19 @@ function Columns({ rows, highlightMax = true }: { rows: { label: string; value: 
 
 // ── 매체 동향·기사 아이디어 (2026-10-09) ──
 
-function Ideas({ ideas }: { ideas: NonNullable<NonNullable<AnalyticsReport['ai']>['ideas']> }) {
+function Ideas({ ideas, onDismiss, pending }: { ideas: NonNullable<NonNullable<AnalyticsReport['ai']>['ideas']>; onDismiss?: (i: number) => void; pending?: string | null }) {
   return (
     <div className="grid lg:grid-cols-2 gap-3">
       {ideas.map((it, i) => (
-        <article key={i} className="border rounded-lg p-3 text-sm">
+        <article key={i} className={`border rounded-lg p-3 text-sm ${pending === `idea-${i}` ? 'opacity-40' : ''}`}>
           <p className="flex flex-wrap items-center gap-1.5 mb-1.5">
             <span className="rounded px-1.5 py-0.5 text-[11px] font-bold text-white" style={{ background: it.priority === 1 ? MARK : it.priority === 2 ? '#4f7f83' : '#8a9a98' }}>
               {it.priority}순위
             </span>
             <span className="rounded border px-1.5 py-0.5 text-[11px] font-semibold">{it.keyword}</span>
+            {onDismiss && <span className="ml-auto"><DismissX onClick={() => onDismiss(i)} busy={!!pending} /></span>}
           </p>
+          {pending === `idea-${i}` && <p className="text-xs text-gray-500 mb-1">새 토픽을 가져오는 중…</p>}
           <p className="font-bold text-[15px] leading-snug mb-1">{it.headline}</p>
           <p className="text-gray-600 mb-2">{it.issue}</p>
           <p className="mb-1"><b className="text-xs text-gray-500 mr-1">각도</b>{it.angle}</p>
@@ -301,6 +304,27 @@ export default function AnalyticsView({ view }: { view: 'visits' | 'trends' }) {
   const [state, setState] = useState<{ configured?: boolean; report?: AnalyticsReport; error?: string } | null>(null);
   const [busy, setBusy] = useState(false);
   const [mediaBusy, setMediaBusy] = useState(false);
+  const [pending, setPending] = useState<string | null>(null);
+  const [dismissErr, setDismissErr] = useState('');
+
+  // 항목 옆 × — 지우고 새 토픽으로 교체 (2026-10-10)
+  async function dismiss(kind: 'chatter' | 'idea', index: number) {
+    setPending(`${kind}-${index}`);
+    setDismissErr('');
+    try {
+      const res = await fetch('/api/admin/analytics/replace', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ kind, index }) });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.report) setState((prev) => ({ ...(prev ?? {}), report: data.report }));
+      else {
+        setDismissErr(data.error ?? '새 토픽을 가져오지 못했습니다');
+        const again = await fetch('/api/admin/analytics').then((r) => r.json()).catch(() => null);
+        if (again?.report) setState(again);
+      }
+    } catch {
+      setDismissErr('새 토픽을 가져오지 못했습니다');
+    }
+    setPending(null);
+  }
 
   // 오늘의 키워드·지면·기사 아이디어만 지금 새로 받기 (자동은 3시간마다)
   async function reloadMedia() {
@@ -389,8 +413,10 @@ export default function AnalyticsView({ view }: { view: 'visits' | 'trends' }) {
               <h2 className={`${BIG_TITLE} mb-2`}>오늘 눈에 띈 이야기</h2>
               <ul className="space-y-1.5">
                 {r.ai.chatter.map((c, i) => (
-                  <li key={i} className="text-sm text-gray-800 leading-relaxed">
+                  <li key={i} className={`text-sm text-gray-800 leading-relaxed ${pending === `chatter-${i}` ? 'opacity-40' : ''}`}>
                     · <LinkedText text={c} />
+                    <DismissX onClick={() => dismiss('chatter', i)} busy={!!pending} />
+                    {pending === `chatter-${i}` && <span className="ml-2 text-xs text-gray-500">새 토픽을 가져오는 중…</span>}
                   </li>
                 ))}
               </ul>
@@ -417,20 +443,21 @@ export default function AnalyticsView({ view }: { view: 'visits' | 'trends' }) {
             <section className="border rounded-xl p-4">
               <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
                 <h2 className={BIG_TITLE}>
-                  오늘의 기사 아이디어
+                  오늘의 기사각
                 </h2>
                 <button type="button" onClick={reloadMedia} disabled={mediaBusy} className="border rounded-lg px-3 py-1 text-xs disabled:opacity-40">
                   {mediaBusy ? '새로 만드는 중… (1분쯤)' : '새로고침'}
                 </button>
               </div>
               <p className="text-base font-semibold mb-3"><LinkedText text={r.ai.headline} /></p>
-              <Ideas ideas={r.ai.ideas} />
+              <Ideas ideas={r.ai.ideas} onDismiss={(i) => dismiss('idea', i)} pending={pending} />
             </section>
           )}
 
+          {dismissErr && <p className="text-xs text-red-600">{dismissErr}</p>}
           {r.aiError && (
             <p className="text-xs text-amber-700">
-              {r.ai?.ideas?.length ? '새 보고를 만들지 못해 지난번 보고를 그대로 보여 드려요' : '기사 아이디어를 만들지 못했습니다'}: {r.aiError}
+              {r.ai?.ideas?.length ? '새 보고를 만들지 못해 지난번 보고를 그대로 보여 드려요' : '기사각을 만들지 못했습니다'}: {r.aiError}
             </p>
           )}
 

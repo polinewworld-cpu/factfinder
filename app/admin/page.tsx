@@ -218,7 +218,7 @@ export default function AdminHome() {
               <p className="text-sm text-gray-900/60">불러오는 중…</p>
             ) : analysis.report?.ai ? (
               <>
-                <p className="text-[11px] text-gray-900/50 mb-1">오늘의 기사 아이디어</p>
+                <p className="text-[11px] text-gray-900/50 mb-1">오늘의 기사각</p>
                 <p className="text-sm font-semibold mb-2"><LinkedText text={analysis.report.ai.headline} /></p>
                 <ul className="space-y-1 list-disc pl-4">
                   {/* 2026-10-09: 기사 아이디어가 있으면 그것(순위·제목 예시), 없으면 옛 보고서의 할 일 */}

@@ -85,6 +85,7 @@ export type ForeignNewsReport = {
   place?: { city: string; weather: string | null; temp: number | null }; // 그날 특파원이 있는 곳(실측 날씨)
   localColor?: string; // 현지 분위기 이야기(날씨·현지 소식·연예계 등, 재미있게)
   format?: number; // 보고서 양식 버전(2 = 긴 오늘의 이슈 + 관련 외신 목록). 낮으면 화면이 한 번 새로 만든다
+  dismissed?: string[]; // 관리자가 ×로 지운 항목의 기사 주소 — 교체 때 다시 안 가져옴
   carriedOver?: number; // 새 소식이 적어 지난 보고에서 이어 붙인 브리핑 수
   closing?: string; // 마무리 인사(말미에 한두 문장, 편집국을 챙기는 따뜻한 한마디)
   briefs: ForeignBrief[]; // 한 줄 브리핑 — 다양한 이슈를 한 줄씩(링크 포함)
@@ -166,9 +167,8 @@ function parseJson(text: string): any {
   return JSON.parse(start >= 0 && end > start ? cleaned.slice(start, end + 1) : cleaned);
 }
 
-const SLOT_NAME: Record<number, string> = { 7: '아침', 13: '낮', 19: '저녁', 0: '새벽' };
-
-export async function buildForeignNews(slot: number): Promise<ForeignNewsReport> {
+// 외신 피드를 모아 한국 관련 후보를 고름(보고서 만들기·"이 토픽 빼고 새로" 교체가 같이 씀)
+async function collectForeign() {
   const sourceErrors: ForeignNewsReport['sourceErrors'] = [];
   const results = await Promise.all(
     FOREIGN_FEEDS.map((f) =>
@@ -198,6 +198,32 @@ export async function buildForeignNews(slot: number): Promise<ForeignNewsReport>
     all = within(WIDE_AGE_MS);
     candidates = pickCandidates(all);
   }
+  return { sourceErrors, all, candidates };
+}
+
+const ADVICE_RULES = `**권고(advice)의 기준(중요)**: 팩트파인더는 보수 성향 언론으로, **집권 더불어민주당 정부와 대통령에 대한 비판적 시각을 기본 편집 기조**로 삼습니다. 이건 전제이니 어떤 이슈든 정부·대통령의 책임과 문제점을 먼저 보는 각도로 권고하세요. 다만 **국민의힘 등 특정 정당을 지지하거나 옹호하는 권고는 하지 않습니다**(정당 응원이 아니라 정부 비판 각도입니다). 그러니 "균형을 잡으세요", "중립을 지키세요", "어느 한쪽으로 치우치지 마세요", "양측 입장을 나란히 놓으세요", "진영 싸움으로 보이지 않게 하세요" 같은 **기계적 중립 조언은 쓰지 마세요.** 대신 이 기사에서 **어떤 점을 강조하면 좋을지**를 구체적으로 권고합니다 — 정부·대통령의 책임, 해명이 필요한 대목, 말과 행동이 어긋나는 부분, 국민이 꼭 알아야 할 쟁점, 외신이 한국 정부를 어떻게 보는지 등. 근거는 기사 제목·소개글에 있는 사실에서만 끌어오고, 확인되지 않은 것은 단정하지 말고 "이 점에 대한 해명을 요구해 보세요"처럼 질문·검증 각도로 제안하세요.`;
+
+function makeBrief(b: any, candidates: Raw[]): ForeignBrief | null {
+  const c = candidates[Number(String(b?.idx ?? '').replace(/^C/i, ''))];
+  const text = stripMarkers(String(b?.text ?? '').trim()); // 한 줄 브리핑은 옆에 매체 링크가 따로 있으니 글 속 표시는 글자만 남김
+  if (!c || !text) return null; // 링크 없는 한 줄은 싣지 않음
+  const advice = stripMarkers(String(b?.advice ?? '').trim());
+  const seen = new Set<string>();
+  const sources: NonNullable<ForeignBrief['sources']> = [];
+  const srcList = [{ idx: b?.idx, titleKo: '' }, ...(Array.isArray(b?.sources) ? b.sources : [])];
+  for (const sc of srcList) {
+    const rc = candidates[Number(String(sc?.idx ?? '').replace(/^C/i, ''))];
+    if (!rc || seen.has(rc.url)) continue;
+    seen.add(rc.url);
+    sources.push({ outlet: rc.outlet, titleEn: rc.title, titleKo: stripMarkers(String(sc?.titleKo ?? '').trim()), url: rc.url });
+  }
+  return { text, advice: advice || undefined, outlet: c.outlet, url: c.url, sources };
+}
+
+const SLOT_NAME: Record<number, string> = { 7: '아침', 13: '낮', 19: '저녁', 0: '새벽' };
+
+export async function buildForeignNews(slot: number): Promise<ForeignNewsReport> {
+  const { sourceErrors, all, candidates } = await collectForeign();
 
   const when = SLOT_NAME[slot] ?? '';
   const report: ForeignNewsReport = {
@@ -266,7 +292,7 @@ export async function buildForeignNews(slot: number): Promise<ForeignNewsReport>
 1. localColor: 보고 맨 앞의 정감 있는 현지 이야기(규칙은 아래).
 2. overviewItems = "오늘의 이슈": **한국과 무관한** 해외 소식 불릿 5~6개. 각 불릿은 **3~4문장(150~250자)**으로 길게: 무슨 일이 있었는지(누가·언제·어디서·무엇을), 왜 화제인지·배경, 그 뒤 어떻게 되고 있는지를 헤드라인 아래 요약 재료에 있는 사실만으로 풀어 쓰세요. 한 줄 제목 수준으로 끝내지 마세요. 재미있거나, 쓸모 있거나, 유행·화제인 이야기(생활·과학·기술·음식·문화·날씨·신기한 뉴스 등)를 수다 떨듯 한 줄씩 소개합니다. 재료는 아래 "현지 헤드라인"([L번호])뿐이고 목록에 없는 건 쓰지 마세요. 전쟁·정치 공방·참사 속보 같은 무거운 소식은 피하고, 한국 관련 기사([C번호])는 여기에 넣지 마세요(3번에서 다룹니다). 마땅한 헤드라인이 없으면 빈 배열로 둡니다.
 3. briefs = "한 줄 브리핑": **한국 관련 기사** 8~12개([C번호]). 한국이 직접 주제이거나 한국의 정치·외교·안보·경제·사회·문화 이슈를 의미 있게 다룬 기사만 고릅니다(지나가듯 한 번 언급되거나 연예·스포츠 단신은 제외). 같은 사건을 여러 매체가 다뤘다면 한 줄로 묶고 매체 시각 차이를 언급합니다. 항목마다 sources(그 사건을 다룬 **관련 기사를 목록에서 빠짐없이** [C번호]로 모두 나열, 대표 기사 포함, 각각 titleKo=영문 제목의 한글 번역)와 text(무슨 일인지 사실만 한 문장)와 advice(편집국이 어떤 방향으로 쓰면 좋을지 **권고** 한 문장)를 씁니다. 예) text: "우크라이나가 북한군 포로 전향 사실을 밝히면서 한국 정부가 대사를 소환했어요." advice: "정부가 비밀유지 의무를 어겼다는 지적이 나온 대목을 전면에 세우고, 대사 소환까지 간 결정 과정을 국민에게 어떻게 설명했는지 짚어 보세요. 그게 이번 기사의 핵심 쟁점이에요."
-   **권고(advice)의 기준(중요)**: 팩트파인더는 보수 성향 언론으로, **집권 더불어민주당 정부와 대통령에 대한 비판적 시각을 기본 편집 기조**로 삼습니다. 이건 전제이니 어떤 이슈든 정부·대통령의 책임과 문제점을 먼저 보는 각도로 권고하세요. 다만 **국민의힘 등 특정 정당을 지지하거나 옹호하는 권고는 하지 않습니다**(정당 응원이 아니라 정부 비판 각도입니다). 그러니 "균형을 잡으세요", "중립을 지키세요", "어느 한쪽으로 치우치지 마세요", "양측 입장을 나란히 놓으세요", "진영 싸움으로 보이지 않게 하세요" 같은 **기계적 중립 조언은 쓰지 마세요.** 대신 이 기사에서 **어떤 점을 강조하면 좋을지**를 구체적으로 권고합니다 — 정부·대통령의 책임, 해명이 필요한 대목, 말과 행동이 어긋나는 부분, 국민이 꼭 알아야 할 쟁점, 외신이 한국 정부를 어떻게 보는지 등. 근거는 기사 제목·소개글에 있는 사실에서만 끌어오고, 확인되지 않은 것은 단정하지 말고 "이 점에 대한 해명을 요구해 보세요"처럼 질문·검증 각도로 제안하세요.
+   ${ADVICE_RULES}
 중요한 순서대로 씁니다.
 4. closing: 마무리 인사(규칙은 아래).
 최근 기사를 우선합니다. 기사 목록의 "N시간 전"을 참고하세요. 하루 이상 지난 기사는 정말 중요한 경우만 포함합니다.
@@ -322,21 +348,8 @@ ${list}`;
     report.localColor = link(String(parsed?.localColor ?? '').trim());
     const briefs: ForeignBrief[] = [];
     for (const b of Array.isArray(parsed?.briefs) ? parsed.briefs : []) {
-      const c = candidates[Number(String(b?.idx ?? '').replace(/^C/i, ''))];
-      const text = stripMarkers(String(b?.text ?? '').trim()); // 한 줄 브리핑은 옆에 매체 링크가 따로 있으니 글 속 표시는 글자만 남김
-      if (!c || !text) continue; // 링크 없는 한 줄은 싣지 않음
-      const advice = stripMarkers(String(b?.advice ?? '').trim());
-      const seen = new Set<string>();
-      const sources: NonNullable<ForeignBrief['sources']> = [];
-      const srcList = [{ idx: b?.idx, titleKo: '' }, ...(Array.isArray(b?.sources) ? b.sources : [])];
-      for (const sc of srcList) {
-        const rc = candidates[Number(String(sc?.idx ?? '').replace(/^C/i, ''))];
-        if (!rc || seen.has(rc.url)) continue;
-        seen.add(rc.url);
-        const ko = stripMarkers(String(sc?.titleKo ?? '').trim());
-        sources.push({ outlet: rc.outlet, titleEn: rc.title, titleKo: ko, url: rc.url });
-      }
-      briefs.push({ text, advice: advice || undefined, outlet: c.outlet, url: c.url, sources });
+      const made = makeBrief(b, candidates);
+      if (made) briefs.push(made);
     }
     report.briefs = briefs.slice(0, 15);
     if (!report.briefs.length && !report.picks.length) {
@@ -413,4 +426,80 @@ export function ensureForeignNews() {
     .findUnique({ where: { id }, select: { id: true } })
     .then((row) => (row ? null : refreshForeignNews()))
     .catch(() => {});
+}
+
+// ── 항목 하나를 지우고 새 토픽으로 교체 (2026-10-10, "오늘의 이슈"·"이게 기사각입니다"의 × 버튼) ──
+// 지운 항목의 기사 주소는 report.dismissed에 남겨 같은 걸 다시 가져오지 않음. 새 소식이 없으면 빈 채로 두고 이유를 돌려줌.
+export async function replaceForeignItem(generatedAt: string, kind: 'overview' | 'brief', index: number): Promise<ForeignNewsReport> {
+  const rows = await prisma.analyticsSnapshot.findMany({ where: { id: { startsWith: ID_PREFIX } }, orderBy: { id: 'desc' }, take: 120 });
+  const row = rows.find((r) => (r.data as any)?.generatedAt === generatedAt);
+  if (!row) throw new Error('보고서를 찾지 못했습니다');
+  const report = row.data as unknown as ForeignNewsReport;
+  report.dismissed = report.dismissed ?? [];
+
+  // 1) 지우기
+  let removedUrls: string[] = [];
+  if (kind === 'brief') {
+    const [gone] = report.briefs.splice(index, 1);
+    if (gone) removedUrls = [gone.url, ...(gone.sources ?? []).map((x) => x.url)];
+  } else {
+    const items = report.overviewItems ?? [];
+    const [gone] = items.splice(index, 1);
+    report.overviewItems = items;
+    if (gone) removedUrls = Array.from(gone.matchAll(/\[\[[^\]|]+\|(https?:[^\]\s]+)\]\]/g)).map((m) => m[1]);
+  }
+  report.dismissed.push(...removedUrls);
+  const save = () => prisma.analyticsSnapshot.update({ where: { id: row.id }, data: { data: report as any, createdAt: new Date() } });
+
+  // 2) 새 토픽 가져오기
+  try {
+    if (!geminiReady()) throw new Error('제미나이 키가 없어 새 토픽을 만들 수 없습니다');
+    const { all, candidates } = await collectForeign();
+    const used = new Set<string>([...report.dismissed, ...report.briefs.flatMap((b) => [b.url, ...(b.sources ?? []).map((x) => x.url)]), ...(report.overviewItems ?? []).join(' ').split(/[\s\]|]+/)]);
+    const hoursAgo = (iso: string | null) => (iso ? `${Math.max(0, Math.round((Date.now() - Date.parse(iso)) / 3600_000))}시간 전` : '시각 미상');
+
+    if (kind === 'brief') {
+      const fresh = candidates.filter((c) => !used.has(c.url));
+      if (!fresh.length) throw new Error('지금은 새로 가져올 한국 관련 외신이 더 없어요');
+      const list = fresh.map((c, i) => `[C${i}] (${c.outlet}, ${hoursAgo(c.publishedAt)}) ${c.title}\n    ${c.summary}`).join('\n');
+      const prompt = `당신은 한국 인터넷신문 "팩트파인더"(보수 성향, 집권 민주당 정부·대통령에 대한 비판적 시각을 핵심으로 정치·사회를 다룸)의 김정신 특파원입니다. 편집장님과 선배 기자님들께 따뜻하고 재치 있는 존댓말("~이에요/~해요/~하세요")로 보고합니다.
+아래 기사 목록에서 **한국 관련 이슈 하나**를 골라 "한 줄 브리핑" 항목 하나를 만드세요. 한국이 직접 주제이거나 한국의 정치·외교·안보·경제·사회·문화를 의미 있게 다룬 기사여야 합니다. 같은 사건을 다룬 다른 기사가 목록에 있으면 sources에 빠짐없이 [C번호]로 함께 넣고(대표 기사 포함), titleKo는 영문 제목의 한글 번역입니다. text는 무슨 일인지 사실만 한 문장, advice는 편집국이 어떤 방향으로 쓰면 좋을지 권고 한 문장입니다.
+${ADVICE_RULES}
+기사 본문은 주어지지 않았습니다. 제목과 소개글에 없는 사실을 지어내지 마세요.
+출력은 JSON 객체 하나만(설명·코드블록 금지): {"idx": 대표 C번호의 숫자, "sources": [{"idx": C번호의 숫자, "titleKo": "영문 제목의 한글 번역"}], "text": "사실 한 문장", "advice": "권고 한 문장"}
+
+기사 목록:
+${list}`;
+      const made = makeBrief(parseJson(await generateText(prompt, { temperature: 0.3 })), fresh);
+      if (!made) throw new Error('새 토픽을 만들지 못했어요');
+      report.briefs.splice(Math.min(index, report.briefs.length), 0, made);
+    } else {
+      const cityKo = report.place?.city ?? null;
+      const nonKorea = all.filter((r) => !KOREA_RE.test(`${r.title} ${r.summary}`) && !used.has(r.url));
+      const pool = [
+        ...nonKorea.filter((r) => cityKo && OUTLET_CITY[r.outlet]?.ko === cityKo).slice(0, 20),
+        ...nonKorea.filter((r) => !(cityKo && OUTLET_CITY[r.outlet]?.ko === cityKo)).slice(0, 15),
+      ];
+      if (!pool.length) throw new Error('지금은 새로 가져올 해외 소식이 더 없어요');
+      const heads = pool.map((r, i) => `[L${i}] (${r.outlet}) ${r.title}${r.summary ? `\n    ${r.summary}` : ''}`).join('\n');
+      const prompt = `당신은 한국 인터넷신문 "팩트파인더"의 김정신 특파원입니다. 편집장님과 선배 기자님들께 따뜻하고 재치 있는 존댓말("~이에요/~해요/~네요")로, 수다 떨듯 말합니다.
+아래 현지 헤드라인 중 **한국과 무관하고 재미있거나 쓸모 있는 소식 하나**(생활·과학·기술·음식·문화·날씨·신기한 뉴스 등. 전쟁·정치 공방·참사 속보는 피함)를 골라 "오늘의 이슈" 불릿 하나를 **3~4문장(150~250자)**으로 쓰세요: 무슨 일인지(누가·언제·어디서·무엇을), 왜 화제인지·배경, 지금 어떻게 되고 있는지. 요약 재료에 있는 사실만 쓰고 지어내지 마세요.
+핵심 구절(사건·인물·이슈 이름, 2~12자)은 [[구절|L번호]] 형식으로 한 번 이상 감싸세요(번호는 목록의 [L번호] 그대로).
+출력은 JSON 객체 하나만(설명·코드블록 금지): {"item": "불릿 본문"}
+
+현지 헤드라인:
+${heads}`;
+      const parsed = parseJson(await generateText(prompt, { temperature: 0.4 }));
+      const text = resolveMarkers(String(parsed?.item ?? '').trim(), (k) => (/^l/i.test(k) ? pool[Number(k.slice(1))]?.url : undefined));
+      if (!text) throw new Error('새 토픽을 만들지 못했어요');
+      const items = report.overviewItems ?? [];
+      items.splice(Math.min(index, items.length), 0, text);
+      report.overviewItems = items;
+    }
+    await save();
+    return report;
+  } catch (e) {
+    await save(); // 지우기는 반영해 둠
+    throw e;
+  }
 }

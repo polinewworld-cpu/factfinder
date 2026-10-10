@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { ForeignNewsReport, ForeignPick } from '@/lib/foreignNews';
 import PersonaHeader from '@/components/PersonaHeader';
 import LinkedText from '@/components/LinkedText';
+import DismissX from '@/components/DismissX';
 import PastReportsButton, { type PastItem } from '@/components/PastReportsButton';
 
 // 관리자 "김정신 특파원" (2026-10-10) — 영미 주요 외신 중 한국 관련 이슈를 현지 언론이 어떻게 다루는지 살핀 보고서.
@@ -55,7 +56,7 @@ function PickCard({ p }: { p: ForeignPick }) {
   );
 }
 
-function Report({ r }: { r: ForeignNewsReport }) {
+function Report({ r, onDismiss, pending }: { r: ForeignNewsReport; onDismiss?: (kind: 'overview' | 'brief', i: number) => void; pending?: string | null }) {
   return (
     <div className="space-y-4">
       <div className="space-y-1">
@@ -72,8 +73,10 @@ function Report({ r }: { r: ForeignNewsReport }) {
           {(r.overviewItems ?? []).length > 0 ? (
             <ul className="space-y-1.5">
               {(r.overviewItems ?? []).map((t, i) => (
-                <li key={i} className="text-sm text-gray-800 leading-relaxed">
+                <li key={i} className={`text-sm text-gray-800 leading-relaxed ${pending === `overview-${i}` ? 'opacity-40' : ''}`}>
                   · <LinkedText text={t} />
+                  {onDismiss && <DismissX onClick={() => onDismiss('overview', i)} busy={!!pending} />}
+                  {pending === `overview-${i}` && <span className="ml-2 text-xs text-gray-500">새 토픽을 가져오는 중…</span>}
                 </li>
               ))}
             </ul>
@@ -91,10 +94,12 @@ function Report({ r }: { r: ForeignNewsReport }) {
         <Card title="이게 기사각입니다">
           {(r.carriedOver ?? 0) > 0 && <p className="mb-2 text-xs text-gray-400">새 소식이 적어서 지난 보고에서 {r.carriedOver}건을 이어서 보여 드려요.</p>}
           <ul className="space-y-1.5">
-            {r.briefs.map((b) => (
-              <li key={b.url} className="text-sm text-gray-800 leading-snug">
+            {r.briefs.map((b, bi) => (
+              <li key={b.url} className={`text-sm text-gray-800 leading-snug ${pending === `brief-${bi}` ? 'opacity-40' : ''}`}>
                 · {b.text}
                 {b.advice ? <span className="text-gray-600"> {b.advice}</span> : null}
+                {onDismiss && <DismissX onClick={() => onDismiss('brief', bi)} busy={!!pending} />}
+                {pending === `brief-${bi}` && <span className="ml-2 text-xs text-gray-500">새 토픽을 가져오는 중…</span>}
                 {(b.sources ?? []).length > 0 ? (
                   <ul className="mt-1 mb-2 ml-3 space-y-0.5">
                     {(b.sources ?? []).map((sc) => (
@@ -155,6 +160,28 @@ export default function ForeignNewsPage() {
   const [error, setError] = useState('');
 
   const autoRefreshed = useRef(false);
+  const [pending, setPending] = useState<string | null>(null);
+
+  // 항목 옆 × — 지우고 새 토픽으로 교체 (2026-10-10)
+  async function dismiss(kind: 'overview' | 'brief', index: number) {
+    const target = reports[0];
+    if (!target) return;
+    setPending(`${kind}-${index}`);
+    setError('');
+    try {
+      const res = await fetch('/api/admin/foreign-news/replace', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ generatedAt: target.generatedAt, kind, index }) });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.report) setReports((prev) => prev.map((x) => (x.generatedAt === target.generatedAt ? data.report : x)));
+      else {
+        setError(data.error ?? '새 토픽을 가져오지 못했습니다');
+        const again = await fetch('/api/admin/foreign-news').then((r) => r.json()).catch(() => null);
+        if (again?.reports) setReports(again.reports);
+      }
+    } catch {
+      setError('새 토픽을 가져오지 못했습니다');
+    }
+    setPending(null);
+  }
 
   async function load(refresh = false) {
     setLoading(true);
@@ -203,7 +230,7 @@ export default function ForeignNewsPage() {
       {error && <p className="text-sm text-red-600">{error}</p>}
       {loading && !latest && <p className="text-sm text-gray-500">외신을 살펴보는 중입니다. 처음에는 1분 가까이 걸릴 수 있습니다…</p>}
 
-      {latest && <Report r={latest} />}
+      {latest && <Report r={latest} onDismiss={dismiss} pending={pending} />}
 
       {!loading && reports.length === 0 && !error && <p className="text-sm text-gray-400">아직 올라온 보고가 없습니다.</p>}
     </main>

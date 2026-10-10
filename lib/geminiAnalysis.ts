@@ -39,6 +39,28 @@ export type GeminiAnalysis = {
   nextWeekActions: string[];
 };
 
+// 아이디어마다 이 이슈의 대표 기사(다른 언론) 몇 개 — 오늘 모은 1면·많이 본·댓글 많은·지면 기사 중 제목에 키워드가 있는 것,
+// 매체가 겹치지 않게 최대 3개(1면 → 많이 본 → 댓글 많은 → 나머지 지면 순) (2026-10-09: "연결할 우리 기사" 대신)
+export function refsForKeyword(media: MediaWatch | null | undefined, keyword: string) {
+  const pool = (media?.outlets ?? []).flatMap((o) => [
+    ...o.newspaper.filter((x) => /^A?1면$/.test(x.page ?? '')).map((x) => ({ outlet: o.name, title: x.title, url: x.url, rank: 0 })),
+    ...o.popular.map((x) => ({ outlet: o.name, title: x.title, url: x.url, rank: 1 })),
+    ...o.commented.map((x) => ({ outlet: o.name, title: x.title, url: x.url, rank: 2 })),
+    ...o.newspaper.filter((x) => !/^A?1면$/.test(x.page ?? '')).map((x) => ({ outlet: o.name, title: x.title, url: x.url, rank: 3 })),
+  ]);
+  // 제목에선 한자 약칭으로 쓰는 경우가 많음 — "북한"은 "北"도, "이재명"은 "李"도
+  const ABBR: Record<string, string> = { 북한: '北', 미국: '美', 중국: '中', 일본: '日', 이재명: '李', 윤석열: '尹', 노무현: '盧', 문재인: '文', 검찰: '檢', 여당: '與', 야당: '野', 러시아: '露' };
+  if (keyword.length < 2) return [];
+  const terms = [keyword, ...(ABBR[keyword] ? [ABBR[keyword]] : [])];
+  const picked: { outlet: string; title: string; url: string }[] = [];
+  for (const r of [...pool].filter((x) => terms.some((t) => x.title.includes(t))).sort((x, y) => x.rank - y.rank)) {
+    if (picked.some((p) => p.outlet === r.outlet || p.title === r.title)) continue;
+    picked.push({ outlet: r.outlet, title: r.title, url: r.url });
+    if (picked.length >= 3) break;
+  }
+  return picked;
+}
+
 const LIST = { type: 'ARRAY', items: { type: 'STRING' } };
 const IDEA = {
   type: 'OBJECT',
@@ -241,27 +263,7 @@ ${JSON.stringify(dataForPrompt)}`;
   const arr = (v: unknown) => (Array.isArray(v) ? v.map(String).filter(Boolean).slice(0, 6) : []);
   const link = (t: string) => resolveMarkers(t, (k) => linkPool[Number(k)]?.url);
 
-  // 아이디어마다 이 이슈의 대표 기사(다른 언론) 몇 개 — 오늘 모은 1면·많이 본·댓글 많은·지면 기사 중 제목에 키워드가 있는 것,
-  // 매체가 겹치지 않게 최대 3개(1면 → 많이 본 → 댓글 많은 → 나머지 지면 순) (2026-10-09: "연결할 우리 기사" 대신)
-  const pool = (media?.outlets ?? []).flatMap((o) => [
-    ...o.newspaper.filter((x) => /^A?1면$/.test(x.page ?? '')).map((x) => ({ outlet: o.name, title: x.title, url: x.url, rank: 0 })),
-    ...o.popular.map((x) => ({ outlet: o.name, title: x.title, url: x.url, rank: 1 })),
-    ...o.commented.map((x) => ({ outlet: o.name, title: x.title, url: x.url, rank: 2 })),
-    ...o.newspaper.filter((x) => !/^A?1면$/.test(x.page ?? '')).map((x) => ({ outlet: o.name, title: x.title, url: x.url, rank: 3 })),
-  ]);
-  // 제목에선 한자 약칭으로 쓰는 경우가 많음 — "북한"은 "北"도, "이재명"은 "李"도
-  const ABBR: Record<string, string> = { 북한: '北', 미국: '美', 중국: '中', 일본: '日', 이재명: '李', 윤석열: '尹', 노무현: '盧', 문재인: '文', 검찰: '檢', 여당: '與', 야당: '野', 러시아: '露' };
-  const refsFor = (keyword: string) => {
-    if (keyword.length < 2) return [];
-    const terms = [keyword, ...(ABBR[keyword] ? [ABBR[keyword]] : [])];
-    const picked: { outlet: string; title: string; url: string }[] = [];
-    for (const r of [...pool].filter((x) => terms.some((t) => x.title.includes(t))).sort((x, y) => x.rank - y.rank)) {
-      if (picked.some((p) => p.outlet === r.outlet || p.title === r.title)) continue;
-      picked.push({ outlet: r.outlet, title: r.title, url: r.url });
-      if (picked.length >= 3) break;
-    }
-    return picked;
-  };
+  const refsFor = (keyword: string) => refsForKeyword(media, keyword);
   const ideas: ArticleIdea[] = (Array.isArray(parsed.ideas) ? parsed.ideas : []).slice(0, 8).map((i: any) => {
     const keyword = String(i.keyword ?? '').trim();
     return {
