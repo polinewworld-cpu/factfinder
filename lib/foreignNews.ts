@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { generateText, geminiReady } from '@/lib/gemini';
-import { resolveMarkers } from '@/lib/linkMarkup';
+import { resolveMarkers, stripMarkers } from '@/lib/linkMarkup';
 
 // 김정신 특파원 (2026-10-10) — 영미 주요 외신의 공개 RSS에서 "한국 관련 이슈"를 다룬 기사만 골라,
 // 현지 언론의 동정을 살핀 보고서를 하루 3번(한국시간 07·13·19시) 올린다. 존댓말로 "이런 방향으로 쓰시길 권합니다"라는 권고를 하고,
@@ -278,11 +278,11 @@ ${list}`;
         priority: [1, 2, 3].includes(Number(p.priority)) ? Number(p.priority) : 3,
         outlet: c.outlet,
         originalTitle: c.title,
-        titleKo: String(p.titleKo ?? ''),
-        summaryKo: String(p.summaryKo ?? ''),
-        whyKorea: String(p.whyKorea ?? ''),
-        tone: String(p.tone ?? ''),
-        advice: String(p.advice ?? ''),
+        titleKo: stripMarkers(String(p.titleKo ?? '')),
+        summaryKo: stripMarkers(String(p.summaryKo ?? '')),
+        whyKorea: stripMarkers(String(p.whyKorea ?? '')),
+        tone: stripMarkers(String(p.tone ?? '')),
+        advice: stripMarkers(String(p.advice ?? '')),
         url: c.url,
         publishedAt: c.publishedAt,
       });
@@ -299,12 +299,12 @@ ${list}`;
       .filter(Boolean)
       .slice(0, 8);
     report.overview = report.overviewItems?.length ? '' : link(String(parsed?.overview ?? ''));
-    report.closing = String(parsed?.closing ?? '').trim();
+    report.closing = stripMarkers(String(parsed?.closing ?? '').trim());
     report.localColor = link(String(parsed?.localColor ?? '').trim());
     const briefs: ForeignBrief[] = [];
     for (const b of Array.isArray(parsed?.briefs) ? parsed.briefs : []) {
       const c = candidates[Number(String(b?.idx ?? '').replace(/^C/i, ''))];
-      const text = String(b?.text ?? '').trim();
+      const text = stripMarkers(String(b?.text ?? '').trim()); // 한 줄 브리핑은 옆에 매체 링크가 따로 있으니 글 속 표시는 글자만 남김
       if (!c || !text) continue; // 링크 없는 한 줄은 싣지 않음
       briefs.push({ text, outlet: c.outlet, url: c.url });
     }
