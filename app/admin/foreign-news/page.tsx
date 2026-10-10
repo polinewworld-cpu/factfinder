@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { ForeignNewsReport, ForeignPick } from '@/lib/foreignNews';
 import PersonaHeader from '@/components/PersonaHeader';
+import LinkedText from '@/components/LinkedText';
 
 // 관리자 "김정신 특파원" (2026-10-10) — 영미 주요 외신 중 한국 관련 이슈를 현지 언론이 어떻게 다루는지 살핀 보고서.
 // 하루 3번(07·13·19시) 올라오고, 존댓말 권고와 근거가 된 현지 언론 기사 링크가 항상 붙는다.
@@ -74,8 +75,16 @@ function Report({ r, showMeta = true }: { r: ForeignNewsReport; showMeta?: boole
               {place ? ` · ${place}` : ''}
             </p>
           )}
-          {r.localColor && <p className="text-sm text-gray-800 leading-relaxed mb-3">{r.localColor}</p>}
-          {r.overview && <p className="text-sm text-gray-800 leading-relaxed">{r.overview}</p>}
+          {r.localColor && (
+            <p className="text-sm text-gray-800 leading-relaxed mb-3">
+              <LinkedText text={r.localColor} />
+            </p>
+          )}
+          {r.overview && (
+            <p className="text-sm text-gray-800 leading-relaxed">
+              <LinkedText text={r.overview} />
+            </p>
+          )}
         </Card>
       )}
 

@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { generateText, geminiReady } from '@/lib/gemini';
+import { resolveMarkers } from '@/lib/linkMarkup';
 
 // 김정신 특파원 (2026-10-10) — 영미 주요 외신의 공개 RSS에서 "한국 관련 이슈"를 다룬 기사만 골라,
 // 현지 언론의 동정을 살핀 보고서를 하루 3번(한국시간 07·13·19시) 올린다. 존댓말로 "이런 방향으로 쓰시길 권합니다"라는 권고를 하고,
@@ -232,14 +233,14 @@ export async function buildForeignNews(slot: number): Promise<ForeignNewsReport>
   const weather = cityInfo ? await fetchWeather(cityInfo.lat, cityInfo.lon) : null;
   if (cityKo) report.place = { city: cityKo, weather: weather?.text ?? null, temp: weather?.temp ?? null };
   // 현지 분위기 재료 — 그 도시 매체의 한국 무관 헤드라인(파업·행사·연예 등) 최대 25개
-  const localHeads = all
+  const localRaw = all
     .filter((r) => cityKo && OUTLET_CITY[r.outlet]?.ko === cityKo && !KOREA_RE.test(`${r.title} ${r.summary}`))
-    .slice(0, 25)
-    .map((r) => `(${r.outlet}) ${r.title}`);
+    .slice(0, 25);
+  const localHeads = localRaw.map((r, i) => `[L${i}] (${r.outlet}) ${r.title}`);
   const todayKo = new Date(Date.now() + 9 * 3600_000).toISOString().slice(0, 10);
 
   const hoursAgo = (iso: string | null) => (iso ? `${Math.max(0, Math.round((Date.now() - Date.parse(iso)) / 3600_000))}시간 전` : '시각 미상');
-  const list = candidates.map((c, i) => `[${i}] (${c.outlet}, ${hoursAgo(c.publishedAt)}) ${c.title}\n    ${c.summary}`).join('\n');
+  const list = candidates.map((c, i) => `[C${i}] (${c.outlet}, ${hoursAgo(c.publishedAt)}) ${c.title}\n    ${c.summary}`).join('\n');
   const prompt = `당신은 한국 인터넷신문 "팩트파인더"(중도주의 관점으로 정치·사회를 다룸)의 김정신 특파원입니다. 현지 주요 언론이 한국 관련 이슈를 어떻게 다루는지 살펴 편집국에 ${when} 보고를 올립니다.
 아래는 영미 주요 외신의 최근 기사 목록(번호, 매체, 제목, 짧은 소개글)입니다.
 
@@ -254,6 +255,7 @@ export async function buildForeignNews(slot: number): Promise<ForeignNewsReport>
 
 5. 각 상세 보고 기사에는 편집국이 어떤 방향으로 쓰면 좋을지 **권고**(advice)를 위 말투로 한두 문장 씁니다. 예: "미국 쪽 시각과 우리 정부 입장을 나란히 놓고 쟁점을 정리해 보세요. 그래야 진영 싸움으로 안 보이거든요." 팩트파인더는 진영논리를 벗어난 중도 관점입니다.
    현지 이야기(localColor): 보고 맨 앞에 붙는 3~6문장. 오늘 ${cityKo ?? '현지'} 현지에서 막 쓰는 것처럼 **재미있고 가볍게**, 현지 느낌을 냅니다. 재료는 위에 준 **실측 날씨**와 **현지 헤드라인**뿐입니다. 날씨를 한마디 하고, 헤드라인에서 보이는 파업·행사·기념일·사건, 그리고 연예계·문화 소식이 있으면 "나도 봤다"는 식으로 수다 떨듯 소개하세요. 예) "여긴 오늘 비가 와서 다들 우산 쓰고 종종걸음이에요. 현지 뉴스를 보니 철도 파업 얘기가 한창이고요, 연예면에서 ○○ 소식도 눈에 띄었어요. 저도 괜히 한참 들여다봤네요." 규칙: 노래·영화·인물·차트 순위·기념일·파업 같은 **구체적 사실은 위 재료에 있을 때만** 말하고, 없으면 지어내지 마세요(가벼운 개인 일화는 허용: 커피, 우산, 흥얼거림 등. 단 곡명·순위처럼 확인 가능한 사실은 재료에 있을 때만). 오늘 날짜에 **확실히 알려진** 공휴일·기념일은 한마디 해도 되지만 확실하지 않으면 생략하세요.
+   링크(중요): 현지 이야기(localColor)와 종합(overview)에서 **핵심 구절**(사건·인물·이슈 이름)은 [[구절|번호]] 형식으로 감쌉니다. 번호는 기사 목록의 [C번호] 또는 현지 헤드라인의 [L번호]를 그대로 쓰세요(예: [[대만 큰 지진 소식|L3]], [[대사 소환|C5]]). 목록에 없는 건 링크하지 않습니다. 현지 이야기는 구절마다, 종합은 문장마다 하나 이상 링크를 답니다. 구절은 짧게(2~12자), 문장을 통째로 감싸지 마세요.
    마무리 인사(closing): 보고 끝에 붙이는 인간적인 한두 문장. 날씨·계절·분위기 같은 가벼운 안부로 편집국을 챙기는 말을 합니다. 예) "환절기라 감기들 조심하세요. 저는 오늘도 커피 한 잔 더 하고 마저 챙겨볼게요." 단, 현지에서 실제로 벌어지는 구체적 사실(질병 유행, 사건, 통계 등)을 지어내서 단정하지 마세요. 기사 목록에 근거가 있으면 "~라고 하네요" 정도로만 가볍게 인용합니다.
 6. 기사 본문은 주어지지 않았습니다. 제목과 소개글에 없는 사실을 지어내지 마세요. 확실하지 않으면 "소개글 기준으로는"이라고 쓰세요. 직접 현지에서 취재했다거나 본 것처럼 쓰지 마세요.
 7. 출력은 JSON 객체 하나만(설명·코드블록 금지):
@@ -261,7 +263,7 @@ export async function buildForeignNews(slot: number): Promise<ForeignNewsReport>
 
 오늘 특파원이 있는 곳: ${cityKo ?? '(정해지지 않음)'} / 오늘 날짜(한국시간): ${todayKo} / 실측 날씨: ${weather ? `${weather.text}, ${weather.temp}도` : '(못 받음)'}
 현지 매체의 오늘 헤드라인(현지 분위기 재료, 한국과 무관한 것들):
-${localHeads.length ? localHeads.map((h) => `- ${h}`).join('\n') : '(없음)'}
+${localHeads.length ? localHeads.join('\n') : '(없음)'}
 
 기사 목록:
 ${list}`;
@@ -270,7 +272,7 @@ ${list}`;
     const parsed = parseJson(await generateText(prompt, { temperature: 0.3 }));
     const picks: ForeignPick[] = [];
     for (const p of Array.isArray(parsed?.items) ? parsed.items : []) {
-      const c = candidates[Number(p?.idx)];
+      const c = candidates[Number(String(p?.idx ?? '').replace(/^C/i, ''))];
       if (!c) continue; // 번호가 목록에 없으면 버림 — 링크는 번호로만 연결되므로 항상 실제 수집한 기사 주소
       picks.push({
         priority: [1, 2, 3].includes(Number(p.priority)) ? Number(p.priority) : 3,
@@ -286,12 +288,18 @@ ${list}`;
       });
     }
     report.picks = picks.sort((a, b) => a.priority - b.priority).slice(0, 15);
-    report.overview = String(parsed?.overview ?? '');
+    // [[구절|C3 / L2]] 번호 → 실제로 수집한 기사 주소 (틀린 번호는 링크 없이 구절만 남김)
+    const link = (t: string) =>
+      resolveMarkers(t, (k) => {
+        const n = Number(k.slice(1));
+        return /^c/i.test(k) ? candidates[n]?.url : /^l/i.test(k) ? localRaw[n]?.url : undefined;
+      });
+    report.overview = link(String(parsed?.overview ?? ''));
     report.closing = String(parsed?.closing ?? '').trim();
-    report.localColor = String(parsed?.localColor ?? '').trim();
+    report.localColor = link(String(parsed?.localColor ?? '').trim());
     const briefs: ForeignBrief[] = [];
     for (const b of Array.isArray(parsed?.briefs) ? parsed.briefs : []) {
-      const c = candidates[Number(b?.idx)];
+      const c = candidates[Number(String(b?.idx ?? '').replace(/^C/i, ''))];
       const text = String(b?.text ?? '').trim();
       if (!c || !text) continue; // 링크 없는 한 줄은 싣지 않음
       briefs.push({ text, outlet: c.outlet, url: c.url });

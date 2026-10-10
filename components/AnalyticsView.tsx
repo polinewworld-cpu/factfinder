@@ -1,6 +1,7 @@
 'use client';
 
 import PersonaHeader from '@/components/PersonaHeader';
+import LinkedText from '@/components/LinkedText';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { AnalyticsReport } from '@/lib/gaReport';
 
@@ -378,7 +379,7 @@ export default function AnalyticsView({ view }: { view: 'visits' | 'trends' }) {
               <ul className="space-y-1.5">
                 {r.ai.chatter.map((c, i) => (
                   <li key={i} className="text-sm text-gray-800 leading-relaxed">
-                    · {c}
+                    · <LinkedText text={c} />
                   </li>
                 ))}
               </ul>
@@ -411,7 +412,7 @@ export default function AnalyticsView({ view }: { view: 'visits' | 'trends' }) {
                   {mediaBusy ? '새로 만드는 중… (1분쯤)' : '새로고침'}
                 </button>
               </div>
-              <p className="text-base font-semibold mb-3">{r.ai.headline}</p>
+              <p className="text-base font-semibold mb-3"><LinkedText text={r.ai.headline} /></p>
               <Ideas ideas={r.ai.ideas} />
             </section>
           )}
@@ -424,7 +425,9 @@ export default function AnalyticsView({ view }: { view: 'visits' | 'trends' }) {
             <Card title="주요 언론 보도 동향" big>
               <ul className="list-disc pl-4 space-y-1 text-sm">
                 {r.ai.outletComparison.map((t, i) => (
-                  <li key={i}>{t}</li>
+                  <li key={i}>
+                    <LinkedText text={t} />
+                  </li>
                 ))}
               </ul>
             </Card>
@@ -458,7 +461,7 @@ export default function AnalyticsView({ view }: { view: 'visits' | 'trends' }) {
 
           {r.ai ? (
             <Card title="분석 메모">
-              {!r.ai.ideas?.length && <p className="text-base font-semibold mb-3">{r.ai.headline}</p>}
+              {!r.ai.ideas?.length && <p className="text-base font-semibold mb-3"><LinkedText text={r.ai.headline} /></p>}
               <div className="grid md:grid-cols-2 gap-x-6 gap-y-4 text-sm">
                 {(
                   [

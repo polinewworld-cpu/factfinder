@@ -1,5 +1,6 @@
 'use client';
 
+import LinkedText from '@/components/LinkedText';
 import { useEffect, useState } from 'react';
 import RippleDotCard from '@/components/RippleDotCard';
 import { UserAvatar } from '@/components/InitialAvatar';
@@ -216,7 +217,7 @@ export default function AdminHome() {
             ) : analysis.report?.ai ? (
               <>
                 <p className="text-[11px] text-gray-900/50 mb-1">오늘의 기사 아이디어</p>
-                <p className="text-sm font-semibold mb-2">{analysis.report.ai.headline}</p>
+                <p className="text-sm font-semibold mb-2"><LinkedText text={analysis.report.ai.headline} /></p>
                 <ul className="space-y-1 list-disc pl-4">
                   {/* 2026-10-09: 기사 아이디어가 있으면 그것(순위·제목 예시), 없으면 옛 보고서의 할 일 */}
                   {analysis.report.ai.ideas?.length

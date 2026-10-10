@@ -2,6 +2,7 @@ import { prisma } from '@/lib/prisma';
 import { authorName } from '@/lib/byline';
 import type { AnalyticsReport } from '@/lib/gaReport';
 import type { MediaWatch } from '@/lib/mediaWatch';
+import { resolveMarkers } from '@/lib/linkMarkup';
 
 // 제미나이 전략·정성 분석 (2026-10-08) — 숫자 보고서(GA) + 이번 주 실제 기사 제목들을 넘겨
 // "무엇이 왜 읽혔고 다음 주 무엇을 언제 쓸지"를 편집국 관점으로 받는다. 매일 아침 보고서와 함께 자동 생성.
@@ -141,6 +142,17 @@ export async function analyzeWithGemini(report: AnalyticsReport, media: MediaWat
       : null,
   };
 
+  // 글 속 구절에 링크를 달 수 있는 기사 목록(번호 = [[구절|번호]]의 번호). 주소는 서버가 번호로만 연결 → AI가 주소를 지어낼 수 없음
+  const linkPool: { outlet: string; title: string; url: string }[] = [];
+  const linkSeen = new Set<string>();
+  for (const o of media?.outlets ?? []) {
+    for (const x of [...o.newspaper.filter((i) => isFront(i.page)), ...o.popular, ...o.commented, ...o.newspaper.filter((i) => !isFront(i.page)).slice(0, 10)]) {
+      if (!x.url || linkSeen.has(x.url) || linkPool.length >= 120) continue;
+      linkSeen.add(x.url);
+      linkPool.push({ outlet: o.name, title: x.title, url: x.url });
+    }
+  }
+  const dataForPrompt = { ...data, 링크가능기사: linkPool.map((x, i) => ({ 번호: i, 매체: x.outlet, 제목: x.title })) };
   const kstHourNow = new Date(Date.now() + 9 * 3600_000).getUTCHours();
   const prompt = `당신은 한국 인터넷 정치 언론사 "팩트파인더" 편집국의 오진실 기자입니다. 편집장님과 선배 기자님들께 아침 동향을 챙겨 드리는 막내 같은 후배라고 생각하세요.
 말투(중요): 딱딱한 보고서체 금지. **수다스럽고 따뜻한** 존댓말로, 선배들 옆에 붙어 앉아 너스레 떨며 말하듯 씁니다. 호칭은 "편집장님", "선배님들"입니다. "~이에요", "~해요", "~거든요", "~세요"를 자연스럽게 섞고, 위트는 한 스푼만(과하거나 가볍지 않게). 이유를 곁들여 권하고 강조할 건 강조합니다. 예) "이 이슈는 세 매체가 동시에 1면에 올렸어요. 이런 이유로 오늘은 이 건부터 더 챙겨보세요.", "여기가 포인트예요, 이건 꼭 강조하셔야 해요."
@@ -162,6 +174,8 @@ export async function analyzeWithGemini(report: AnalyticsReport, media: MediaWat
 첫 인사(opening): 보고 맨 앞 인사 2~3문장. "선배님들~" 하고 부르며 **수다스럽게 너스레를 떨고** 따뜻하게 시작합니다. 자기소개(오진실 기자입니다)도 넣으세요. 지금 한국시간은 ${kstHourNow}시니 아침·낮·저녁 인사를 시간대에 맞게 하세요. 예) "선배님들~ 좋은 아침이에요! 진실이 출근했습니다. 커피는 한 잔씩 하셨죠? 저는 아침부터 뉴스 훑느라 눈이 벌써 반짝반짝이에요." 구체적인 사실(통계·사건)은 지어내지 말고 안부·분위기 위주로 씁니다.
 마무리 인사(closing): 보고 맨 끝에 붙이는 후배다운 따뜻한 한두 문장. 편집장님과 선배 기자님들을 챙기는 말입니다. 예) "오늘도 다들 점심 거르지 마세요. 저는 아이디어 몇 개 더 주워 올게요, 파이팅이에요!" 날씨·건강·식사 같은 가벼운 안부는 좋지만 구체적인 사실(통계·사건)을 지어내진 마세요.
 
+링크(중요): 수다(chatter)·매체 비교(outletComparison)·맨 위 요약(headline)의 문장에서 **핵심 구절**(사건·인물·이슈 이름)은 [[구절|번호]] 형식으로 감쌉니다. 번호는 데이터의 "링크가능기사" 목록에 있는 해당 기사 번호만 쓰세요(목록에 없는 기사는 링크하지 않습니다). 수다는 **한 줄마다 반드시 하나 이상**, 매체 비교는 항목마다 하나 이상 링크를 답니다. 예) "[[믹스커피 제한 소식|12]] 보셨나요, 직장인들 갑론을박이 뜨겁더라고요." 구절은 짧게(2~12자), 문장을 통째로 감싸지 마세요.
+
 절대 규칙:
 - 인물·기관·사건·법안 같은 고유명사가 없는 일반론 문장 금지. ("중도 관점을 보여라", "신뢰도를 높여라", "회의를 열어라" 같은 말은 쓰지 말 것)
 - 데이터에 없는 사실을 지어내지 말 것. 근거는 위 데이터에서만.
@@ -173,7 +187,7 @@ export async function analyzeWithGemini(report: AnalyticsReport, media: MediaWat
 - 모든 문장은 한국어, 한두 문장.
 
 데이터:
-${JSON.stringify(data)}`;
+${JSON.stringify(dataForPrompt)}`;
 
   // 제미나이가 붐빌 때("high demand" 등) 잠깐 쉬고 재시도, 그래도 안 되면 가벼운 모델로 자동 전환 (2026-10-08)
   const models = [...new Set([process.env.GEMINI_MODEL || 'gemini-3.6-flash', 'gemini-3.5-flash-lite'])];
@@ -216,6 +230,7 @@ ${JSON.stringify(data)}`;
   if (!text) throw new Error(`자동 분석 호출 실패: ${lastError}`);
   const parsed = JSON.parse(text.replace(/^```json\s*|```\s*$/g, ''));
   const arr = (v: unknown) => (Array.isArray(v) ? v.map(String).filter(Boolean).slice(0, 6) : []);
+  const link = (t: string) => resolveMarkers(t, (k) => linkPool[Number(k)]?.url);
 
   // 아이디어마다 이 이슈의 대표 기사(다른 언론) 몇 개 — 오늘 모은 1면·많이 본·댓글 많은·지면 기사 중 제목에 키워드가 있는 것,
   // 매체가 겹치지 않게 최대 3개(1면 → 많이 본 → 댓글 많은 → 나머지 지면 순) (2026-10-09: "연결할 우리 기사" 대신)
@@ -253,10 +268,10 @@ ${JSON.stringify(data)}`;
   ideas.sort((a, b) => a.priority - b.priority);
 
   return {
-    headline: String(parsed.headline ?? ''),
+    headline: link(String(parsed.headline ?? '')),
     ideas,
-    outletComparison: arr(parsed.outletComparison),
-    chatter: arr(parsed.chatter),
+    outletComparison: arr(parsed.outletComparison).map(link),
+    chatter: arr(parsed.chatter).map(link),
     opening: String(parsed.opening ?? '').trim(),
     closing: String(parsed.closing ?? '').trim(),
     whatWorked: arr(parsed.whatWorked),
