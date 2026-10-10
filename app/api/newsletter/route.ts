@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { ROLES } from '@/lib/roles';
 import { getCurrentUser } from '@/lib/session';
-import { buildNewsletter, subscribers, upcomingSaturday, weeklyPicks, weekLabel } from '@/lib/newsletter';
+import { buildNewsletter, dailyLabel, dailyPicks, kstDate, subscribers } from '@/lib/newsletter';
 import { gmailStatus } from '@/lib/gmail';
 import { authorName } from '@/lib/byline';
 
@@ -29,7 +29,7 @@ export async function GET() {
   if (denied) return denied;
 
   const monday = kstMonday();
-  const week = upcomingSaturday();
+  const week = kstDate(); // 오늘(한국 날짜) — 매일 아침 발송 (2026-10-10)
   const [articles, subscriberList, history, config, gmail, autoIds] = await Promise.all([
     prisma.article.findMany({
       where: { status: 'PUBLISHED', publishedAt: { gte: new Date(Date.now() - 30 * 86400_000) } },
@@ -41,7 +41,7 @@ export async function GET() {
     prisma.newsletterSend.findMany({ orderBy: { sentAt: 'desc' }, take: 12 }),
     prisma.siteConfig.findUnique({ where: { id: 'singleton' }, select: { newsletterAuto: true, newsletterSkipWeek: true } }),
     gmailStatus(),
-    weeklyPicks(week),
+    dailyPicks(week),
   ]);
 
   return NextResponse.json({
@@ -61,9 +61,9 @@ export async function GET() {
     auto: {
       enabled: config?.newsletterAuto !== false,
       week,
-      weekLabel: weekLabel(week),
+      weekLabel: dailyLabel(week),
       skipped: config?.newsletterSkipWeek === week,
-      alreadySent: history.some((h) => h.weekKey === week),
+      alreadySent: history.some((h) => h.weekKey === `d-${week}`),
       ids: autoIds,
     },
     history: history.map((h) => ({ id: h.id, sentAt: h.sentAt, status: h.status, auto: h.auto, recipientCount: h.recipientCount, failedCount: h.failedCount, subject: h.subject, note: h.note })),

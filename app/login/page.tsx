@@ -34,7 +34,7 @@ function safeCallback(raw?: string | null) {
 
 const PERKS = [
   { icon: '🔖', title: '기사 저장', desc: '다시 읽고 싶은 기사를 모아 둡니다' },
-  { icon: '✉️', title: '토요일 뉴스레터', desc: '한 주 주요 기사를 아침에 받아봅니다' },
+  { icon: '✉️', title: '아침 뉴스레터', desc: '어제의 주요 기사를 매일 아침 받아봅니다' },
   { icon: '💬', title: '댓글', desc: '기사에 의견을 남깁니다' },
   { icon: '✍️', title: '기자 신청', desc: '팩트파인더 기자로 함께합니다' },
 ];
