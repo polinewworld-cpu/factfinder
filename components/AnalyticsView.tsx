@@ -477,44 +477,7 @@ export default function AnalyticsView({ view }: { view: 'visits' | 'trends' }) {
             </ul>
           </Card>
 
-          {r.ai ? (
-            <Card title="분석 메모">
-              {!r.ai.ideas?.length && <p className="text-base font-semibold mb-3"><LinkedText text={r.ai.headline} /></p>}
-              <div className="grid md:grid-cols-2 gap-x-6 gap-y-4 text-sm">
-                {(
-                  [
-                    ['잘 된 것', r.ai.whatWorked],
-                    ['아쉬운 것', r.ai.whatDidnt],
-                    ['주제·후속기사 전략', r.ai.topicStrategy ?? []],
-                    ['발행 시간 전략', r.ai.scheduleStrategy],
-                    ['유입 전략', r.ai.channelStrategy],
-                    ['기자별 메모', r.ai.reporterNotes],
-                  ] as const
-                ).map(([title, items]) =>
-                  items.length ? (
-                    <div key={title}>
-                      <p className="text-xs font-semibold text-gray-500 mb-1">{title}</p>
-                      <ul className="list-disc pl-4 space-y-1">
-                        {items.map((t, i) => (
-                          <li key={i}>{t}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  ) : null,
-                )}
-              </div>
-              {r.ai.nextWeekActions.length > 0 && (
-                <div className="mt-4 pt-3 border-t">
-                  <p className="text-xs font-semibold text-gray-500 mb-1">할 일</p>
-                  <ul className="space-y-1 text-sm">
-                    {r.ai.nextWeekActions.map((t, i) => (
-                      <li key={i}>☐ {t}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </Card>
-          ) : null}
+          {/* 방문 분석의 "분석 메모"(잘 된 것·아쉬운 것·전략·할 일)는 사장님 지시로 뺌 (2026-10-10) */}
 
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {(
