@@ -3,9 +3,9 @@
 import { useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 
-// 편집실 화면 권한 (2026-10-09 사장님 지시) — 기자·논설위원은 동향 보고·사진 뱅크(+기사 작성 /write)만.
+// 편집실 화면 권한 (2026-10-09 사장님 지시) — 기자·논설위원은 오진실 기자(동향 보고)·김정신 특파원·사진 뱅크(+기사 작성 /write)만.
 // 편집실 첫 화면(/admin)으로 오면 동향 보고로 보냄. 데이터 API는 따로 편집장 전용이라 화면만 막아도 새는 것 없음.
-export const WRITER_ADMIN_PATHS = ['/admin/trends', '/admin/photo-bank'];
+export const WRITER_ADMIN_PATHS = ['/admin/trends', '/admin/foreign-news', '/admin/photo-bank']; // 오진실 기자(동향 보고)·김정신 특파원(외신)은 모든 기자가 열람 (2026-10-10)
 
 export default function AdminGate({ isChief, children }: { isChief: boolean; children: React.ReactNode }) {
   const pathname = usePathname() ?? '';
