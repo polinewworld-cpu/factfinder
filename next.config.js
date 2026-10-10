@@ -35,5 +35,15 @@ const nextConfig = {
   async redirects() {
     return legacyRedirects.map((r) => ({ ...r, permanent: true }));
   },
+  // 테스트 주소(onrender)는 검색 결과에 안 나오게 — 모든 응답에 noindex (2026-10-10, app/robots.ts와 짝)
+  async headers() {
+    return [
+      {
+        source: '/:path*',
+        has: [{ type: 'host', value: '(?<h>.*\.onrender\.com)' }],
+        headers: [{ key: 'X-Robots-Tag', value: 'noindex, nofollow' }],
+      },
+    ];
+  },
 };
 module.exports = nextConfig;
