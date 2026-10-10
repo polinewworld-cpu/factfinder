@@ -12,6 +12,7 @@ type NavItem = { href: string; label: string; group?: AdminTab[] };
 const NAV: NavItem[] = [
   { href: '/admin', label: '대시보드' },
   { href: '/admin/trends', label: '동향 보고' }, // 매체 동향·기사 아이디어 (2026-10-09 방문 분석에서 분리)
+  { href: '/admin/foreign-news', label: '외신 추천' }, // 한국 관련 영미 외신 (2026-10-10)
   { href: '/admin/analytics', label: '방문 분석' }, // GA 자동 분석 (2026-10-08)
   { href: '/write', label: '기사 작성' },
   { href: '/admin/articles', label: '전체 기사' },
@@ -32,7 +33,7 @@ function isActive(item: NavItem, pathname: string | null, role: string | null) {
 }
 
 // 기자·논설위원에게 보이는 메뉴 (2026-10-09)
-const WRITER_NAV = ['/admin/trends', '/write', '/admin/photo-bank'];
+const WRITER_NAV = ['/admin/trends', '/admin/foreign-news', '/write', '/admin/photo-bank'];
 
 export default function AdminSidebar({ isChief = true }: { isChief?: boolean }) {
   const pathname = usePathname();
