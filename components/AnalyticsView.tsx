@@ -346,14 +346,7 @@ export default function AnalyticsView({ view }: { view: 'visits' | 'trends' }) {
             <h1 className="text-xl font-bold text-gray-900">방문 분석</h1>
           )}
           {r &&
-            (view === 'trends' ? (
-              <p className="text-xs text-gray-500 mt-1">
-                조선·중앙·동아·매일·서울신문·한국경제 ·{' '}
-                {(r.mediaCheckedAt || r.media?.generatedAt) &&
-                  `${new Date((r.mediaCheckedAt || r.media?.generatedAt)!).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })} 기준 · `}
-                3시간마다 자동 갱신(06~23시)
-              </p>
-            ) : (
+            (view === 'trends' ? null : (
               <p className="text-xs text-gray-500 mt-1">
                 최근 7일 {r.period.from} ~ {r.period.to} ·{' '}
                 {new Date(r.generatedAt).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })} 분석 · 매일 아침 자동 갱신
@@ -377,16 +370,23 @@ export default function AnalyticsView({ view }: { view: 'visits' | 'trends' }) {
         <>
           {view === 'trends' && (
             <>
+          {r.ai?.chatter && r.ai.chatter.length > 0 && (
+            <section className="border rounded-xl p-4">
+              <h2 className={`${BIG_TITLE} mb-2`}>오늘 눈에 띈 이야기</h2>
+              <ul className="space-y-1.5">
+                {r.ai.chatter.map((c, i) => (
+                  <li key={i} className="text-sm text-gray-800 leading-relaxed">
+                    · {c}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
           <section className="border rounded-xl p-4">
             <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
               <h2 className={BIG_TITLE}>
                 오늘의 키워드
-                {r.media && (
-                  <span className="text-xs font-normal text-gray-400">
-                    {' '}
-                    · {new Date(r.media.generatedAt).toLocaleTimeString('ko-KR', { timeZone: 'Asia/Seoul', hour: '2-digit', minute: '2-digit' })} 기준 · 3시간마다 자동 갱신
-                  </span>
-                )}
               </h2>
               <button type="button" onClick={reloadMedia} disabled={mediaBusy} className="border rounded-lg px-3 py-1 text-xs disabled:opacity-40">
                 {mediaBusy ? '새로 받는 중… (1분쯤)' : '새로고침'}
@@ -404,12 +404,6 @@ export default function AnalyticsView({ view }: { view: 'visits' | 'trends' }) {
               <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
                 <h2 className={BIG_TITLE}>
                   오늘의 기사 아이디어
-                  {(r.mediaCheckedAt || r.media?.generatedAt) && (
-                    <span className="text-xs font-normal text-gray-400">
-                      {' '}
-                      · {new Date((r.mediaCheckedAt || r.media?.generatedAt)!).toLocaleTimeString('ko-KR', { timeZone: 'Asia/Seoul', hour: '2-digit', minute: '2-digit' })} 기준 · 3시간마다 자동 갱신
-                    </span>
-                  )}
                 </h2>
                 <button type="button" onClick={reloadMedia} disabled={mediaBusy} className="border rounded-lg px-3 py-1 text-xs disabled:opacity-40">
                   {mediaBusy ? '새로 만드는 중… (1분쯤)' : '새로고침'}

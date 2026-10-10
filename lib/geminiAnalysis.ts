@@ -26,6 +26,7 @@ export type GeminiAnalysis = {
   headline: string;
   ideas?: ArticleIdea[];
   outletComparison?: string[];
+  chatter?: string[]; // 오진실 기자의 수다 — 한국 뉴스 중 눈에 띄는 비정치 이슈 한마디씩(중요도 순 아님)
   whatWorked: string[];
   whatDidnt: string[];
   topicStrategy?: string[]; // 옛 보고서 호환(더 이상 만들지 않음)
@@ -54,6 +55,7 @@ const RESPONSE_SCHEMA = {
     headline: { type: 'STRING' },
     ideas: { type: 'ARRAY', items: IDEA },
     outletComparison: LIST,
+    chatter: LIST,
     whatWorked: LIST,
     whatDidnt: LIST,
     scheduleStrategy: LIST,
@@ -150,6 +152,8 @@ export async function analyzeWithGemini(report: AnalyticsReport, media: MediaWat
 - evidence: 근거를 숫자로 — 예) "조선·동아 1면, 중앙 많이 본 뉴스 2위, 댓글 많은 뉴스 3개 매체"
 "outletComparison": 같은 이슈를 6개 매체가 어떻게 다르게 다뤘는지 3~5개 — 1면 배치 여부, 어느 매체만 다뤘는지, 제목에서 드러나는 초점 차이를 매체 이름과 함께.
 
+수다(chatter): 위 두 가지와 별개로, 한국 뉴스(네이버 많이 본·댓글 많은·지면) 중 **정치 말고 눈에 띄는 이슈**(연예·스포츠·생활·날씨·사건사고·문화·음식·유행 등)를 4~6줄, 한 줄씩 너스레 떨듯 자연스럽게 언급합니다. 중요도 순이 아니라 그냥 "어, 이거 눈에 띄네" 하고 대충 재미있게. 예) "오늘 점심 메뉴 고민하시는 분들, 김밥 값 얘기가 댓글창을 달구고 있어요. 저도 괜히 편의점 앞에서 서성였네요." 데이터의 제목에 있는 사실만 말하고 지어내지 마세요. 정치 기사는 여기 넣지 마세요.
+
 절대 규칙:
 - 인물·기관·사건·법안 같은 고유명사가 없는 일반론 문장 금지. ("중도 관점을 보여라", "신뢰도를 높여라", "회의를 열어라" 같은 말은 쓰지 말 것)
 - 데이터에 없는 사실을 지어내지 말 것. 근거는 위 데이터에서만.
@@ -244,6 +248,7 @@ ${JSON.stringify(data)}`;
     headline: String(parsed.headline ?? ''),
     ideas,
     outletComparison: arr(parsed.outletComparison),
+    chatter: arr(parsed.chatter),
     whatWorked: arr(parsed.whatWorked),
     whatDidnt: arr(parsed.whatDidnt),
     scheduleStrategy: arr(parsed.scheduleStrategy),
