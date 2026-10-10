@@ -41,20 +41,21 @@ export default function AdminSidebar({ isChief = true }: { isChief?: boolean }) 
   const { open } = useAdminNav();
 
   return (
-    <nav className={`admin-sidebar shrink-0 py-8 ${open ? 'w-40' : 'w-10'}`} aria-label="관리자 메뉴">
-      <div className="mb-4 flex items-center">
+    // 2026-10-10 모바일: 왼쪽 세로 메뉴(160px)가 화면을 반이나 먹어 본문이 찌그러졌음 → 좁은 화면에서는 위쪽 가로 스크롤 메뉴로
+    <nav className={`admin-sidebar shrink-0 w-full py-2 md:py-8 ${open ? 'md:w-40' : 'md:w-10'}`} aria-label="관리자 메뉴">
+      <div className="mb-4 hidden md:flex items-center">
         <AdminSidebarToggle />
         {open ? <p className="m-0 text-sm font-semibold text-gray-700">{isChief ? '관리자' : '편집실'}</p> : null}
       </div>
-      {open ? (
-        <div className="space-y-1">
+      {(
+        <div className={`admin-menu-list flex gap-1 overflow-x-auto md:block md:space-y-1 md:overflow-visible ${open ? '' : 'md:hidden'}`}>
           {NAV.filter((item) => isChief || WRITER_NAV.includes(item.href)).map((item) => {
             const active = isActive(item, pathname, role);
             return (
               <a
                 key={item.href}
                 href={item.href}
-                className={`block rounded-lg px-3 py-2 text-sm font-semibold ${
+                className={`block shrink-0 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-semibold ${
                   active ? 'bg-brand text-white' : 'text-gray-700 hover:bg-brand/10 hover:text-brand'
                 }`}
               >
@@ -63,7 +64,7 @@ export default function AdminSidebar({ isChief = true }: { isChief?: boolean }) 
             );
           })}
         </div>
-      ) : null}
+      )}
     </nav>
   );
 }

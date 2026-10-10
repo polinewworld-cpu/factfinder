@@ -18,9 +18,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const isChief = user.role === ROLES.CHIEF_EDITOR;
 
   return (
-    <div className="page-shell backstage zb-admin flex items-start gap-6">
+    <div className="page-shell backstage zb-admin flex flex-col md:flex-row items-stretch md:items-start gap-2 md:gap-6">
       <AdminSidebar isChief={isChief} />
-      <div className="min-w-0 flex-1">
+      <div className="min-w-0 w-full flex-1">
         <AdminGate isChief={isChief}>{children}</AdminGate>
       </div>
     </div>

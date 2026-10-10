@@ -3108,3 +3108,25 @@ body:has(.zb-admin) .site-footer {
   outline: none;
   border-color: var(--accent);
 }
+
+/* ───────── 관리자 모바일 보정 (2026-10-10) ─────────
+   좁은 화면에서 왼쪽 세로 메뉴가 화면의 절반을 차지하고 표·입력칸이 밖으로 삐져나오던 문제.
+   메뉴는 AdminSidebar에서 위쪽 가로 스크롤로 바뀌고, 여기서는 본문이 화면 안에 들어오게 다듬는다. */
+@media (max-width: 767px) {
+  .zb-admin .admin-menu-list { scrollbar-width: none; padding-bottom: 4px; border-bottom: 1px solid var(--zb-line); }
+  .zb-admin .admin-menu-list::-webkit-scrollbar { display: none; }
+  .zb-admin main { padding-left: 0; padding-right: 0; }
+  .zb-admin input,
+  .zb-admin select,
+  .zb-admin textarea { max-width: 100%; }
+  .zb-admin img,
+  .zb-admin iframe,
+  .zb-admin video { max-width: 100%; }
+  .zb-admin table { display: block; max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .zb-admin pre,
+  .zb-admin code { white-space: pre-wrap; word-break: break-all; }
+  .zb-admin .max-w-5xl,
+  .zb-admin .max-w-4xl,
+  .zb-admin .max-w-3xl,
+  .zb-admin .max-w-2xl { max-width: 100%; }
+}

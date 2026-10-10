@@ -55,5 +55,5 @@ export function AdminSidebarToggle() {
 }
 
 export function WriteShell({ children }: { children: React.ReactNode }) {
-  return <div className="page-shell backstage flex items-start gap-6">{children}</div>;
+  return <div className="page-shell backstage flex flex-col md:flex-row items-stretch md:items-start gap-2 md:gap-6">{children}</div>;
 }
