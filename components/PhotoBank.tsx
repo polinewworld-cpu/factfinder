@@ -13,6 +13,7 @@ import {
   checkPhotoInput,
   type SourceType,
 } from '@/lib/photoBankRules';
+import { closeOnBackdrop } from '@/lib/backdrop';
 
 // 사진 뱅크 (2026-10-09, 기능정의 v0.1) — 관리자 "사진 뱅크" 화면과 기사 작성 화면의 "사진 뱅크에서 고르기" 창이 함께 쓴다.
 // 기존 갤러리(사진·해시태그·워터마크 지우기)를 확장: 출처 유형·라이선스·크레디트·인물·상황 태그·사용 이력. (AI 재구성 기능은 10-09 삭제)
@@ -494,7 +495,7 @@ function DetailPanel({
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-[55] flex justify-end" onClick={onClose}>
+    <div className="fixed inset-0 bg-black/50 z-[55] flex justify-end" {...closeOnBackdrop(onClose)}>
       <div className="bg-white w-full max-w-xl h-full overflow-y-auto p-5 space-y-4" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between">
           <h3 className="font-bold">사진 정보</h3>
@@ -699,7 +700,7 @@ function ImportPanel({ item, people, tags, onClose, onDone, pickLabel }: { item:
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4" onClick={onClose}>
+    <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4" {...closeOnBackdrop(onClose)}>
       <div className="bg-white rounded-2xl w-full max-w-3xl max-h-[92vh] overflow-y-auto p-5 space-y-4" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between">
           <h3 className="font-bold">사진 뱅크로 가져오기</h3>
@@ -934,7 +935,7 @@ function InboxApprove({ item, people, tags, onClose, onDone }: { item: InboxItem
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4" onClick={onClose}>
+    <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4" {...closeOnBackdrop(onClose)}>
       <div className="bg-white rounded-2xl w-full max-w-3xl max-h-[92vh] overflow-y-auto p-5 space-y-4" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between">
           <h3 className="font-bold">확인 후 승인</h3>
@@ -1267,6 +1268,9 @@ export default function PhotoBank({
       window.addEventListener('pointerup', up);
     }
     function key(e: KeyboardEvent) {
+      // 입력칸에서 누른 Esc(한글 조합 취소 포함)는 무시 — 일괄 캡션 입력 중 Esc에 선택이 풀려 입력 막대가 통째로 사라졌음 (2026-10-10)
+      const t = e.target as HTMLElement | null;
+      if (e.isComposing || t?.closest('input,textarea,select,[contenteditable="true"]')) return;
       if (e.key === 'Escape') setSel([]);
     }
     document.addEventListener('pointerdown', down);

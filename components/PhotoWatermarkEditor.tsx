@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { closeOnBackdrop } from '@/lib/backdrop';
 
 type Photo = { id: string; url: string; filename: string | null; title: string | null; tags: { id: string; name: string }[] };
 
@@ -195,12 +196,14 @@ export default function PhotoWatermarkEditor({
     }
   }
 
+  const backdrop = closeOnBackdrop(onClose);
   return (
     <div
       className="fixed inset-0 bg-black/70 flex items-center justify-center z-[60] p-4"
+      onMouseDown={backdrop.onMouseDown}
       onClick={(e) => {
         e.stopPropagation(); // 갤러리 모달 배경 클릭(onClose)까지 겹쳐 닫히지 않도록 여기서 전파를 막음
-        onClose();
+        backdrop.onClick(e); // 지우개로 칠하다 창 밖에서 마우스를 떼도 닫히지 않게 (2026-10-10)
       }}
     >
       <div

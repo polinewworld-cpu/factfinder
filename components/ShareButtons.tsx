@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { KakaoIcon, FacebookIcon, XIcon, ThreadsIcon, LinkIcon, TelegramIcon, ShareIcon, CloseIcon } from './icons';
+import { closeOnBackdrop } from '@/lib/backdrop';
 
 declare global {
   interface Window {
@@ -127,7 +128,7 @@ export default function ShareButtons({
       )}
 
       {open && (
-        <div className="share-modal-overlay" onClick={() => setOpen(false)}>
+        <div className="share-modal-overlay" {...closeOnBackdrop(() => setOpen(false))}>
           <div className="share-modal" onClick={(e) => e.stopPropagation()}>
             <div className="share-modal-header">
               <h3 className="share-modal-title">공유하기</h3>

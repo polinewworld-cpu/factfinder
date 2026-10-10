@@ -2,6 +2,7 @@
 
 import PhotoBank from './PhotoBank';
 import { figureCaption } from '@/lib/photoBankRules';
+import { closeOnBackdrop } from '@/lib/backdrop';
 
 // 기사 작성 화면의 "사진 뱅크에서 고르기" 창 (기능정의서 8.1 갤러리 픽커 → 2026-10-09 사진 뱅크로 교체)
 // multiple=false: 본문 이미지 1장 / multiple=true: 카드뉴스 여러 장
@@ -24,7 +25,7 @@ export default function PhotoGalleryModal({
 }) {
   if (!open) return null;
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={onClose}>
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" {...closeOnBackdrop(onClose)}>
       <div className="bg-white rounded-2xl w-full max-w-6xl max-h-[90vh] flex flex-col overflow-hidden" onClick={(e) => e.stopPropagation()}>
         <div className="p-4 border-b border-gray-100 flex items-center justify-between">
           <h3 className="font-bold text-gray-900">사진 뱅크에서 고르기{multiple ? ' (여러 장)' : ''}</h3>

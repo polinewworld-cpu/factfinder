@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import AdminTabs, { PEOPLE_TABS } from '@/components/AdminTabs';
 import { compressImageFile } from '@/lib/imageCompress';
+import { closeOnBackdrop } from '@/lib/backdrop';
 
 // 회원/기자관리 → 유령기자 (2026-10-09 사장님 정의) — 로그인 없이 이름으로만 존재하는 필자(외부 기고자·옛 사이트 기자).
 // 이름·직함·프로필 사진(바이라인), 원고료 정산용 계좌. (주민등록증 사진 기능은 10-09 삭제)
@@ -75,7 +76,7 @@ function EditPanel({ id, onClose, onChanged }: { id: string; onClose: () => void
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex justify-end" onClick={onClose}>
+    <div className="fixed inset-0 bg-black/50 z-50 flex justify-end" {...closeOnBackdrop(onClose)}>
       <div className="bg-white w-full max-w-lg h-full overflow-y-auto p-5 space-y-5" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between">
           <h3 className="font-bold">유령기자 정보</h3>

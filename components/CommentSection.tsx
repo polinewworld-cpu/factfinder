@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { timeAgo } from '@/lib/time';
 import { CloseIcon } from './icons';
 import { toFrenchBrackets } from '@/lib/frenchBrackets';
+import { closeOnBackdrop } from '@/lib/backdrop';
 
 type CommentItem = {
   id: string;
@@ -82,7 +83,7 @@ export default function CommentSection({ articleId }: { articleId: string }) {
       </div>
 
       {showLoginPrompt && (
-        <div className="share-modal-overlay" onClick={() => setShowLoginPrompt(false)}>
+        <div className="share-modal-overlay" {...closeOnBackdrop(() => setShowLoginPrompt(false))}>
           <div className="share-modal" onClick={(e) => e.stopPropagation()}>
             <div className="share-modal-header">
               <h3 className="share-modal-title">로그인이 필요합니다</h3>

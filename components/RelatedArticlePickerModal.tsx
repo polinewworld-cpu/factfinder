@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { toFrenchBrackets } from '@/lib/frenchBrackets';
+import { closeOnBackdrop } from '@/lib/backdrop';
 
 type ArticleRow = { id: string; title: string; updatedAt: string; author: { name: string } };
 
@@ -88,7 +89,7 @@ export default function RelatedArticlePickerModal({
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={onClose}>
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" {...closeOnBackdrop(onClose)}>
       <div
         className="bg-white rounded-2xl w-full max-w-2xl max-h-[85vh] flex flex-col overflow-hidden"
         onClick={(e) => e.stopPropagation()}

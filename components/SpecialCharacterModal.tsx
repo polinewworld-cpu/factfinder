@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { closeOnBackdrop } from '@/lib/backdrop';
 
 type SpecialChar = { id: string; char: string; label?: string | null; category: string };
 
@@ -115,7 +116,7 @@ export default function SpecialCharacterModal({
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={onClose}>
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" {...closeOnBackdrop(onClose)}>
       <div
         className="bg-white rounded-2xl w-full max-w-lg max-h-[80vh] flex flex-col overflow-hidden"
         onClick={(e) => e.stopPropagation()}

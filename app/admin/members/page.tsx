@@ -4,6 +4,7 @@ import AdminTabs, { PEOPLE_TABS } from '@/components/AdminTabs';
 import { useEffect, useRef, useState } from 'react';
 import { compressImageFile } from '@/lib/imageCompress';
 import { useSearchParams } from 'next/navigation';
+import { closeOnBackdrop } from '@/lib/backdrop';
 
 // 2026-09-22: 회원/후원회원 구별 폐지(후원 여부는 role이 아니라 isDonor로만 표시) — DONOR_READER는
 // 더 이상 새로 부여하지 않지만, 과거 데이터에 남아있을 경우 라벨은 표시할 수 있게 유지
@@ -53,7 +54,7 @@ function EditMember({ user, onClose, onSaved }: { user: any; onClose: () => void
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex justify-end" onClick={onClose}>
+    <div className="fixed inset-0 bg-black/50 z-50 flex justify-end" {...closeOnBackdrop(onClose)}>
       <div className="bg-white w-full max-w-lg h-full overflow-y-auto p-5 space-y-4" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between">
           <h3 className="font-bold">회원 정보 편집</h3>
