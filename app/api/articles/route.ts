@@ -1,3 +1,4 @@
+import { postNewArticlesToSocial } from '@/lib/socialPost';
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { ROLES, initialStatusForRole } from '@/lib/roles';
@@ -143,5 +144,6 @@ export async function POST(req: NextRequest) {
   // 사진 뱅크 사용 이력 — 본문·커버·카드뉴스에 들어간 사진 (실패해도 저장은 그대로)
   await syncPhotoUsage(article.id, article.content, [article.coverImageUrl, ...article.images.map((i) => i.url)]).catch(() => {});
 
+  if (article.status === 'PUBLISHED') postNewArticlesToSocial().catch(() => {}); // SNS 자동 게시
   return NextResponse.json(article, { status: 201 });
 }

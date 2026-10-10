@@ -1,3 +1,4 @@
+import { postNewArticlesToSocial } from '@/lib/socialPost';
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { ROLES } from '@/lib/roles';
@@ -22,5 +23,6 @@ export async function POST(_req: NextRequest, { params }: { params: { id: string
     data: { status: 'PUBLISHED', publishedAt: new Date() },
   });
 
+  postNewArticlesToSocial().catch(() => {}); // SNS 자동 게시
   return NextResponse.json(approved);
 }

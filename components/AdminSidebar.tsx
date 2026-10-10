@@ -45,6 +45,7 @@ const SECTIONS: Section[] = [
       { href: '/admin/members?role=REPORTER', label: '회원/기자관리', icon: 'users', group: PEOPLE_TABS },
       { href: '/admin/donations', label: '후원내역', icon: 'heart' },
       { href: '/admin/newsletter', label: '뉴스레터 관리', icon: 'mail' },
+      { href: '/admin/social', label: 'SNS 자동 게시', icon: 'ad' },
     ],
   },
 ];
