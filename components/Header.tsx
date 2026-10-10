@@ -6,6 +6,7 @@ import BackstageAccount from './BackstageAccount';
 import MarketTicker from './MarketTicker';
 import CategoryNav from './CategoryNav';
 import HeaderClock from './HeaderClock';
+import BrandLink from './BrandLink';
 
 export default async function Header() {
   const user = await getCurrentUser();
@@ -22,9 +23,9 @@ export default async function Header() {
   return (
     <>
       <header className="site-header">
-        <a className="brand" href="/" aria-label="팩트파인더 홈">
+        <BrandLink>
           <LogoMark />
-        </a>
+        </BrandLink>
 
         <nav className="header-actions" aria-label="주요 메뉴">
           <MarketTicker />

@@ -6,13 +6,17 @@ import { SidebarPanelIcon } from './icons';
 const STORAGE_KEY = 'factfinder-admin-nav';
 
 type AdminNavContextValue = {
-  open: boolean;
+  open: boolean; // 넓은 화면: 왼쪽 고정 메뉴 펼침
   toggle: () => void;
+  drawer: boolean; // 폰: 왼쪽에서 나오는 메뉴 서랍 (2026-10-10 — 상단 로고가 버튼 역할)
+  setDrawer: (v: boolean | ((prev: boolean) => boolean)) => void;
 };
 
 const AdminNavContext = createContext<AdminNavContextValue>({
   open: true,
   toggle: () => {},
+  drawer: false,
+  setDrawer: () => {},
 });
 
 export function useAdminNav() {
@@ -21,6 +25,7 @@ export function useAdminNav() {
 
 export function AdminNavProvider({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(true);
+  const [drawer, setDrawer] = useState(false);
 
   useEffect(() => {
     if (localStorage.getItem(STORAGE_KEY) === '0') setOpen(false);
@@ -34,7 +39,7 @@ export function AdminNavProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
-  return <AdminNavContext.Provider value={{ open, toggle }}>{children}</AdminNavContext.Provider>;
+  return <AdminNavContext.Provider value={{ open, toggle, drawer, setDrawer }}>{children}</AdminNavContext.Provider>;
 }
 
 export function AdminSidebarToggle() {

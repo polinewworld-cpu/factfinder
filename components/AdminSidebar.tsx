@@ -12,7 +12,7 @@ type NavItem = { href: string; label: string; icon: IconKey; group?: AdminTab[] 
 type Section = { title: string; items: NavItem[] };
 
 // 관리자 메뉴 — 정글2처럼 묶음 제목(작은 회색 글씨) 아래 항목을 늘어놓는 구조 (2026-10-10)
-// 좁은 화면(폰)에서는 위쪽 막대의 햄버거 버튼을 누르면 왼쪽에서 서랍으로 나오고, 넓은 화면에서는 기존처럼 왼쪽에 고정.
+// 좁은 화면(폰)에서는 헤더의 초록색 팩트파인더 로고(components/BrandLink.tsx)를 누르면 왼쪽에서 서랍으로 나오고, 넓은 화면에서는 기존처럼 왼쪽에 고정.
 // 2026-10-09: 배너·줄광고·애드센스 → "광고 관리", 기자·신청·옛 기자·회원 → "회원/기자관리" 한 칸 + 화면 안 탭(AdminTabs).
 // "옛 사진 옮기기"(/admin/legacy-images)는 당분간 메뉴에서 숨김 — 주소로는 그대로 열림.
 const SECTIONS: Section[] = [
@@ -35,6 +35,10 @@ const SECTIONS: Section[] = [
     ],
   },
   {
+    title: '바로가기',
+    items: [{ href: '/', label: '사이트 보기', icon: 'home' }],
+  },
+  {
     title: '운영',
     items: [
       { href: '/admin/banners', label: '광고 관리', icon: 'ad', group: AD_TABS },
@@ -54,7 +58,7 @@ function isActive(item: NavItem, pathname: string | null, role: string | null) {
 }
 
 // 기자·논설위원에게 보이는 메뉴 (2026-10-09)
-const WRITER_NAV = ['/admin/trends', '/admin/foreign-news', '/write', '/admin/photo-bank'];
+const WRITER_NAV = ['/admin/trends', '/admin/foreign-news', '/write', '/admin/photo-bank', '/'];
 
 const ICON_PATHS: Record<IconKey, string> = {
   home: 'M3 11l9-8 9 8M5 10v10h5v-6h4v6h5V10',
@@ -84,8 +88,7 @@ type Me = { name?: string | null; email?: string | null; image?: string | null }
 export default function AdminSidebar({ isChief = true, me }: { isChief?: boolean; me?: Me }) {
   const pathname = usePathname();
   const role = useSearchParams().get('role');
-  const { open } = useAdminNav();
-  const [drawer, setDrawer] = useState(false);
+  const { open, drawer, setDrawer } = useAdminNav();
   const [now, setNow] = useState<Date | null>(null);
 
   const sections = SECTIONS.map((s) => ({ ...s, items: s.items.filter((i) => isChief || WRITER_NAV.includes(i.href)) })).filter((s) => s.items.length);
@@ -93,7 +96,7 @@ export default function AdminSidebar({ isChief = true, me }: { isChief?: boolean
   const current = all.find((i) => isActive(i, pathname, role));
 
   // 다른 화면으로 이동하면 서랍을 닫고, 서랍이 열려 있는 동안 뒤 화면이 스크롤되지 않게 / Esc로 닫기
-  useEffect(() => setDrawer(false), [pathname, role]);
+  useEffect(() => setDrawer(false), [pathname, role, setDrawer]);
   useEffect(() => {
     if (!drawer) return;
     setNow(new Date());
@@ -117,16 +120,6 @@ export default function AdminSidebar({ isChief = true, me }: { isChief?: boolean
       {/* ── 폰: 위쪽 막대(햄버거 + 현재 화면 이름) + 왼쪽에서 나오는 서랍 ── */}
       <div className="md:hidden">
         <div className="admin-mobilebar flex items-center gap-3 py-2">
-          <button
-            type="button"
-            aria-label="관리자 메뉴 열기"
-            onClick={() => setDrawer(true)}
-            className="flex h-11 w-11 shrink-0 flex-col items-center justify-center gap-[5px] rounded-xl border bg-white shadow-sm"
-          >
-            <span className="block h-[3px] w-6 rounded bg-[#4285f4]" />
-            <span className="block h-[3px] w-6 rounded bg-[#ea4335]" />
-            <span className="block h-[3px] w-6 rounded bg-[#fbbc05]" />
-          </button>
           <span className="text-base font-bold text-gray-900">{current?.label ?? (isChief ? '관리자' : '편집실')}</span>
         </div>
 

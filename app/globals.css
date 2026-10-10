@@ -3129,3 +3129,21 @@ body:has(.zb-admin) .site-footer {
   .zb-admin .max-w-3xl,
   .zb-admin .max-w-2xl { max-width: 100%; }
 }
+
+/* 관리·글쓰기 화면에서는 팩트파인더 로고가 초록색 메뉴 버튼 (2026-10-10) */
+button.brand-admin {
+  appearance: none;
+  background: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  font: inherit;
+  -webkit-tap-highlight-color: transparent;
+}
+.brand-admin .logo-mark polygon {
+  fill: #1fa35c;
+}
+.brand-admin:hover .logo-mark polygon {
+  fill: #178a4c;
+}
