@@ -5,6 +5,7 @@ import AccountMenu from './AccountMenu';
 import BackstageAccount from './BackstageAccount';
 import MarketTicker from './MarketTicker';
 import CategoryNav from './CategoryNav';
+import HeaderClock from './HeaderClock';
 
 export default async function Header() {
   const user = await getCurrentUser();
@@ -29,6 +30,7 @@ export default async function Header() {
           <MarketTicker />
           {account && (
             <BackstageAccount>
+              <HeaderClock />
               <AccountMenu
                 name={account.name}
                 image={account.image}
