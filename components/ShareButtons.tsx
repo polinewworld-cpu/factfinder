@@ -87,13 +87,24 @@ export default function ShareButtons({
     }
   }
 
+  // 카카오는 전체 주소(https://…)의 5MB 이하 이미지만 가져감 — 사이트 안 짧은 주소는 전체 주소로,
+  // 업로드 사진(/api/blob/…)은 가벼운 jpg 축소본(?w=800&f=jpg)으로 바꿔 보냄
+  function kakaoImageUrl() {
+    const origin = window.location.origin;
+    if (!coverImageUrl) return `${origin}/og-default.png`;
+    const m = coverImageUrl.match(/^(?:https?:\/\/[^/]+)?\/api\/blob\/([^?#]+)/);
+    if (m && /\.(jpe?g|png|webp|avif|gif)$/i.test(m[1])) return `${origin}/api/blob/${m[1]}?w=800&f=jpg`;
+    if (/^https?:\/\//i.test(coverImageUrl)) return coverImageUrl;
+    return `${origin}${coverImageUrl.startsWith('/') ? '' : '/'}${coverImageUrl}`;
+  }
+
   function shareKakao() {
     if (!kakaoReady || !window.Kakao) return;
     window.Kakao.Share.sendDefault({
       objectType: 'feed',
       content: {
         title,
-        imageUrl: coverImageUrl || `${window.location.origin}/og-default.png`,
+        imageUrl: kakaoImageUrl(),
         link: { mobileWebUrl: url, webUrl: url },
       },
     });
