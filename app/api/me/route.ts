@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
+import { nicknameHolder } from '@/lib/nicknameHolder';
 
 export async function GET() {
   const user = await getCurrentUser();
@@ -49,7 +50,12 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json(updated);
   } catch (e: any) {
     if (e?.code === 'P2002') {
-      return NextResponse.json({ error: '이미 사용 중인 닉네임입니다' }, { status: 409 });
+      // 옛 사이트 기자 이름이면 본인 기사 승계 방법을 안내 (2026-10-10)
+      const holder = typeof nickname === 'string' ? await nicknameHolder(nickname.trim(), user.id) : null;
+      const error = holder?.conflict.legacy
+        ? `"${nickname.trim()}" 이름으로 옛 팩트파인더 기사가 등록돼 있습니다. 본인이라면 우선 다른 닉네임으로 가입한 뒤 편집장에게 "옛 기사 연결"을 요청하세요 — 연결하면 옛 기사와 이 이름이 내 계정으로 옮겨집니다.`
+        : '이미 사용 중인 닉네임입니다';
+      return NextResponse.json({ error }, { status: 409 });
     }
     throw e;
   }

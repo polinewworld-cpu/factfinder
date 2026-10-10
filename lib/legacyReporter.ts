@@ -25,7 +25,8 @@ export async function mergeLegacyReporter(legacyId: string, targetId: string) {
 export async function claimLegacyReporterOnLogin(userId: string, email?: string | null) {
   if (!email || isLegacyAccount(email)) return null;
   const legacy = await prisma.user.findMany({
-    where: { email: LEGACY_EMAIL, ghost: false, legacyClaimEmail: email.toLowerCase() },
+    // 숨긴 옛 기자라도 편집장이 이메일을 다시 등록했으면 승계 (숨길 때 등록 이메일은 지워지므로 새로 등록한 경우만, 2026-10-10)
+    where: { email: LEGACY_EMAIL, legacyClaimEmail: email.toLowerCase() },
     select: { id: true },
   });
   if (legacy.length === 0) return null;

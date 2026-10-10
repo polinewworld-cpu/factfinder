@@ -21,8 +21,9 @@ export async function GET() {
   if (denied) return denied;
   const [legacy, members] = await Promise.all([
     prisma.user.findMany({
-      where: { email: LEGACY, ghost: false }, // 유령 계정(삭제한 옛 기자)은 목록에서 숨김
-      select: { id: true, name: true, legacyClaimEmail: true, _count: { select: { articles: true } } },
+      // 2026-10-10: [삭제]로 숨긴 옛 기자도 목록 아래쪽에 "숨김"으로 보여 줌 — 숨긴 뒤 그 기자가 가입하면 연결할 길이 없었음
+      where: { email: LEGACY },
+      select: { id: true, name: true, ghost: true, legacyClaimEmail: true, _count: { select: { articles: true } } },
       orderBy: { articles: { _count: 'desc' } },
     }),
     prisma.user.findMany({
@@ -39,7 +40,9 @@ export async function GET() {
     }),
   ]);
   return NextResponse.json({
-    legacy: legacy.map((u) => ({ id: u.id, name: u.name, claimEmail: u.legacyClaimEmail, articleCount: u._count.articles })),
+    legacy: legacy
+      .map((u) => ({ id: u.id, name: u.name, hidden: u.ghost, claimEmail: u.legacyClaimEmail, articleCount: u._count.articles }))
+      .sort((a, b) => Number(a.hidden) - Number(b.hidden)),
     members,
   });
 }

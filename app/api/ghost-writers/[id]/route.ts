@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { ROLES } from '@/lib/roles';
 import { getCurrentUser } from '@/lib/session';
 import { GHOST_WHERE } from '@/lib/ghostWriter';
+import { nicknameHolder } from '@/lib/nicknameHolder';
 
 // 유령기자 상세·수정·숨김 (2026-10-09) — 편집장 전용. 정산 정보(은행·계좌·예금주) 포함. (주민등록증 사진 기능은 사장님 지시로 삭제)
 async function chief() {
@@ -42,8 +43,9 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   if (has('name')) {
     const name = str(b.name)?.slice(0, 30);
     if (!name) return NextResponse.json({ error: '이름을 입력하세요' }, { status: 400 });
-    const dup = await prisma.user.findFirst({ where: { nickname: name, ghost: false, NOT: { id: u.id } }, select: { id: true } });
-    if (dup) return NextResponse.json({ error: `"${name}" 이름이 이미 있습니다` }, { status: 400 });
+    // 숨긴 계정이 쓰는 이름도 걸러야 함 — 예전엔 ghost:false만 봐서 통과한 뒤 DB 중복 오류(500)가 났음 (2026-10-10)
+    const holder = await nicknameHolder(name, u.id);
+    if (holder) return NextResponse.json({ error: holder.message, conflict: holder.conflict }, { status: 409 });
     data.name = name;
     data.nickname = name;
   }
