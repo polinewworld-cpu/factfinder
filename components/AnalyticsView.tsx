@@ -426,7 +426,7 @@ export default function AnalyticsView({ view }: { view: 'visits' | 'trends' }) {
           {(
             <section className="border rounded-xl p-4">
               <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
-                <h2 className={BIG_TITLE}>이재명 대통령 X</h2>
+                <h2 className={BIG_TITLE}>이재명이 오늘도 X에서 정신 놨네요</h2>
                 <a href={r.leeX?.url ?? 'https://x.com/Jaemyung_Lee'} target="_blank" rel="noopener noreferrer" className="border rounded-lg px-3 py-1 text-sm font-semibold" style={{ color: MARK }}>
                   대통령 X 바로가기 ↗
                 </a>
