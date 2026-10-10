@@ -11,7 +11,7 @@ type NavItem = { href: string; label: string; group?: AdminTab[] };
 // "옛 사진 옮기기"(/admin/legacy-images)는 당분간 메뉴에서 숨김 — 주소로는 그대로 열림.
 const NAV: NavItem[] = [
   { href: '/admin', label: '대시보드' },
-  { href: '/admin/trends', label: '동향 보고' }, // 매체 동향·기사 아이디어 (2026-10-09 방문 분석에서 분리)
+  { href: '/admin/trends', label: '오진실 기자' }, // 매체 동향·기사 아이디어 (2026-10-09 방문 분석에서 분리, 10-10 '동향 보고' → 오진실 기자)
   { href: '/admin/foreign-news', label: '김정신 특파원' }, // 한국 관련 영미 외신 보고, 하루 3번 (2026-10-10)
   { href: '/admin/analytics', label: '방문 분석' }, // GA 자동 분석 (2026-10-08)
   { href: '/write', label: '기사 작성' },

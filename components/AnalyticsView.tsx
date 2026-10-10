@@ -1,5 +1,6 @@
 'use client';
 
+import PersonaHeader from '@/components/PersonaHeader';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { AnalyticsReport } from '@/lib/gaReport';
 
@@ -339,7 +340,11 @@ export default function AnalyticsView({ view }: { view: 'visits' | 'trends' }) {
     <main className="py-8 space-y-4">
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div>
-          <h1 className="text-xl font-bold text-gray-900">{view === 'trends' ? '동향 보고' : '방문 분석'}</h1>
+          {view === 'trends' ? (
+            <PersonaHeader personaKey="oh" name="오진실 기자" alt="오진실 기자(AI가 만든 가상 인물)" />
+          ) : (
+            <h1 className="text-xl font-bold text-gray-900">방문 분석</h1>
+          )}
           {r &&
             (view === 'trends' ? (
               <p className="text-xs text-gray-500 mt-1">
