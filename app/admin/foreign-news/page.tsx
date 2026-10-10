@@ -1,11 +1,14 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import type { ForeignBrief, ForeignNewsReport, ForeignPick } from '@/lib/foreignNews';
+import type { ForeignNewsReport, ForeignPick } from '@/lib/foreignNews';
+import PersonaHeader from '@/components/PersonaHeader';
 
 // 관리자 "김정신 특파원" (2026-10-10) — 영미 주요 외신 중 한국 관련 이슈를 현지 언론이 어떻게 다루는지 살핀 보고서.
-// 하루 3번(07·13·19시) 올라오고, 존댓말 권고와 근거가 된 현지 언론 기사 링크가 항상 붙는다. 프로필 사진은 AI가 만든 가상 인물(편집장이 올림).
-const PRIORITY_LABEL: Record<number, string> = { 1: '1순위', 2: '2순위', 3: '3순위' };
+// 하루 3번(07·13·19시) 올라오고, 존댓말 권고와 근거가 된 현지 언론 기사 링크가 항상 붙는다.
+// 화면 모양은 오진실 기자(동향 보고, components/AnalyticsView.tsx)와 같은 틀 — 머리글(사진+이름+새로고침) → 인사 → 카드들 → 마무리 인사.
+const BIG_TITLE = 'text-xl font-bold text-gray-900';
+const MARK = '#0d4f55';
 const SLOT_LABEL: Record<number, string> = { 7: '아침 보고', 13: '낮 보고', 19: '저녁 보고', 0: '새벽 보고' };
 
 function ago(iso: string | null) {
@@ -21,81 +24,97 @@ function when(iso: string) {
   return `${d.getUTCMonth() + 1}월 ${d.getUTCDate()}일`;
 }
 
-function Avatar({ url, size }: { url: string | null; size: number }) {
-  return url ? (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img src={`${url}?w=800`} alt="김정신 특파원(AI가 만든 가상 인물)" width={size} height={size} className="rounded-full object-cover object-top border border-gray-200 shrink-0" style={{ width: size, height: size }} />
-  ) : (
-    <div className="rounded-full bg-gray-200 text-gray-500 font-bold flex items-center justify-center shrink-0" style={{ width: size, height: size, fontSize: size / 2.5 }}>
-      김
-    </div>
+function Card({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <section className="border rounded-xl p-4">
+      <h2 className={`${BIG_TITLE} mb-3`}>{title}</h2>
+      {children}
+    </section>
   );
 }
 
 function PickCard({ p }: { p: ForeignPick }) {
   return (
-    <li className="border border-gray-200 rounded-xl p-4">
-      <div className="flex items-center gap-2 text-xs text-gray-500 mb-1">
-        <span className="font-bold text-brand">{PRIORITY_LABEL[p.priority] ?? ''}</span>
-        <span className="font-semibold text-gray-700">{p.outlet}</span>
-        <span>{ago(p.publishedAt)}</span>
-      </div>
-      <p className="font-bold text-gray-900 mb-1">{p.titleKo || p.originalTitle}</p>
+    <article className="border rounded-lg p-3 text-sm">
+      <p className="flex flex-wrap items-center gap-1.5 mb-1.5">
+        <span className="rounded px-1.5 py-0.5 text-[11px] font-bold text-white" style={{ background: p.priority === 1 ? MARK : p.priority === 2 ? '#4f7f83' : '#8a9a98' }}>
+          {p.priority}순위
+        </span>
+        <span className="rounded border px-1.5 py-0.5 text-[11px] font-semibold">{p.outlet}</span>
+        <span className="text-[11px] text-gray-400">{ago(p.publishedAt)}</span>
+      </p>
+      <p className="font-bold text-[15px] leading-snug mb-1">{p.titleKo || p.originalTitle}</p>
       {p.titleKo && <p className="text-xs text-gray-400 mb-2">{p.originalTitle}</p>}
-      {p.summaryKo && <p className="text-sm text-gray-700 mb-2">{p.summaryKo}</p>}
-      {p.whyKorea && <p className="text-xs text-gray-500 mb-1"><b>한국과의 관련:</b> {p.whyKorea}</p>}
-      {p.tone && <p className="text-xs text-gray-500 mb-1"><b>현지 언론의 시각:</b> {p.tone}</p>}
-      {p.advice && <p className="text-sm text-gray-900 bg-brand/5 rounded-lg px-3 py-2 my-2"><b>권고:</b> {p.advice}</p>}
-      <a href={p.url} target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-brand underline">
-        {p.outlet} 원문 보기 ↗
-      </a>
-    </li>
+      {p.summaryKo && <p className="text-gray-600 mb-2">{p.summaryKo}</p>}
+      {p.whyKorea && <p className="mb-1"><b className="text-xs text-gray-500 mr-1">한국과의 관련</b>{p.whyKorea}</p>}
+      {p.tone && <p className="mb-1"><b className="text-xs text-gray-500 mr-1">현지 언론의 시각</b>{p.tone}</p>}
+      {p.advice && <p className="mb-1"><b className="text-xs text-gray-500 mr-1">권고</b>{p.advice}</p>}
+      <p className="text-[11px] text-gray-500 mt-2">
+        <a href={p.url} target="_blank" rel="noopener noreferrer" className="hover:underline">
+          [{p.outlet}] 원문 보기 ↗
+        </a>
+      </p>
+    </article>
   );
 }
 
-function Report({ r }: { r: ForeignNewsReport }) {
+function Report({ r, showMeta = true }: { r: ForeignNewsReport; showMeta?: boolean }) {
+  const place = r.place
+    ? `${r.place.city}${r.place.weather ? ` · ${r.place.weather}` : ''}${r.place.temp !== null && r.place.temp !== undefined ? ` ${r.place.temp}℃` : ''}`
+    : '';
   return (
-    <div>
-      {r.greeting && <p className="text-sm font-semibold text-gray-900 mb-1">{r.greeting}</p>}
-      {r.place && (
-        <p className="text-xs text-gray-500 mb-2">
-          {r.place.city}
-          {r.place.weather ? ` · ${r.place.weather}` : ''}
-          {r.place.temp !== null && r.place.temp !== undefined ? ` ${r.place.temp}℃` : ''}
-        </p>
+    <div className="space-y-4">
+      {r.greeting && <p className="text-sm font-semibold text-gray-900 leading-relaxed">{r.greeting}</p>}
+
+      {(r.localColor || r.overview) && (
+        <Card title="오늘 현지 이야기">
+          {showMeta && (
+            <p className="text-xs text-gray-400 mb-2">
+              {when(r.generatedAt)} {SLOT_LABEL[r.slot] ?? ''} · {ago(r.generatedAt)}
+              {place ? ` · ${place}` : ''}
+            </p>
+          )}
+          {r.localColor && <p className="text-sm text-gray-800 leading-relaxed mb-3">{r.localColor}</p>}
+          {r.overview && <p className="text-sm text-gray-800 leading-relaxed">{r.overview}</p>}
+        </Card>
       )}
-      {r.localColor && <p className="text-sm text-gray-800 leading-relaxed mb-3">{r.localColor}</p>}
-      {r.overview && <p className="text-sm text-gray-800 leading-relaxed mb-4">{r.overview}</p>}
-      {r.aiError && <p className="text-amber-700 text-xs mb-3">{r.aiError}</p>}
+
+      {r.aiError && <p className="text-xs text-amber-700">{r.aiError}</p>}
+
       {(r.briefs ?? []).length > 0 && (
-        <div className="mb-5">
-          <h3 className="text-sm font-bold text-gray-900 mb-2">한 줄 브리핑</h3>
+        <Card title="한 줄 브리핑">
           <ul className="space-y-1.5">
-            {(r.briefs as ForeignBrief[]).map((b) => (
+            {r.briefs.map((b) => (
               <li key={b.url} className="text-sm text-gray-800 leading-snug">
                 · {b.text}{' '}
-                <a href={b.url} target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-brand underline whitespace-nowrap">
+                <a href={b.url} target="_blank" rel="noopener noreferrer" className="text-xs font-semibold underline whitespace-nowrap" style={{ color: MARK }}>
                   {b.outlet} ↗
                 </a>
               </li>
             ))}
           </ul>
-        </div>
+        </Card>
       )}
-      {r.picks.length > 0 && <h3 className="text-sm font-bold text-gray-900 mb-2">상세 보고</h3>}
-      <ul className="space-y-3">
-        {r.picks.map((p) => (
-          <PickCard key={p.url} p={p} />
-        ))}
-      </ul>
-      {r.closing && <p className="text-sm text-gray-800 leading-relaxed mt-5">{r.closing}</p>}
+
       {r.picks.length > 0 && (
-        <p className="text-xs text-gray-400 mt-3">
+        <Card title="상세 보고">
+          <div className="grid lg:grid-cols-2 gap-3">
+            {r.picks.map((p) => (
+              <PickCard key={p.url} p={p} />
+            ))}
+          </div>
+        </Card>
+      )}
+
+      {r.closing && <p className="text-sm text-gray-800 leading-relaxed">{r.closing}</p>}
+
+      {r.picks.length > 0 && (
+        <p className="text-xs text-gray-500">
           참고한 현지 언론: {Array.from(new Set(r.picks.map((p) => p.outlet))).join(' · ')} — 외신 {r.fetched}건 중 한국 관련 후보 {r.candidates}건
         </p>
       )}
       {r.sourceErrors.length > 0 && (
-        <p className="text-xs text-gray-400 mt-1">이번에 받지 못한 외신: {r.sourceErrors.map((s) => `${s.outlet}(${s.error})`).join(', ')}</p>
+        <p className="text-xs text-gray-500">이번에 받지 못한 외신: {r.sourceErrors.map((s) => `${s.outlet}(${s.error})`).join(', ')}</p>
       )}
     </div>
   );
@@ -103,7 +122,6 @@ function Report({ r }: { r: ForeignNewsReport }) {
 
 export default function ForeignNewsPage() {
   const [reports, setReports] = useState<ForeignNewsReport[]>([]);
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -117,7 +135,6 @@ export default function ForeignNewsPage() {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error ?? '불러오지 못했습니다');
       setReports(data.reports ?? []);
-      setAvatarUrl(data.avatarUrl ?? null);
       // 옛 형식(현지 이야기가 없는) 최신 보고라면 새 형식으로 딱 한 번 다시 만든다 — 실패해도 되풀이하지 않음
       if (!refresh && !autoRefreshed.current && data.reports?.[0] && !data.reports[0].localColor) {
         autoRefreshed.current = true;
@@ -137,52 +154,36 @@ export default function ForeignNewsPage() {
   const [latest, ...earlier] = reports;
 
   return (
-    <main className="py-8">
-      <section className="flex items-center gap-4 mb-2">
-        <Avatar url={avatarUrl} size={88} />
-        <div className="min-w-0 flex-1">
-          <h1 className="text-xl font-bold text-gray-900">김정신 특파원</h1>
+    <main className="py-8 space-y-4">
+      <div className="flex flex-wrap items-end justify-between gap-2">
+        <div>
+          <PersonaHeader personaKey="kim" name="김정신 특파원" alt="김정신 특파원(AI가 만든 가상 인물)" />
         </div>
-      </section>
-      <div className="flex items-center gap-2 mb-6">
-        <button
-          type="button"
-          disabled={loading}
-          onClick={() => load(true)}
-          className="text-xs font-semibold text-gray-600 border border-gray-200 rounded-lg px-3 py-1.5 hover:border-gray-400 disabled:opacity-50"
-        >
-          {loading ? '불러오는 중…' : '지금 새로 보고받기'}
+        <button type="button" onClick={() => load(true)} disabled={loading} className="border rounded-lg px-3 py-1.5 text-sm disabled:opacity-40">
+          {loading ? '새로 받는 중… (1분쯤)' : '지금 새로고침'}
         </button>
       </div>
 
-      {error && <p className="text-red-600 text-sm mb-4">{error}</p>}
-      {loading && !latest && <p className="text-gray-500 text-sm">외신을 살펴보는 중입니다. 처음에는 1분 가까이 걸릴 수 있습니다…</p>}
+      {error && <p className="text-sm text-red-600">{error}</p>}
+      {loading && !latest && <p className="text-sm text-gray-500">외신을 살펴보는 중입니다. 처음에는 1분 가까이 걸릴 수 있습니다…</p>}
 
-      {latest && (
-        <section className="mb-8">
-          <p className="text-xs text-gray-400 mb-3">
-            {when(latest.generatedAt)} {SLOT_LABEL[latest.slot] ?? ''} · {ago(latest.generatedAt)}
-          </p>
-          <Report r={latest} />
-        </section>
-      )}
+      {latest && <Report r={latest} />}
 
       {earlier.length > 0 && (
-        <section>
-          <h2 className="text-sm font-bold text-gray-900 mb-2">지난 보고</h2>
+        <Card title="지난 보고">
           <div className="space-y-2">
             {earlier.map((r) => (
-              <details key={r.generatedAt} className="border border-gray-200 rounded-xl px-4 py-3">
+              <details key={r.generatedAt} className="border rounded-lg px-3 py-2">
                 <summary className="cursor-pointer text-sm font-semibold text-gray-700">
                   {when(r.generatedAt)} {SLOT_LABEL[r.slot] ?? ''} <span className="font-normal text-gray-400">· 추천 {r.picks.length}건</span>
                 </summary>
                 <div className="mt-3">
-                  <Report r={r} />
+                  <Report r={r} showMeta={false} />
                 </div>
               </details>
             ))}
           </div>
-        </section>
+        </Card>
       )}
 
       {!loading && reports.length === 0 && !error && <p className="text-sm text-gray-400">아직 올라온 보고가 없습니다.</p>}
