@@ -348,14 +348,6 @@ export async function getForeignAvatar(): Promise<string | null> {
   return typeof url === 'string' ? url : null;
 }
 
-export async function setForeignAvatar(url: string) {
-  await prisma.analyticsSnapshot.upsert({
-    where: { id: AVATAR_ID },
-    update: { data: { url } as any, createdAt: new Date() },
-    create: { id: AVATAR_ID, data: { url } as any },
-  });
-}
-
 // 최근 보고서들(최신 먼저)
 export async function recentForeignReports(limit = 6): Promise<ForeignNewsReport[]> {
   const rows = await prisma.analyticsSnapshot.findMany({

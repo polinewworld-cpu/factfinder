@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from 'react';
 import type { ForeignBrief, ForeignNewsReport, ForeignPick } from '@/lib/foreignNews';
-import { compressImageFile } from '@/lib/imageCompress';
 
 // 관리자 "김정신 특파원" (2026-10-10) — 영미 주요 외신 중 한국 관련 이슈를 현지 언론이 어떻게 다루는지 살핀 보고서.
 // 하루 3번(07·13·19시) 올라오고, 존댓말 권고와 근거가 된 현지 언론 기사 링크가 항상 붙는다. 프로필 사진은 AI가 만든 가상 인물(편집장이 올림).
@@ -105,10 +104,8 @@ function Report({ r }: { r: ForeignNewsReport }) {
 export default function ForeignNewsPage() {
   const [reports, setReports] = useState<ForeignNewsReport[]>([]);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-  const [canEditAvatar, setCanEditAvatar] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [avatarBusy, setAvatarBusy] = useState(false);
 
   const autoRefreshed = useRef(false);
 
@@ -121,7 +118,6 @@ export default function ForeignNewsPage() {
       if (!res.ok) throw new Error(data.error ?? '불러오지 못했습니다');
       setReports(data.reports ?? []);
       setAvatarUrl(data.avatarUrl ?? null);
-      setCanEditAvatar(!!data.canEditAvatar);
       // 옛 형식(현지 이야기가 없는) 최신 보고라면 새 형식으로 딱 한 번 다시 만든다 — 실패해도 되풀이하지 않음
       if (!refresh && !autoRefreshed.current && data.reports?.[0] && !data.reports[0].localColor) {
         autoRefreshed.current = true;
@@ -137,29 +133,6 @@ export default function ForeignNewsPage() {
   useEffect(() => {
     load();
   }, []);
-
-  async function changeAvatar(file: File) {
-    setAvatarBusy(true);
-    setError('');
-    try {
-      const fd = new FormData();
-      fd.append('file', await compressImageFile(file));
-      const up = await fetch('/api/upload', { method: 'POST', body: fd });
-      const upData = await up.json().catch(() => ({}));
-      if (!up.ok) throw new Error(upData.error ?? '사진 올리기에 실패했습니다');
-      const res = await fetch('/api/admin/foreign-news', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ avatarUrl: upData.url }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error ?? '사진을 저장하지 못했습니다');
-      setAvatarUrl(data.avatarUrl);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : '사진 올리기에 실패했습니다');
-    }
-    setAvatarBusy(false);
-  }
 
   const [latest, ...earlier] = reports;
 
@@ -180,21 +153,6 @@ export default function ForeignNewsPage() {
         >
           {loading ? '불러오는 중…' : '지금 새로 보고받기'}
         </button>
-        {canEditAvatar && (
-          <label className={`text-xs font-semibold text-gray-600 border border-gray-200 rounded-lg px-3 py-1.5 hover:border-gray-400 cursor-pointer ${avatarBusy ? 'opacity-50 pointer-events-none' : ''}`}>
-            {avatarBusy ? '올리는 중…' : '프로필 사진 바꾸기'}
-            <input
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={(e) => {
-                const f = e.target.files?.[0];
-                e.target.value = '';
-                if (f) changeAvatar(f);
-              }}
-            />
-          </label>
-        )}
       </div>
 
       {error && <p className="text-red-600 text-sm mb-4">{error}</p>}
