@@ -83,6 +83,7 @@ export type ForeignNewsReport = {
   overviewItems?: string[]; // 이번 회차 이슈를 불릿 한 줄씩(진실이처럼) — 줄마다 핵심 구절 링크
   place?: { city: string; weather: string | null; temp: number | null }; // 그날 특파원이 있는 곳(실측 날씨)
   localColor?: string; // 현지 분위기 이야기(날씨·현지 소식·연예계 등, 재미있게)
+  carriedOver?: number; // 새 소식이 적어 지난 보고에서 이어 붙인 브리핑 수
   closing?: string; // 마무리 인사(말미에 한두 문장, 편집국을 챙기는 따뜻한 한마디)
   briefs: ForeignBrief[]; // 한 줄 브리핑 — 다양한 이슈를 한 줄씩(링크 포함)
   picks: ForeignPick[];
@@ -98,6 +99,9 @@ export const REPORT_SLOTS = [7, 13, 19]; // 하루 3번(한국시간)
 const ID_PREFIX = '0-fn-';
 const MAX_AGE_MS = 48 * 3600_000;
 const MAX_CANDIDATES = 70;
+const WIDE_AGE_MS = 5 * 24 * 3600_000; // 최근 48시간에 한국 관련 기사가 적으면 5일까지 넓혀서 찾음
+const MIN_CANDIDATES = 8;
+const MIN_BRIEFS = 6;
 
 // 한국 관련 1차 거름 — 놓치지 않으려고 넓게, 진짜 관련성은 제미나이가 가림
 const KOREA_RE =
@@ -173,18 +177,25 @@ export async function buildForeignNews(slot: number): Promise<ForeignNewsReport>
     )
   );
 
-  // 같은 주소 중복 제거 + 최근 48시간(날짜를 모르면 포함)
+  // 같은 주소 중복 제거 + 최근 48시간(날짜를 모르면 포함). 한국 관련 후보가 적으면 5일까지 넓혀서 다시 찾음 (2026-10-10)
   const seen = new Set<string>();
-  const all = results.flat().filter((r) => {
+  const unique = results.flat().filter((r) => {
     if (seen.has(r.url)) return false;
     seen.add(r.url);
-    return !r.publishedAt || Date.now() - Date.parse(r.publishedAt) <= MAX_AGE_MS;
+    return true;
   });
-
-  const candidates = all
-    .filter((r) => KOREA_RE.test(`${r.title} ${r.summary}`))
-    .sort((a, b) => (Date.parse(b.publishedAt ?? '') || 0) - (Date.parse(a.publishedAt ?? '') || 0))
-    .slice(0, MAX_CANDIDATES);
+  const within = (ms: number) => unique.filter((r) => !r.publishedAt || Date.now() - Date.parse(r.publishedAt) <= ms);
+  const pickCandidates = (list: Raw[]) =>
+    list
+      .filter((r) => KOREA_RE.test(`${r.title} ${r.summary}`))
+      .sort((a, b) => (Date.parse(b.publishedAt ?? '') || 0) - (Date.parse(a.publishedAt ?? '') || 0))
+      .slice(0, MAX_CANDIDATES);
+  let all = within(MAX_AGE_MS);
+  let candidates = pickCandidates(all);
+  if (candidates.length < MIN_CANDIDATES) {
+    all = within(WIDE_AGE_MS);
+    candidates = pickCandidates(all);
+  }
 
   const when = SLOT_NAME[slot] ?? '';
   const report: ForeignNewsReport = {
@@ -334,6 +345,18 @@ export function refreshForeignNews(): Promise<ForeignNewsReport> {
     inFlight = (async () => {
       const slot = slotFor(kstHour());
       const report = await buildForeignNews(slot);
+      // 새 소식이 적어 브리핑이 몇 줄 안 나오면 이전 보고의 브리핑을 이어 붙임(없는 것보다 낫다 — 사장님 지시 2026-10-10)
+      if (report.briefs.length < MIN_BRIEFS && !report.aiError) {
+        const prev = (await recentForeignReports(4).catch(() => [])).find((r) => r.generatedAt !== report.generatedAt && (r.briefs ?? []).length > 0);
+        if (prev) {
+          const have = new Set(report.briefs.map((b) => b.url));
+          const extra = prev.briefs.filter((b) => !have.has(b.url)).slice(0, 12 - report.briefs.length);
+          if (extra.length) {
+            report.briefs = [...report.briefs, ...extra];
+            report.carriedOver = extra.length;
+          }
+        }
+      }
       const id = slotId(slot);
       await prisma.analyticsSnapshot.upsert({
         where: { id },

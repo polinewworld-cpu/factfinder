@@ -89,6 +89,7 @@ function Report({ r }: { r: ForeignNewsReport }) {
 
       {(r.briefs ?? []).length > 0 && (
         <Card title="한 줄 브리핑">
+          {(r.carriedOver ?? 0) > 0 && <p className="mb-2 text-xs text-gray-400">새 소식이 적어서 지난 보고에서 {r.carriedOver}건을 이어서 보여 드려요.</p>}
           <ul className="space-y-1.5">
             {r.briefs.map((b) => (
               <li key={b.url} className="text-sm text-gray-800 leading-snug">
