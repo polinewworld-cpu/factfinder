@@ -3174,7 +3174,7 @@ html:has(.admin-dashboard) {
 }
 /* 낮(KST 06~18시)에는 밝은 사무실 사진 */
 html:has(.admin-dashboard)[data-admin-time='day'] {
-  background: linear-gradient(rgba(9, 13, 15, 0.5), rgba(9, 13, 15, 0.62)), url('/admin-bg-day.webp') center top / cover no-repeat fixed #0b0f10;
+  background: linear-gradient(rgba(255, 255, 255, 0.28), rgba(240, 246, 248, 0.4)), url('/admin-bg-day.webp') center top / cover no-repeat fixed #dfe6e8;
 }
 body:has(.admin-dashboard) { background: transparent; }
 body:has(.admin-dashboard) .site-header,
@@ -3228,3 +3228,34 @@ body:has(.admin-dashboard) .brand-admin .logo-mark { filter: drop-shadow(0 0 3px
 /* 대시보드: 글래스 카드의 작은 점 무늬 제거, 카드 안 링크는 밝은 색 */
 .admin-dashboard canvas { display: none !important; }
 .admin-dashboard a[style*="0d4f55"] { color: var(--zb-teal-hi) !important; }
+
+/* ── 낮 모드(KST 06~18시): 밝은 사진 + 밝은 유리 + 어두운 글자 ── */
+html[data-admin-time='day'] .zb-admin:has(.admin-dashboard) {
+  --zb-ink: #11292c;
+  --zb-ink-sub: rgba(17, 41, 44, 0.74);
+  --zb-ink-dis: rgba(17, 41, 44, 0.5);
+  --zb-line: rgba(17, 41, 44, 0.16);
+  --zb-teal: #0d4f55;
+  --zb-teal-hi: #0a3d42;
+  --zb-teal-soft: rgba(13, 79, 85, 0.14);
+}
+html[data-admin-time='day'] .zb-admin:has(.admin-dashboard) h1 { color: #0c2a2e; text-shadow: 0 1px 10px rgba(255, 255, 255, 0.7); }
+html[data-admin-time='day'] .zb-admin:has(.admin-dashboard) .hover\:text-gray-900:hover { color: #000; }
+html[data-admin-time='day'] .zb-admin:has(.admin-dashboard) .zb-dot-card,
+html[data-admin-time='day'] .zb-admin:has(.admin-dashboard) .rounded-xl.border,
+html[data-admin-time='day'] .zb-admin:has(.admin-dashboard) .border.rounded-xl,
+html[data-admin-time='day'] .zb-admin:has(.admin-dashboard) .zb-card,
+html[data-admin-time='day'] .zb-admin:has(.admin-dashboard) .admin-sidebar {
+  background: rgba(255, 255, 255, 0.42);
+  border: 1px solid rgba(255, 255, 255, 0.75) !important;
+  box-shadow: 0 10px 30px rgba(30, 60, 70, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+html[data-admin-time='day'] .zb-admin:has(.admin-dashboard) .zb-dot-card:hover { background: rgba(255, 255, 255, 0.52); }
+html[data-admin-time='day'] .zb-admin:has(.admin-dashboard) .admin-sidebar a.bg-brand { background: rgba(13, 79, 85, 0.88); color: #fff; }
+html[data-admin-time='day'] .zb-admin:has(.admin-dashboard) .admin-mobilebar { border-bottom-color: rgba(17, 41, 44, 0.16); }
+html[data-admin-time='day'] body:has(.admin-dashboard) .site-header .text-gray-900 { color: #11292c; }
+html[data-admin-time='day'] body:has(.admin-dashboard) .site-header .text-gray-500 { color: rgba(17, 41, 44, 0.7); }
+html[data-admin-time='day'] body:has(.admin-dashboard) .site-footer,
+html[data-admin-time='day'] body:has(.admin-dashboard) .site-footer a { color: rgba(17, 41, 44, 0.7); }
+html[data-admin-time='day'] body:has(.admin-dashboard) .brand-admin .logo-mark { filter: none; }
+html[data-admin-time='day'] .admin-dashboard a[style*="0d4f55"] { color: #0a3d42 !important; }
