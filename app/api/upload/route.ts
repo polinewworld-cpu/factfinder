@@ -7,7 +7,7 @@ import { randomUUID } from 'crypto';
 // 커버이미지 등 파일 업로드 — 운영은 Supabase 저장소, 로컬 개발 환경에선 프로젝트 폴더에 저장 (lib/blobStorage 참고).
 // 업로드된 파일은 /api/blob/[filename] 라우트로 서빙됨.
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/avif'];
-const MAX_SIZE = 10 * 1024 * 1024; // 10MB
+const MAX_SIZE = 5 * 1024 * 1024; // 5MB (2026-10-10: 10MB → 5MB, 카카오톡 공유 이미지 한도에 맞춤)
 const EXT: Record<string, string> = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif', 'image/avif': 'avif' };
 
 export async function POST(req: NextRequest) {
@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: '이미지 파일만 업로드 가능합니다 (jpg/png/webp/gif/avif)' }, { status: 400 });
   }
   if (file.size > MAX_SIZE) {
-    // 브라우저 쪽(lib/imageCompress.ts)에서 업로드 전에 10MB 이내로 자동 압축을 시도하므로
+    // 브라우저 쪽(lib/imageCompress.ts)에서 업로드 전에 5MB 이내로 자동 압축을 시도하므로
     // 정상적인 경우 이 분기는 거의 타지 않음 — 압축이 실패했거나 이미지가 아닌 경우의 최종 안전장치 (2026-09-11)
     return NextResponse.json({ error: '자동 압축 후에도 파일이 너무 큽니다. 더 작은 사진으로 다시 시도해주세요.' }, { status: 400 });
   }

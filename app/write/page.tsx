@@ -391,7 +391,7 @@ export default function WritePage() {
     if (files.length === 0) return;
     setCardUploading(true);
     for (const rawFile of files) {
-      const file = await compressImageFile(rawFile); // 10MB 넘으면 브라우저에서 자동으로 줄여서 보냄
+      const file = await compressImageFile(rawFile); // 5MB 넘으면 브라우저에서 자동으로 줄여서 보냄
       const form = new FormData();
       form.append('file', file);
       const res = await fetch('/api/upload', { method: 'POST', body: form });
@@ -567,7 +567,7 @@ export default function WritePage() {
     setBodyImageUploading(true);
     setErrorMsg('');
     try {
-      const file = await compressImageFile(rawFile); // 10MB 넘으면 브라우저에서 자동으로 줄여서 보냄
+      const file = await compressImageFile(rawFile); // 5MB 넘으면 브라우저에서 자동으로 줄여서 보냄
       const form = new FormData();
       form.append('file', file);
       const res = await fetch('/api/upload', { method: 'POST', body: form });

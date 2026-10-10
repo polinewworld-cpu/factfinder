@@ -1,10 +1,10 @@
-// 브라우저에서 이미지를 서버(/api/upload)로 보내기 전에 용량 제한(기본 10MB) 이내로 자동 압축하는 유틸.
+// 브라우저에서 이미지를 서버(/api/upload)로 보내기 전에 용량 제한(기본 5MB — 카카오톡 공유 등 다른 서비스 기준에 맞춤, 2026-10-10) 이내로 자동 압축하는 유틸.
 // 서버 쪽엔 sharp 같은 이미지 처리 라이브러리가 설치돼 있지 않고, 이 세션은 사용자 PC에 npm install을
 // 직접 실행할 방법이 없어서(인수인계서 참고) 순수 브라우저 Canvas API로 처리함 (2026-09-11 신설).
 // 이미 제한 이내면 원본 그대로 반환하고, 아니면 (1) 품질을 낮추고 → (2) 그래도 안 되면 가로세로를
 // 단계적으로 줄이는 순서로 재시도. PNG/GIF처럼 캔버스 toBlob에서 quality가 의미 없는 무손실 포맷은
 // JPEG로 변환해서 압축함(투명 배경은 흰 배경으로 채워짐).
-export async function compressImageFile(file: File, maxBytes = 10 * 1024 * 1024): Promise<File> {
+export async function compressImageFile(file: File, maxBytes = 5 * 1024 * 1024): Promise<File> {
   if (!file.type.startsWith('image/') || file.size <= maxBytes) return file;
   if (typeof document === 'undefined') return file;
 
@@ -12,7 +12,7 @@ export async function compressImageFile(file: File, maxBytes = 10 * 1024 * 1024)
   try {
     bitmap = await createImageBitmap(file);
   } catch {
-    return file; // 디코딩 실패 시 원본 그대로 보냄 — 서버 10MB 체크에서 다시 막힐 수 있음
+    return file; // 디코딩 실패 시 원본 그대로 보냄 — 서버 5MB 체크에서 다시 막힐 수 있음
   }
 
   let width = bitmap.width;
