@@ -3172,6 +3172,10 @@ button.brand-admin {
 html:has(.admin-dashboard) {
   background: linear-gradient(rgba(9, 13, 15, 0.58), rgba(9, 13, 15, 0.68)), url('/admin-bg.webp') center top / cover no-repeat fixed #0b0f10;
 }
+/* 낮(KST 06~18시)에는 밝은 사무실 사진 */
+html:has(.admin-dashboard)[data-admin-time='day'] {
+  background: linear-gradient(rgba(9, 13, 15, 0.5), rgba(9, 13, 15, 0.62)), url('/admin-bg-day.webp') center top / cover no-repeat fixed #0b0f10;
+}
 body:has(.admin-dashboard) { background: transparent; }
 body:has(.admin-dashboard) .site-header,
 body:has(.admin-dashboard) .site-footer { background: transparent; }

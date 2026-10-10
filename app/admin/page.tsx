@@ -2,6 +2,7 @@
 
 import LinkedText from '@/components/LinkedText';
 import { useEffect, useState } from 'react';
+import AdminTimeBg from '@/components/AdminTimeBg';
 import RippleDotCard from '@/components/RippleDotCard';
 import { UserAvatar } from '@/components/InitialAvatar';
 import { toFrenchBrackets } from '@/lib/frenchBrackets';
@@ -106,6 +107,7 @@ export default function AdminHome() {
 
   return (
     <main className="py-8 admin-dashboard">
+      <AdminTimeBg />
       <h1 className="text-xl font-bold text-gray-900 mb-6">관리자 대시보드</h1>
 
       {!stats ? (
