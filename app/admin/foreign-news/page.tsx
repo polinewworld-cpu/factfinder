@@ -131,7 +131,7 @@ export default function ForeignNewsPage() {
   const [latest, ...earlier] = reports;
 
   return (
-    <main className="max-w-3xl mx-auto px-4 py-8">
+    <main className="py-8">
       <section className="flex items-center gap-4 mb-2">
         <Avatar url={avatarUrl} size={88} />
         <div className="min-w-0 flex-1">
