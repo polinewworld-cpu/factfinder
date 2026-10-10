@@ -2907,8 +2907,8 @@ img {
   --brand-rgb: 13 79 85;
   --brand-dark-rgb: 20 101 108;
   font-family: "Pretendard Variable", Pretendard, "Malgun Gothic", system-ui, sans-serif;
-  font-size: 13px;
-  line-height: 1.4;
+  font-size: 15px;
+  line-height: 1.55;
   color: var(--zb-ink);
   -webkit-font-smoothing: antialiased;
 }
@@ -2922,10 +2922,10 @@ body:has(.zb-admin) .site-footer {
 }
 
 /* 글자 */
-.zb-admin h1 { font-size: 18px; font-weight: 600; letter-spacing: -0.01em; color: var(--zb-ink); }
-.zb-admin .text-xl { font-size: 18px; }
-.zb-admin .text-sm { font-size: 13px; }
-.zb-admin .text-xs { font-size: 11px; }
+.zb-admin h1 { font-size: 22px; font-weight: 600; letter-spacing: -0.01em; color: var(--zb-ink); }
+.zb-admin .text-xl { font-size: 21px; }
+.zb-admin .text-sm { font-size: 15px; }
+.zb-admin .text-xs { font-size: 12.5px; }
 .zb-admin .font-bold { font-weight: 600; }
 .zb-admin .text-gray-900, .zb-admin .text-gray-800, .zb-admin .text-gray-700 { color: var(--zb-ink); }
 .zb-admin .text-gray-600, .zb-admin .text-gray-500 { color: var(--zb-ink-sub); }
@@ -2950,9 +2950,9 @@ body:has(.zb-admin) .site-footer {
 .zb-admin .border-gray-200, .zb-admin .border-gray-100, .zb-admin .border-gray-300 { border-color: var(--zb-line); }
 
 /* 표 — 머리는 작은 회청색 라벨, 줄은 헤어라인 */
-.zb-admin table { font-size: 13px; }
+.zb-admin table { font-size: 14.5px; }
 .zb-admin thead tr { background: transparent !important; }
-.zb-admin th { font-size: 11px; font-weight: 600; letter-spacing: 0.04em; color: var(--zb-ink-sub); }
+.zb-admin th { font-size: 12.5px; font-weight: 600; letter-spacing: 0.04em; color: var(--zb-ink-sub); }
 .zb-admin tbody tr { border-color: rgba(216, 206, 187, 0.5) !important; }
 .zb-admin tbody tr.bg-gray-100 { background: rgba(216, 206, 187, 0.35); color: var(--zb-ink-dis); }
 
@@ -2968,10 +2968,10 @@ body:has(.zb-admin) .site-footer {
   border-radius: 0 !important;
   background: transparent;
   padding: 4px 2px;
-  font-size: 13px;
+  font-size: 15px;
   color: var(--zb-ink);
 }
-.zb-admin input[type="date"] { font-size: 12px; color: var(--zb-ink-sub); }
+.zb-admin input[type="date"] { font-size: 14px; color: var(--zb-ink-sub); }
 .zb-admin input::placeholder { color: var(--zb-ink-dis); }
 .zb-admin input:focus, .zb-admin select:focus {
   outline: none;
@@ -3005,14 +3005,14 @@ body:has(.zb-admin) .site-footer {
 .zb-admin .border-brand\/30 { border-color: rgba(13, 79, 85, 0.3); }
 
 /* 탭 */
-.zb-admin [role="tab"] { font-size: 13px; font-weight: 500; }
+.zb-admin [role="tab"] { font-size: 15px; font-weight: 500; }
 .zb-admin [role="tab"][aria-selected="true"] { font-weight: 600; color: var(--zb-teal); border-color: var(--zb-teal); }
 
 /* 왼쪽 메뉴 */
 .zb-admin .admin-sidebar a { border-radius: 4px; font-weight: 500; color: var(--zb-ink); }
 .zb-admin .admin-sidebar a:hover { background: transparent; color: var(--zb-teal); }
 .zb-admin .admin-sidebar a.bg-brand { background: var(--zb-teal-soft); color: var(--zb-teal); font-weight: 600; }
-.zb-admin .admin-sidebar p { color: var(--zb-ink-sub); font-weight: 600; font-size: 11px; letter-spacing: 0.04em; }
+.zb-admin .admin-sidebar p { color: var(--zb-ink-sub); font-weight: 600; font-size: 12px; letter-spacing: 0.04em; }
 
 /* 대시보드 카드(RippleDotCard) — 핫핑크 면 대신 Z-Board 박스 */
 .zb-admin .zb-dot-card {
@@ -3141,9 +3141,27 @@ button.brand-admin {
   font: inherit;
   -webkit-tap-highlight-color: transparent;
 }
-.brand-admin .logo-mark polygon {
-  fill: #1fa35c;
+
+/* 관리자 글자 크기 보정 (2026-10-10) — PC·폰 모두 너무 작다는 지적.
+   Tailwind 기본·임의 크기 클래스를 한 단계씩 키우고, 폰에서는 입력칸을 16px로(작으면 아이폰이 화면을 확대함). */
+.zb-admin .text-base { font-size: 16.5px; }
+.zb-admin .text-lg { font-size: 18.5px; }
+.zb-admin .text-2xl { font-size: 24px; }
+.zb-admin .text-\[11px\] { font-size: 12.5px; }
+.zb-admin .text-\[12px\] { font-size: 13.5px; }
+.zb-admin .text-\[13px\] { font-size: 14.5px; }
+.zb-admin .text-\[15px\] { font-size: 16.5px; }
+.zb-admin button,
+.zb-admin select,
+.zb-admin input,
+.zb-admin textarea { font-size: max(1em, 14px); }
+@media (max-width: 767px) {
+  .zb-admin { font-size: 15.5px; }
+  .zb-admin input,
+  .zb-admin select,
+  .zb-admin textarea { font-size: 16px; }
 }
-.brand-admin:hover .logo-mark polygon {
-  fill: #178a4c;
-}
+
+/* 관리·글쓰기 화면의 로고 색 = 관리자에서 쓰는 어두운 진청록 (2026-10-10 지시) */
+.brand-admin .logo-mark polygon { fill: #0d4f55; }
+.brand-admin:hover .logo-mark polygon { fill: #14656c; }
