@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/session';
 import { ROLES } from '@/lib/roles';
-import { CHANNELS, channelReady, getSocialConfig, postNewArticlesToSocial, recentSocialLog, setSocialConfig } from '@/lib/socialPost';
+import { CHANNELS, channelReady, getSocialConfig, postNewArticlesToSocial, recentSocialLog, recentYoutubeKits, setSocialConfig } from '@/lib/socialPost';
 
 // 관리자 "SNS 자동 게시" — 채널 켜기/끄기와 최근 게시 기록 (편집장 전용, 2026-10-10)
 export const dynamic = 'force-dynamic';
@@ -17,6 +17,7 @@ export async function GET() {
   return NextResponse.json({
     channels: CHANNELS.map((c) => ({ key: c.key, label: c.label, ready: channelReady(c.key), enabled: config[c.key], env: c.env })),
     log: await recentSocialLog(),
+    youtube: await recentYoutubeKits(),
   });
 }
 

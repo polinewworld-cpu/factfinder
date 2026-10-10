@@ -178,3 +178,20 @@ export async function recentSocialLog(limit = 15) {
   const titles = new Map(arts.map((a) => [a.id, a.title]));
   return rows.map((r) => ({ articleId: r.id.slice(5), title: titles.get(r.id.slice(5)) ?? '(삭제된 기사)', result: r.data as unknown as Record_, at: r.createdAt }));
 }
+
+// 유튜브 커뮤니티 게시물은 공식 API가 없어 자동 게시가 안 됨 → 관리자 화면에서 복사해 붙여 넣게 문구·사진을 준비해 둠 (2026-10-10)
+export async function recentYoutubeKits(limit = 10) {
+  const arts = await prisma.article.findMany({
+    where: { status: 'PUBLISHED' },
+    select: { id: true, title: true, excerpt: true, content: true, coverImageUrl: true, publishedAt: true },
+    orderBy: { publishedAt: 'desc' },
+    take: limit,
+  });
+  return arts.map((a) => ({
+    id: a.id,
+    title: a.title,
+    publishedAt: a.publishedAt,
+    text: `${a.title.trim()}\n\n${clip(summary(a), 300)}\n\n${articleUrl(a)}`,
+    image: imageUrl(a),
+  }));
+}
