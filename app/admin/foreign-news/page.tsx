@@ -92,7 +92,8 @@ function Report({ r }: { r: ForeignNewsReport }) {
           <ul className="space-y-1.5">
             {r.briefs.map((b) => (
               <li key={b.url} className="text-sm text-gray-800 leading-snug">
-                · {b.text}{' '}
+                · {b.text}
+                {b.advice ? <span className="text-gray-600"> {b.advice}</span> : null}{' '}
                 <a href={b.url} target="_blank" rel="noopener noreferrer" className="text-xs font-semibold underline whitespace-nowrap" style={{ color: MARK }}>
                   {b.outlet} ↗
                 </a>
@@ -112,11 +113,15 @@ function Report({ r }: { r: ForeignNewsReport }) {
         </Card>
       )}
 
-      {r.closing && <p className="text-sm text-gray-800 leading-relaxed">{r.closing}</p>}
+      {r.closing && (
+        <section className="border rounded-xl p-4">
+          <p className="text-sm text-gray-800 leading-relaxed">{r.closing}</p>
+        </section>
+      )}
 
-      {r.picks.length > 0 && (
+      {(r.briefs.length > 0 || r.picks.length > 0) && (
         <p className="text-xs text-gray-500">
-          참고한 현지 언론: {Array.from(new Set(r.picks.map((p) => p.outlet))).join(' · ')} — 외신 {r.fetched}건 중 한국 관련 후보 {r.candidates}건
+          참고한 현지 언론: {Array.from(new Set([...r.briefs.map((b) => b.outlet), ...r.picks.map((p) => p.outlet)])).join(' · ')} — 외신 {r.fetched}건 중 한국 관련 후보 {r.candidates}건
         </p>
       )}
       {r.sourceErrors.length > 0 && (

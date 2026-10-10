@@ -452,7 +452,11 @@ export default function AnalyticsView({ view }: { view: 'visits' | 'trends' }) {
             </Card>
           )}
 
-          {r.ai?.closing && <p className="text-sm text-gray-800 leading-relaxed">{r.ai.closing}</p>}
+          {r.ai?.closing && (
+            <section className="border rounded-xl p-4">
+              <p className="text-sm text-gray-800 leading-relaxed">{r.ai.closing}</p>
+            </section>
+          )}
 
 
             </>
