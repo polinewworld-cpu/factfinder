@@ -154,7 +154,7 @@
 1. 직전에 옛 사이트 새 기사 마저 가져오기(legacy-import) → 옛 사진 옮기기
 2. Cloudflare 연결(무료, 사진 캐시로 Supabase 전송량 절약, AI 봇 차단 끄기, Bot Fight Mode 켜기)
 3. Render 사용자 도메인, `NEXTAUTH_URL` 변경, 구글 OAuth 승인 주소 추가, cron-job.org 주소 변경
-4. 구글 서치콘솔·네이버 서치어드바이저에 sitemap.xml·news-sitemap.xml·rss.xml 제출, 뉴스 검색제휴 주소 변경 신고
+4. (선택) 서치콘솔·네이버에 sitemap.xml 한 번 알리기 — 도메인이 그대로라 재등록·검색제휴 신고는 불필요. 옛 기사 주소는 301로 새 주소 연결, 소유 확인 태그도 새 사이트에 있음 (2026-10-10 정정)
 5. 이니시스 signKey 재발급 → Render, 다다미디어 결제 페이지 중지
 
 **기능**
