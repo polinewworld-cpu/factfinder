@@ -421,8 +421,10 @@ export default function AnalyticsView({ view }: { view: 'visits' | 'trends' }) {
             </section>
           )}
 
-          {!r.ai?.ideas?.length && r.aiError && (
-            <p className="text-xs text-gray-500">기사 아이디어를 만들지 못했습니다: {r.aiError}</p>
+          {r.aiError && (
+            <p className="text-xs text-amber-700">
+              {r.ai?.ideas?.length ? '새 보고를 만들지 못해 지난번 보고를 그대로 보여 드려요' : '기사 아이디어를 만들지 못했습니다'}: {r.aiError}
+            </p>
           )}
 
           {r.ai?.outletComparison && r.ai.outletComparison.length > 0 && (

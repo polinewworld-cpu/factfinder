@@ -203,7 +203,7 @@ ${JSON.stringify(dataForPrompt)}`;
         body: JSON.stringify({
           contents: [{ role: 'user', parts: [{ text: prompt }] }],
           // responseSchema로 형식을 강제 — 문장 속 따옴표 등으로 JSON이 깨지는 것 방지
-          generationConfig: { temperature: 0.5, responseMimeType: 'application/json', responseSchema: RESPONSE_SCHEMA },
+          generationConfig: { temperature: 0.5, maxOutputTokens: 16000, responseMimeType: 'application/json', responseSchema: RESPONSE_SCHEMA },
         }),
         signal: AbortSignal.timeout(120_000),
       }).catch((e) => {
@@ -218,7 +218,7 @@ ${JSON.stringify(dataForPrompt)}`;
           JSON.parse(text.replace(/^```json\s*|```\s*$/g, ''));
           break outer;
         } catch {
-          lastError = '답변 형식 오류';
+          lastError = body.candidates?.[0]?.finishReason === 'MAX_TOKENS' ? '답변이 너무 길어 중간에 잘렸습니다' : '답변 형식 오류';
           text = '';
           continue; // 형식이 깨졌으면 다시 요청
         }
