@@ -68,7 +68,7 @@ function Report({ r, showMeta = true }: { r: ForeignNewsReport; showMeta?: boole
     <div className="space-y-4">
       {r.greeting && <p className="text-sm font-semibold text-gray-900 leading-relaxed">{r.greeting}</p>}
 
-      {(r.localColor || r.overview) && (
+      {(r.localColor || r.overview || (r.overviewItems ?? []).length > 0) && (
         <Card title="오늘 현지 이야기">
           {showMeta && (
             <p className="text-xs text-gray-400 mb-2">
@@ -81,10 +81,20 @@ function Report({ r, showMeta = true }: { r: ForeignNewsReport; showMeta?: boole
               <LinkedText text={r.localColor} />
             </p>
           )}
-          {r.overview && (
-            <p className="text-sm text-gray-800 leading-relaxed">
-              <LinkedText text={r.overview} />
-            </p>
+          {(r.overviewItems ?? []).length > 0 ? (
+            <ul className="space-y-1.5">
+              {(r.overviewItems ?? []).map((t, i) => (
+                <li key={i} className="text-sm text-gray-800 leading-relaxed">
+                  · <LinkedText text={t} />
+                </li>
+              ))}
+            </ul>
+          ) : (
+            r.overview && (
+              <p className="text-sm text-gray-800 leading-relaxed">
+                <LinkedText text={r.overview} />
+              </p>
+            )
           )}
         </Card>
       )}
