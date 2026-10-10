@@ -19,7 +19,7 @@ export type MasonryVideo = {
 const KIND_LABEL: Record<MasonryVideo['kind'], string> = {
   SHORT: '쇼츠',
   VIDEO: '영상',
-  LIVE: '라이브',
+  LIVE: '정치신세계',
 };
 
 function videoUrl(video: MasonryVideo) {
