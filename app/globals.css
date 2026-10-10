@@ -3113,8 +3113,7 @@ body:has(.zb-admin) .site-footer {
    좁은 화면에서 왼쪽 세로 메뉴가 화면의 절반을 차지하고 표·입력칸이 밖으로 삐져나오던 문제.
    메뉴는 AdminSidebar에서 위쪽 가로 스크롤로 바뀌고, 여기서는 본문이 화면 안에 들어오게 다듬는다. */
 @media (max-width: 767px) {
-  .zb-admin .admin-menu-list { scrollbar-width: none; padding-bottom: 4px; border-bottom: 1px solid var(--zb-line); }
-  .zb-admin .admin-menu-list::-webkit-scrollbar { display: none; }
+  .zb-admin .admin-mobilebar { border-bottom: 1px solid var(--zb-line); margin-bottom: 8px; }
   .zb-admin main { padding-left: 0; padding-right: 0; }
   .zb-admin input,
   .zb-admin select,

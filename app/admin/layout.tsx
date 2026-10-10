@@ -19,7 +19,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   return (
     <div className="page-shell backstage zb-admin flex flex-col md:flex-row items-stretch md:items-start gap-2 md:gap-6">
-      <AdminSidebar isChief={isChief} />
+      <AdminSidebar isChief={isChief} me={{ name: user.name, email: user.email, image: user.image }} />
       <div className="min-w-0 w-full flex-1">
         <AdminGate isChief={isChief}>{children}</AdminGate>
       </div>
