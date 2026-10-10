@@ -11,7 +11,9 @@ export const isGhostWriterEmail = (email?: string | null) => !!email && email.en
 
 export const GHOST_WHERE = { email: { endsWith: GHOST_EMAIL_SUFFIX }, ghost: false } as const;
 
-export async function createGhostWriter(name: string, writerTitle?: string | null, image?: string | null) {
+export const MEMO_MAX = 20; // 편집장 메모(구분용) 글자 수 (2026-10-10)
+
+export async function createGhostWriter(name: string, writerTitle?: string | null, image?: string | null, memo?: string | null) {
   const clean = name.trim().slice(0, 30);
   if (!clean) throw new Error('이름을 입력하세요');
   // 같은 이름이 이미 있으면 닉네임 충돌 — 숫자를 붙이지 않고 알려 줌
@@ -28,6 +30,7 @@ export async function createGhostWriter(name: string, writerTitle?: string | nul
       role: 'REPORTER',
       writerTitle: writerTitle?.trim() || null,
       image: image?.trim() || null,
+      writerMemo: memo?.trim().slice(0, MEMO_MAX) || null,
     },
   });
 }

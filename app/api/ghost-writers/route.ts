@@ -20,6 +20,7 @@ export async function GET() {
       name: true,
       nickname: true,
       writerTitle: true,
+      writerMemo: true,
       image: true,
       bankAccount: true,
       _count: { select: { articles: true } },
@@ -39,8 +40,8 @@ export async function POST(req: NextRequest) {
   if (!(await chief())) return NextResponse.json({ error: '편집장만 등록할 수 있습니다' }, { status: 403 });
   const b = await req.json().catch(() => ({}));
   try {
-    const u = await createGhostWriter(String(b.name ?? ''), b.writerTitle, b.image);
-    return NextResponse.json({ id: u.id, displayName: u.nickname || u.name, writerTitle: u.writerTitle, image: u.image }, { status: 201 });
+    const u = await createGhostWriter(String(b.name ?? ''), b.writerTitle, b.image, b.writerMemo);
+    return NextResponse.json({ id: u.id, displayName: u.nickname || u.name, writerTitle: u.writerTitle, writerMemo: u.writerMemo, image: u.image, articleCount: 0 }, { status: 201 });
   } catch (e) {
     return NextResponse.json({ error: e instanceof Error ? e.message : '등록 실패' }, { status: 400 });
   }

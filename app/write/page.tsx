@@ -13,6 +13,8 @@ import CoverFocalEditor from '@/components/CoverFocalEditor';
 import { ComposerFormatTools, ComposerSelectionToolbar } from '@/components/ComposerFormatToolbar';
 import { cardImageRatio, FEATURED_CARD_RATIO, WIDE_CARD_RATIO, isSquareAssignedCrop } from '@/lib/cardImage';
 import { toFrenchBrackets, replaceFrenchBracketsInTree } from '@/lib/frenchBrackets';
+import GhostWriterPicker, { type GhostWriterOption } from '@/components/GhostWriterPicker';
+import { UserAvatar } from '@/components/InitialAvatar';
 
 type Me = { id: string; role: string; name?: string; nickname?: string | null; email?: string };
 type Category = { id: string; name: string; slug: string };
@@ -46,8 +48,8 @@ export default function WritePage() {
   // 유령기자 (2026-10-09) — 편집장이 자기 계정으로 외부 기고를 올릴 때 글쓴이를 "유령기자"로 고름(원고료 정산도 그 사람 앞으로)
   const [authorMode, setAuthorMode] = useState<'name' | 'ghost'>('name');
   const [ghostWriterId, setGhostWriterId] = useState('');
-  const [ghostWriters, setGhostWriters] = useState<{ id: string; displayName: string; writerTitle: string | null }[]>([]);
-  const [newGhost, setNewGhost] = useState<{ name: string; title: string } | null>(null);
+  const [ghostWriters, setGhostWriters] = useState<GhostWriterOption[]>([]);
+  const [ghostPickerOpen, setGhostPickerOpen] = useState(false); // 유령기자 고르기 레이어 (2026-10-10, 드롭박스 대체)
   const [ghostMsg, setGhostMsg] = useState('');
   const originalGhostRef = useRef('');
   const [keywordIds, setKeywordIds] = useState<string[]>([]);
@@ -1216,62 +1218,46 @@ export default function WritePage() {
                   checked={authorMode === 'ghost'}
                   onChange={() => {
                     setAuthorMode('ghost');
+                    if (!ghostWriterId) setGhostPickerOpen(true);
                     markDirty();
                   }}
                 />
                 유령기자
               </label>
-              {authorMode === 'ghost' && (
-                <select
-                  value={ghostWriterId}
-                  onChange={(e) => {
-                    if (e.target.value === '__new') {
-                      setNewGhost({ name: '', title: '' });
-                      return;
-                    }
-                    setGhostWriterId(e.target.value);
-                    markDirty();
-                  }}
-                  className="h-8 border border-gray-300 rounded px-2 text-[13px] bg-transparent max-w-[220px]"
-                >
-                  <option value="">고르세요</option>
-                  {ghostWriters.map((g) => (
-                    <option key={g.id} value={g.id}>
-                      {g.displayName}
-                      {g.writerTitle ? ` (${g.writerTitle})` : ''}
-                    </option>
-                  ))}
-                  <option value="__new">+ 새 유령기자</option>
-                </select>
-              )}
-              {newGhost && (
-                <span className="inline-flex items-center gap-1">
-                  <input value={newGhost.name} onChange={(e) => setNewGhost({ ...newGhost, name: e.target.value })} placeholder="이름" maxLength={30} />
-                  <input value={newGhost.title} onChange={(e) => setNewGhost({ ...newGhost, title: e.target.value })} placeholder="직함 (선택)" maxLength={40} />
+              {authorMode === 'ghost' && (() => {
+                const g = ghostWriters.find((w) => w.id === ghostWriterId);
+                return (
                   <button
                     type="button"
-                    className="text-xs font-bold border rounded px-2 h-8"
-                    onClick={async () => {
-                      setGhostMsg('');
-                      const res = await fetch('/api/ghost-writers', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ name: newGhost.name, writerTitle: newGhost.title }),
-                      });
-                      const d = await res.json().catch(() => ({}));
-                      if (!res.ok) return setGhostMsg(d.error ?? '등록 실패');
-                      setGhostWriters((l) => [...l, { id: d.id, displayName: d.displayName, writerTitle: d.writerTitle }]);
-                      setGhostWriterId(d.id);
-                      setNewGhost(null);
-                      markDirty();
-                    }}
+                    onClick={() => setGhostPickerOpen(true)}
+                    className="inline-flex items-center gap-2 h-8 border border-gray-300 rounded px-2 text-[13px] font-normal hover:border-brand max-w-[260px]"
                   >
-                    등록
+                    {g ? (
+                      <>
+                        <UserAvatar image={g.image} seed={g.id} name={g.displayName} className="w-6 h-6 rounded-full object-cover text-[11px]" />
+                        <span className="truncate">
+                          {g.displayName}
+                          {g.writerTitle ? ` · ${g.writerTitle}` : ''}
+                        </span>
+                      </>
+                    ) : (
+                      <span className="text-gray-500">유령기자 고르기…</span>
+                    )}
                   </button>
-                  <button type="button" className="text-xs text-gray-500 px-1" onClick={() => setNewGhost(null)}>
-                    취소
-                  </button>
-                </span>
+                );
+              })()}
+              {ghostPickerOpen && (
+                <GhostWriterPicker
+                  writers={ghostWriters}
+                  selectedId={ghostWriterId}
+                  onPick={(id) => {
+                    setGhostWriterId(id);
+                    setGhostMsg('');
+                    markDirty();
+                  }}
+                  onCreated={(w) => setGhostWriters((l) => [...l, w])}
+                  onClose={() => setGhostPickerOpen(false)}
+                />
               )}
               {ghostMsg && <span className="text-xs text-red-600 font-normal">{ghostMsg}</span>}
             </div>

@@ -70,6 +70,7 @@ model User {
   createdAt                 DateTime                   @default(now())
   // 유령기자(로그인 없는 필자 — …@legacy.invalid 계정: 외부 기고자·옛 사이트 기자) 프로필·정산 정보 (2026-10-09)
   writerTitle               String? // 직함 — 바이라인에 "이름 직함"으로 (예: 前 ○○대 교수)
+  writerMemo                String? // 편집장용 짧은 메모(20자) — 유령기자 고를 때 구분용, 사이트엔 안 나옴 (2026-10-10)
   bankName                  String? // 원고료 정산용 — 편집장만 열람
   bankAccount               String?
   accountHolder             String?

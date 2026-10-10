@@ -7,11 +7,12 @@ import { closeOnBackdrop } from '@/lib/backdrop';
 
 // 회원/기자관리 → 유령기자 (2026-10-09 사장님 정의) — 로그인 없이 이름으로만 존재하는 필자(외부 기고자·옛 사이트 기자).
 // 이름·직함·프로필 사진(바이라인), 원고료 정산용 계좌. (주민등록증 사진 기능은 10-09 삭제)
-type Row = { id: string; displayName: string; writerTitle: string | null; image: string | null; articleCount: number; hasBank: boolean };
+type Row = { id: string; displayName: string; writerTitle: string | null; writerMemo: string | null; image: string | null; articleCount: number; hasBank: boolean };
 type Detail = {
   id: string;
   displayName: string;
   writerTitle: string | null;
+  writerMemo: string | null;
   image: string | null;
   bankName: string | null;
   bankAccount: string | null;
@@ -23,7 +24,7 @@ const input = 'w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm outl
 
 function EditPanel({ id, onClose, onChanged }: { id: string; onClose: () => void; onChanged: () => void }) {
   const [d, setD] = useState<Detail | null>(null);
-  const [form, setForm] = useState({ name: '', writerTitle: '', image: '', bankName: '', bankAccount: '', accountHolder: '' });
+  const [form, setForm] = useState({ name: '', writerTitle: '', writerMemo: '', image: '', bankName: '', bankAccount: '', accountHolder: '' });
   const [msg, setMsg] = useState('');
   const [busy, setBusy] = useState(false);
   const photoRef = useRef<HTMLInputElement>(null);
@@ -36,6 +37,7 @@ function EditPanel({ id, onClose, onChanged }: { id: string; onClose: () => void
     setForm({
       name: data.displayName,
       writerTitle: data.writerTitle ?? '',
+      writerMemo: data.writerMemo ?? '',
       image: data.image ?? '',
       bankName: data.bankName ?? '',
       bankAccount: data.bankAccount ?? '',
@@ -117,6 +119,10 @@ function EditPanel({ id, onClose, onChanged }: { id: string; onClose: () => void
                 <span className="text-xs text-gray-500">직함 (바이라인: &quot;이름 직함&quot; — 비우면 &quot;이름 기자&quot;)</span>
                 <input value={form.writerTitle} onChange={(e) => setForm({ ...form, writerTitle: e.target.value })} className={input} placeholder="예) 前 ○○대 교수, 칼럼니스트" maxLength={40} />
               </label>
+              <label className="block">
+                <span className="text-xs text-gray-500">메모 (20자 · 편집장만 봄, 기사 쓸 때 고르는 창에 같이 나옴)</span>
+                <input value={form.writerMemo} onChange={(e) => setForm({ ...form, writerMemo: e.target.value })} className={input} placeholder="예) 법률 칼럼 · 격주 금요일" maxLength={20} />
+              </label>
             </section>
 
             <section className="space-y-3 border-t pt-4">
@@ -160,7 +166,7 @@ export default function GhostWritersPage() {
   const [rows, setRows] = useState<Row[] | null>(null);
   const [q, setQ] = useState('');
   const [editId, setEditId] = useState<string | null>(null);
-  const [newForm, setNewForm] = useState({ name: '', writerTitle: '' });
+  const [newForm, setNewForm] = useState({ name: '', writerTitle: '', writerMemo: '' });
   const [msg, setMsg] = useState('');
 
   async function load() {
@@ -176,12 +182,12 @@ export default function GhostWritersPage() {
     const res = await fetch('/api/ghost-writers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(newForm) });
     const d = await res.json().catch(() => ({}));
     if (!res.ok) return setMsg(d.error ?? '등록 실패');
-    setNewForm({ name: '', writerTitle: '' });
+    setNewForm({ name: '', writerTitle: '', writerMemo: '' });
     await load();
     setEditId(d.id);
   }
 
-  const shown = (rows ?? []).filter((r) => !q.trim() || `${r.displayName} ${r.writerTitle ?? ''}`.includes(q.trim()));
+  const shown = (rows ?? []).filter((r) => !q.trim() || `${r.displayName} ${r.writerTitle ?? ''} ${r.writerMemo ?? ''}`.includes(q.trim()));
 
   return (
     <main className="max-w-5xl mx-auto px-4 py-8">
@@ -193,7 +199,8 @@ export default function GhostWritersPage() {
       <div className="border rounded-xl p-3 mb-4 flex flex-wrap items-center gap-2">
         <span className="text-sm font-semibold">새 유령기자</span>
         <input value={newForm.name} onChange={(e) => setNewForm({ ...newForm, name: e.target.value })} className="border rounded-lg px-2 py-1 text-sm w-36" placeholder="이름" maxLength={30} />
-        <input value={newForm.writerTitle} onChange={(e) => setNewForm({ ...newForm, writerTitle: e.target.value })} className="border rounded-lg px-2 py-1 text-sm w-56" placeholder="직함 (선택)" maxLength={40} />
+        <input value={newForm.writerTitle} onChange={(e) => setNewForm({ ...newForm, writerTitle: e.target.value })} className="border rounded-lg px-2 py-1 text-sm w-48" placeholder="직함 (선택)" maxLength={40} />
+        <input value={newForm.writerMemo} onChange={(e) => setNewForm({ ...newForm, writerMemo: e.target.value })} className="border rounded-lg px-2 py-1 text-sm w-44" placeholder="메모 20자 (선택)" maxLength={20} />
         <button type="button" onClick={create} disabled={!newForm.name.trim()} className="text-xs font-bold text-white bg-brand rounded-lg px-3 py-1.5 disabled:opacity-40">
           등록
         </button>
@@ -210,6 +217,7 @@ export default function GhostWritersPage() {
               <tr className="text-left text-xs text-gray-500 border-b">
                 <th className="py-2 pr-3">이름</th>
                 <th className="py-2 pr-3">직함</th>
+                <th className="py-2 pr-3">메모</th>
                 <th className="py-2 pr-3 text-right">기사</th>
                 <th className="py-2 pr-3">계좌</th>
                 <th className="py-2"></th>
@@ -225,6 +233,7 @@ export default function GhostWritersPage() {
                     </span>
                   </td>
                   <td className="py-2 pr-3 text-gray-600">{r.writerTitle ?? '-'}</td>
+                  <td className="py-2 pr-3 text-gray-500 text-xs">{r.writerMemo ?? ''}</td>
                   <td className="py-2 pr-3 text-right tabular-nums">{r.articleCount.toLocaleString()}</td>
                   <td className="py-2 pr-3">{r.hasBank ? '등록' : <span className="text-gray-400">없음</span>}</td>
                   <td className="py-2 text-right">

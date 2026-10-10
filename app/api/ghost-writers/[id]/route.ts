@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { ROLES } from '@/lib/roles';
 import { getCurrentUser } from '@/lib/session';
-import { GHOST_WHERE } from '@/lib/ghostWriter';
+import { GHOST_WHERE, MEMO_MAX } from '@/lib/ghostWriter';
 import { nicknameHolder } from '@/lib/nicknameHolder';
 import { deleteOrRetire } from '@/lib/retireUser';
 
@@ -22,6 +22,7 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
       name: true,
       nickname: true,
       writerTitle: true,
+      writerMemo: true,
       image: true,
       bankName: true,
       bankAccount: true,
@@ -53,6 +54,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   for (const k of ['writerTitle', 'image', 'bankName', 'bankAccount', 'accountHolder'] as const) {
     if (has(k)) data[k] = str(b[k]);
   }
+  if (has('writerMemo')) data.writerMemo = str(b.writerMemo)?.slice(0, MEMO_MAX) ?? null;
   await prisma.user.update({ where: { id: u.id }, data });
   return NextResponse.json({ ok: true });
 }
