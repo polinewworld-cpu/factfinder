@@ -151,7 +151,7 @@ export default function ProfilePage() {
       <p className="text-xs text-gray-400 mb-1">이메일</p>
       <p className="text-sm text-gray-700 mb-4">{me.email}</p>
 
-      <p className="text-xs text-gray-400 mb-1">닉네임 (필수, 중복 불가 · 댓글에 표시됩니다)</p>
+      <p className="text-xs text-gray-400 mb-1">닉네임 (필수 · 댓글과 기사에 표시됩니다)</p>
       <input
         value={nickname}
         onChange={(e) => setNickname(e.target.value)}

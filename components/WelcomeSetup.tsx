@@ -6,7 +6,7 @@ import InitialAvatar from '@/components/InitialAvatar';
 import { usableAvatarUrl } from '@/lib/avatarGradient';
 
 // 첫 가입 직후(닉네임 미설정 회원) 사이트 어느 페이지로 들어오든 본문 대신 이 화면을 보여줌.
-// 닉네임(필수·중복불가) + 프로필사진(구글 사진 기본값) 설정 → 저장하면 새로고침되어 원래 보던 페이지로 복귀.
+// 닉네임(필수, 10-10부터 중복 허용) + 프로필사진(구글 사진 기본값) 설정 → 저장하면 새로고침되어 원래 보던 페이지로 복귀.
 // 이후 수정은 /profile(내 프로필)에서.
 // 2026-10-08: 마지막 단계에서 [독자회원가입] / [기자회원가입] 선택 —
 //   독자 = 토요일 아침 뉴스레터 수신(newsletterOptIn) / 기자 = 기자 신청(편집장 승인 대기, 기존 /api/reporter-application)
@@ -102,7 +102,7 @@ export default function WelcomeSetup({
           </div>
         </div>
 
-        <p className="text-xs text-gray-400 mb-1">닉네임 (필수, 중복 불가 · 댓글에 표시됩니다)</p>
+        <p className="text-xs text-gray-400 mb-1">닉네임 (필수 · 댓글과 기사에 표시됩니다)</p>
         <input
           value={nickname}
           onChange={(e) => setNickname(e.target.value)}

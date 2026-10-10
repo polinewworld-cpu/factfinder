@@ -27,5 +27,10 @@ export async function GET(req: NextRequest) {
     ? await prisma.photo.findMany({ where: { sourceUrl: { in: urls } }, select: { sourceUrl: true } })
     : [];
   const inBank = new Set(existing.map((e) => e.sourceUrl));
-  return NextResponse.json({ ...result, items: result.items.map((i) => ({ ...i, inBank: inBank.has(i.pageUrl) })) });
+  // 최신 사진 먼저 (촬영일 있는 것끼리 최신순, 날짜 없는 건 뒤로 — 원래 순서 유지) (2026-10-10)
+  const items = result.items
+    .map((i, idx) => ({ ...i, inBank: inBank.has(i.pageUrl), idx }))
+    .sort((a, b) => (b.takenAt ?? '').localeCompare(a.takenAt ?? '') || a.idx - b.idx)
+    .map(({ idx: _idx, ...i }) => i);
+  return NextResponse.json({ ...result, items });
 }

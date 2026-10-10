@@ -1180,7 +1180,7 @@ export default function PhotoBank({
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
   const [usage, setUsage] = useState<'' | 'unused' | 'not7d'>('');
-  const [sort, setSort] = useState<'created' | 'taken' | 'leastUsed'>('created');
+  const [sort, setSort] = useState<'latest' | 'created' | 'taken' | 'leastUsed'>('latest'); // 기본 = 최신 사진순 (2026-10-10)
   const [showFilters, setShowFilters] = useState(false);
 
   const params = useMemo(() => {
@@ -1342,6 +1342,7 @@ export default function PhotoBank({
       <div className="flex flex-wrap gap-2">
         <input value={q} onChange={(e) => setQ(e.target.value)} className={`${input} flex-1 min-w-[200px]`} placeholder="인물·주제로 검색 — 내 뱅크와 외부에서 안전한 사진만" />
         <select value={sort} onChange={(e) => setSort(e.target.value as typeof sort)} className="border border-gray-200 rounded-lg px-2 text-sm bg-white">
+          <option value="latest">최신 사진순</option>
           <option value="created">최근 등록순</option>
           <option value="taken">최근 촬영순</option>
           <option value="leastUsed">덜 쓴 순</option>

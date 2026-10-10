@@ -20,7 +20,7 @@ export type PhotoSearch = {
   from?: string; // 촬영일 YYYY-MM-DD
   to?: string;
   usage?: 'unused' | 'not7d' | '';
-  sort?: 'taken' | 'created' | 'leastUsed';
+  sort?: 'latest' | 'taken' | 'created' | 'leastUsed'; // latest(기본) = 촬영일, 없으면 등록일 기준 최신순 (2026-10-10)
 };
 
 export function searchFromParams(sp: URLSearchParams): PhotoSearch {
@@ -34,7 +34,7 @@ export function searchFromParams(sp: URLSearchParams): PhotoSearch {
     from: sp.get('from') || undefined,
     to: sp.get('to') || undefined,
     usage: (sp.get('usage') as PhotoSearch['usage']) || '',
-    sort: (sp.get('sort') as PhotoSearch['sort']) || 'created',
+    sort: (sp.get('sort') as PhotoSearch['sort']) || 'latest',
   };
 }
 
@@ -86,7 +86,14 @@ export async function searchPhotos(s: PhotoSearch, take = 200) {
         ? [{ usages: { _count: 'asc' } }, { createdAt: 'desc' }]
         : [{ createdAt: 'desc' }];
 
-  return prisma.photo.findMany({ where: and.length ? { AND: and } : {}, include: PHOTO_INCLUDE, orderBy, take });
+  const where = and.length ? { AND: and } : {};
+  if (s.sort === 'latest') {
+    // 최신 사진순(기본, 2026-10-10 사장님): 촬영일이 있으면 촬영일, 없으면 등록일로 — DB 정렬로는 못 섞어서 넉넉히 받아 정렬
+    const rows = await prisma.photo.findMany({ where, include: PHOTO_INCLUDE, orderBy: [{ createdAt: 'desc' }], take: Math.min(take * 5, 1500) });
+    const when = (p: (typeof rows)[number]) => (p.takenAt ?? p.createdAt).getTime();
+    return rows.sort((a, b) => when(b) - when(a)).slice(0, take);
+  }
+  return prisma.photo.findMany({ where, include: PHOTO_INCLUDE, orderBy, take });
 }
 
 // 우리 저장소 주소만 비교(절대주소로 들어간 경우 대비)

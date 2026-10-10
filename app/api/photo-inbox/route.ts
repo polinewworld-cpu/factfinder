@@ -15,7 +15,8 @@ async function chief() {
 export async function GET() {
   if (!(await chief())) return NextResponse.json({ error: '편집장만 볼 수 있습니다' }, { status: 403 });
   const [items, config, counts] = await Promise.all([
-    prisma.photoInbox.findMany({ where: { status: 'PENDING' }, orderBy: { createdAt: 'desc' }, take: 300 }),
+    // 최신 사진 먼저 — 촬영일 최신순, 촬영일 없으면 뒤로 (2026-10-10)
+    prisma.photoInbox.findMany({ where: { status: 'PENDING' }, orderBy: [{ takenAt: { sort: 'desc', nulls: 'last' } }, { createdAt: 'desc' }], take: 300 }),
     prisma.siteConfig.findUnique({ where: { id: 'singleton' }, select: { photoCollectMinutes: true, photoCollectAt: true } }),
     prisma.photoInbox.groupBy({ by: ['status'], _count: true }),
   ]);
