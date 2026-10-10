@@ -26,6 +26,7 @@ export type GeminiAnalysis = {
   headline: string;
   ideas?: ArticleIdea[];
   outletComparison?: string[];
+  closing?: string; // 오진실 기자의 마무리 인사 한두 문장
   chatter?: string[]; // 오진실 기자의 수다 — 한국 뉴스 중 눈에 띄는 비정치 이슈 한마디씩(중요도 순 아님)
   whatWorked: string[];
   whatDidnt: string[];
@@ -56,6 +57,7 @@ const RESPONSE_SCHEMA = {
     ideas: { type: 'ARRAY', items: IDEA },
     outletComparison: LIST,
     chatter: LIST,
+    closing: { type: 'STRING' },
     whatWorked: LIST,
     whatDidnt: LIST,
     scheduleStrategy: LIST,
@@ -154,6 +156,8 @@ export async function analyzeWithGemini(report: AnalyticsReport, media: MediaWat
 
 수다(chatter): 위 두 가지와 별개로, 한국 뉴스(네이버 많이 본·댓글 많은·지면) 중 **정치 말고 눈에 띄는 이슈**(연예·스포츠·생활·날씨·사건사고·문화·음식·유행 등)를 4~6줄, 한 줄씩 너스레 떨듯 자연스럽게 언급합니다. 중요도 순이 아니라 그냥 "어, 이거 눈에 띄네" 하고 대충 재미있게. 예) "오늘 점심 메뉴 고민하시는 분들, 김밥 값 얘기가 댓글창을 달구고 있어요. 저도 괜히 편의점 앞에서 서성였네요." 데이터의 제목에 있는 사실만 말하고 지어내지 마세요. 정치 기사는 여기 넣지 마세요.
 
+마무리 인사(closing): 보고 맨 끝에 붙이는 후배다운 따뜻한 한두 문장. 편집장님과 선배 기자님들을 챙기는 말입니다. 예) "오늘도 다들 점심 거르지 마세요. 저는 아이디어 몇 개 더 주워 올게요, 파이팅이에요!" 날씨·건강·식사 같은 가벼운 안부는 좋지만 구체적인 사실(통계·사건)을 지어내진 마세요.
+
 절대 규칙:
 - 인물·기관·사건·법안 같은 고유명사가 없는 일반론 문장 금지. ("중도 관점을 보여라", "신뢰도를 높여라", "회의를 열어라" 같은 말은 쓰지 말 것)
 - 데이터에 없는 사실을 지어내지 말 것. 근거는 위 데이터에서만.
@@ -249,6 +253,7 @@ ${JSON.stringify(data)}`;
     ideas,
     outletComparison: arr(parsed.outletComparison),
     chatter: arr(parsed.chatter),
+    closing: String(parsed.closing ?? '').trim(),
     whatWorked: arr(parsed.whatWorked),
     whatDidnt: arr(parsed.whatDidnt),
     scheduleStrategy: arr(parsed.scheduleStrategy),

@@ -370,6 +370,8 @@ export default function AnalyticsView({ view }: { view: 'visits' | 'trends' }) {
         <>
           {view === 'trends' && (
             <>
+          <p className="text-sm font-semibold text-gray-900">편집장님, 선배 기자님들. 오진실 기자입니다.</p>
+
           {r.ai?.chatter && r.ai.chatter.length > 0 && (
             <section className="border rounded-xl p-4">
               <h2 className={`${BIG_TITLE} mb-2`}>오늘 눈에 띈 이야기</h2>
@@ -433,6 +435,8 @@ export default function AnalyticsView({ view }: { view: 'visits' | 'trends' }) {
               <OutletTabs outlets={r.media.outlets} />
             </Card>
           )}
+
+          {r.ai?.closing && <p className="text-sm text-gray-800 leading-relaxed">{r.ai.closing}</p>}
 
             </>
           )}
