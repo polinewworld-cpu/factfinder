@@ -84,6 +84,7 @@ export type ForeignNewsReport = {
   overviewItems?: string[]; // 이번 회차 이슈를 불릿 한 줄씩(진실이처럼) — 줄마다 핵심 구절 링크
   place?: { city: string; weather: string | null; temp: number | null }; // 그날 특파원이 있는 곳(실측 날씨)
   localColor?: string; // 현지 분위기 이야기(날씨·현지 소식·연예계 등, 재미있게)
+  format?: number; // 보고서 양식 버전(2 = 긴 오늘의 이슈 + 관련 외신 목록). 낮으면 화면이 한 번 새로 만든다
   carriedOver?: number; // 새 소식이 적어 지난 보고에서 이어 붙인 브리핑 수
   closing?: string; // 마무리 인사(말미에 한두 문장, 편집국을 챙기는 따뜻한 한마디)
   briefs: ForeignBrief[]; // 한 줄 브리핑 — 다양한 이슈를 한 줄씩(링크 포함)
@@ -200,6 +201,7 @@ export async function buildForeignNews(slot: number): Promise<ForeignNewsReport>
 
   const when = SLOT_NAME[slot] ?? '';
   const report: ForeignNewsReport = {
+    format: 2,
     generatedAt: new Date().toISOString(),
     slot,
     greeting: '편집장님. 김정신 특파원입니다.',

@@ -164,8 +164,8 @@ export default function ForeignNewsPage() {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error ?? '불러오지 못했습니다');
       setReports(data.reports ?? []);
-      // 옛 형식(현지 이야기가 없는) 최신 보고라면 새 형식으로 딱 한 번 다시 만든다 — 실패해도 되풀이하지 않음
-      if (!refresh && !autoRefreshed.current && data.reports?.[0] && !data.reports[0].localColor) {
+      // 옛 양식(format 2 미만) 최신 보고라면 새 형식으로 딱 한 번 다시 만든다 — 실패해도 되풀이하지 않음
+      if (!refresh && !autoRefreshed.current && data.reports?.[0] && data.reports[0].format !== 2) {
         autoRefreshed.current = true;
         await load(true);
         return;
