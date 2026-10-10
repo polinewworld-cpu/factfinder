@@ -12,6 +12,7 @@ export default function LineAdsAdminPage() {
   const [lineAds, setLineAds] = useState<LineAd[]>([]);
   const [busy, setBusy] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [saveMsg, setSaveMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [newText, setNewText] = useState('');
   const [newLinkUrl, setNewLinkUrl] = useState('');
 
@@ -49,13 +50,21 @@ export default function LineAdsAdminPage() {
 
   async function updateField(id: string, data: Partial<LineAd>) {
     setBusy(true);
-    await fetch(`/api/line-ads/${id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    });
-    await load();
+    setSaveMsg({ ok: true, text: '저장 중…' });
+    try {
+      const res = await fetch(`/api/line-ads/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) throw new Error('save failed');
+      await load();
+      setSaveMsg({ ok: true, text: '✓ 저장되었습니다' });
+    } catch {
+      setSaveMsg({ ok: false, text: '저장에 실패했습니다. 다시 시도해주세요.' });
+    }
     setBusy(false);
+    setTimeout(() => setSaveMsg(null), 2500);
   }
 
   async function removeLineAd(id: string) {
@@ -85,8 +94,14 @@ export default function LineAdsAdminPage() {
       </p>
       <p className="text-xs text-gray-400 mb-6">
         노출중 {activeCount}개 / 최대 10개까지 화면에 노출됩니다(순서가 빠른 것부터). 나머지는 꺼둔 채 대기시켜두세요.
+        <br />문안·링크는 수정 후 다른 곳을 클릭하면 자동 저장되며, 저장되면 화면 아래에 알림이 뜹니다.
       </p>
       {errorMsg && <p className="text-red-600 text-sm mb-4">{errorMsg}</p>}
+      {saveMsg && (
+        <p className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-50 text-sm font-semibold text-white rounded-lg px-4 py-2 shadow-lg ${saveMsg.ok ? 'bg-gray-900' : 'bg-red-600'}`}>
+          {saveMsg.text}
+        </p>
+      )}
 
       <ul className="space-y-2 mb-6">
         {lineAds.map((ad, i) => (
