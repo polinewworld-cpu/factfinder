@@ -370,7 +370,7 @@ export default function AnalyticsView({ view }: { view: 'visits' | 'trends' }) {
         <>
           {view === 'trends' && (
             <>
-          <p className="text-sm font-semibold text-gray-900">편집장님, 선배 기자님들. 오진실 기자입니다.</p>
+          <p className="text-sm font-semibold text-gray-900 leading-relaxed">{r.ai?.opening || '편집장님, 선배님들. 오진실 기자입니다.'}</p>
 
           {r.ai?.chatter && r.ai.chatter.length > 0 && (
             <section className="border rounded-xl p-4">

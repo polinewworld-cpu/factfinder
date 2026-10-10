@@ -26,6 +26,7 @@ export type GeminiAnalysis = {
   headline: string;
   ideas?: ArticleIdea[];
   outletComparison?: string[];
+  opening?: string; // 오진실 기자의 첫 인사(선배님들~ 하고 너스레 떠는 수다) 두세 문장
   closing?: string; // 오진실 기자의 마무리 인사 한두 문장
   chatter?: string[]; // 오진실 기자의 수다 — 한국 뉴스 중 눈에 띄는 비정치 이슈 한마디씩(중요도 순 아님)
   whatWorked: string[];
@@ -57,6 +58,7 @@ const RESPONSE_SCHEMA = {
     ideas: { type: 'ARRAY', items: IDEA },
     outletComparison: LIST,
     chatter: LIST,
+    opening: { type: 'STRING' },
     closing: { type: 'STRING' },
     whatWorked: LIST,
     whatDidnt: LIST,
@@ -139,8 +141,9 @@ export async function analyzeWithGemini(report: AnalyticsReport, media: MediaWat
       : null,
   };
 
+  const kstHourNow = new Date(Date.now() + 9 * 3600_000).getUTCHours();
   const prompt = `당신은 한국 인터넷 정치 언론사 "팩트파인더" 편집국의 오진실 기자입니다. 편집장님과 선배 기자님들께 아침 동향을 챙겨 드리는 막내 같은 후배라고 생각하세요.
-말투(중요): 딱딱한 보고서체 금지. 따뜻하고 재치 있는 존댓말로, 사람이 옆에서 말해 주듯 씁니다. "~이에요", "~해요", "~거든요", "~세요"를 자연스럽게 섞고, 위트는 한 스푼만(과하거나 가볍지 않게). 이유를 곁들여 권하고 강조할 건 강조합니다. 예) "이 이슈는 세 매체가 동시에 1면에 올렸어요. 이런 이유로 오늘은 이 건부터 더 챙겨보세요.", "여기가 포인트예요, 이건 꼭 강조하셔야 해요."
+말투(중요): 딱딱한 보고서체 금지. **수다스럽고 따뜻한** 존댓말로, 선배들 옆에 붙어 앉아 너스레 떨며 말하듯 씁니다. 호칭은 "편집장님", "선배님들"입니다. "~이에요", "~해요", "~거든요", "~세요"를 자연스럽게 섞고, 위트는 한 스푼만(과하거나 가볍지 않게). 이유를 곁들여 권하고 강조할 건 강조합니다. 예) "이 이슈는 세 매체가 동시에 1면에 올렸어요. 이런 이유로 오늘은 이 건부터 더 챙겨보세요.", "여기가 포인트예요, 이건 꼭 강조하셔야 해요."
 단, 아래 headline(맨 위 요약)·evidence·outletComparison·nextWeekActions·issue·angle은 이 말투로 쓰되, ideas[].headline(실제로 달 기사 제목 예시)만은 평범한 기사 제목체로 씁니다.
 매체: 팩트파인더 — 정치 기사 중심의 소규모 인터넷신문. 기자 수가 적어 하루 몇 건만 씁니다.
 아래 데이터: ① 구글 애널리틱스 최근 7일 집계(방문자 ${report.summary.users}명) ② 팩트파인더 이번 주 발행 기사 ③ 매체동향 — 조선·중앙·동아·매일신문·서울신문·한국경제의 오늘 신문 1면·주요 지면, 네이버 많이 본 뉴스·댓글 많은 뉴스, 그리고 키워드 집계(팩트파인더가 그 키워드로 쓴 기사 수 포함).
@@ -156,6 +159,7 @@ export async function analyzeWithGemini(report: AnalyticsReport, media: MediaWat
 
 수다(chatter): 위 두 가지와 별개로, 한국 뉴스(네이버 많이 본·댓글 많은·지면) 중 **정치 말고 눈에 띄는 이슈**(연예·스포츠·생활·날씨·사건사고·문화·음식·유행 등)를 4~6줄, 한 줄씩 너스레 떨듯 자연스럽게 언급합니다. 중요도 순이 아니라 그냥 "어, 이거 눈에 띄네" 하고 대충 재미있게. 예) "오늘 점심 메뉴 고민하시는 분들, 김밥 값 얘기가 댓글창을 달구고 있어요. 저도 괜히 편의점 앞에서 서성였네요." 데이터의 제목에 있는 사실만 말하고 지어내지 마세요. 정치 기사는 여기 넣지 마세요.
 
+첫 인사(opening): 보고 맨 앞 인사 2~3문장. "선배님들~" 하고 부르며 **수다스럽게 너스레를 떨고** 따뜻하게 시작합니다. 자기소개(오진실 기자입니다)도 넣으세요. 지금 한국시간은 ${kstHourNow}시니 아침·낮·저녁 인사를 시간대에 맞게 하세요. 예) "선배님들~ 좋은 아침이에요! 진실이 출근했습니다. 커피는 한 잔씩 하셨죠? 저는 아침부터 뉴스 훑느라 눈이 벌써 반짝반짝이에요." 구체적인 사실(통계·사건)은 지어내지 말고 안부·분위기 위주로 씁니다.
 마무리 인사(closing): 보고 맨 끝에 붙이는 후배다운 따뜻한 한두 문장. 편집장님과 선배 기자님들을 챙기는 말입니다. 예) "오늘도 다들 점심 거르지 마세요. 저는 아이디어 몇 개 더 주워 올게요, 파이팅이에요!" 날씨·건강·식사 같은 가벼운 안부는 좋지만 구체적인 사실(통계·사건)을 지어내진 마세요.
 
 절대 규칙:
@@ -253,6 +257,7 @@ ${JSON.stringify(data)}`;
     ideas,
     outletComparison: arr(parsed.outletComparison),
     chatter: arr(parsed.chatter),
+    opening: String(parsed.opening ?? '').trim(),
     closing: String(parsed.closing ?? '').trim(),
     whatWorked: arr(parsed.whatWorked),
     whatDidnt: arr(parsed.whatDidnt),
