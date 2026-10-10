@@ -114,6 +114,8 @@ export default async function Home({ searchParams }: { searchParams: { category?
     slot: SLOT_BY_PLACEMENT[b.placement],
     imageUrl: b.imageUrl,
     linkUrl: b.linkUrl,
+    videoUrl: b.videoUrl,
+    ctaLabel: b.ctaLabel,
   }));
 
   let feedItems: unknown[];

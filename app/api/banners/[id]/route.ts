@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { ROLES } from '@/lib/roles';
 import { getCurrentUser } from '@/lib/session';
+import { cleanLabel, cleanVideo } from '@/lib/bannerFields';
 
 const HOMEPAGE_PLACEMENTS = ['HOMEPAGE_3', 'HOMEPAGE_5', 'HOMEPAGE_7'];
 
@@ -16,7 +17,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   const existing = await prisma.banner.findUnique({ where: { id: params.id } });
   if (!existing) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
-  const { imageUrl, linkUrl, order, active } = await req.json();
+  const { imageUrl, linkUrl, order, active, videoUrl, ctaLabel } = await req.json();
 
   const updated = await prisma.$transaction(async (tx) => {
     if (active === true && HOMEPAGE_PLACEMENTS.includes(existing.placement)) {
@@ -32,6 +33,8 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
         ...(linkUrl !== undefined ? { linkUrl } : {}),
         ...(order !== undefined ? { order } : {}),
         ...(active !== undefined ? { active } : {}),
+        ...(videoUrl !== undefined ? { videoUrl: cleanVideo(videoUrl) } : {}),
+        ...(ctaLabel !== undefined ? { ctaLabel: cleanLabel(ctaLabel) } : {}),
       },
     });
   });

@@ -8,9 +8,49 @@ type Banner = {
   placement: string;
   imageUrl: string;
   linkUrl: string;
+  videoUrl?: string | null;
+  ctaLabel?: string | null;
   order: number;
   active: boolean;
 };
+
+// 배너 영상 설정 (2026-10-10) — 영상 주소가 있으면 배너를 누를 때 어두운 화면 위로 영상 + 아래 버튼(링크 = 배너 링크)
+function VideoFields({ banner, onSaved }: { banner: Banner; onSaved: () => void }) {
+  const [videoUrl, setVideoUrl] = useState(banner.videoUrl ?? '');
+  const [ctaLabel, setCtaLabel] = useState(banner.ctaLabel ?? '');
+  const [msg, setMsg] = useState('');
+  const changed = videoUrl !== (banner.videoUrl ?? '') || ctaLabel !== (banner.ctaLabel ?? '');
+  async function save() {
+    const res = await fetch(`/api/banners/${banner.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ videoUrl, ctaLabel }),
+    });
+    setMsg(res.ok ? '저장했습니다' : '저장 실패');
+    if (res.ok) onSaved();
+  }
+  return (
+    <div className="mt-2 flex flex-wrap items-center gap-2">
+      <input
+        value={videoUrl}
+        onChange={(e) => setVideoUrl(e.target.value)}
+        placeholder="누르면 재생할 영상 — 유튜브 주소 또는 /ads/…mp4 (비우면 바로 링크로)"
+        className="flex-1 min-w-[220px] border border-gray-200 rounded-lg px-3 py-1.5 text-xs outline-none focus:border-brand"
+      />
+      <input
+        value={ctaLabel}
+        onChange={(e) => setCtaLabel(e.target.value)}
+        placeholder="영상 아래 버튼 문구"
+        maxLength={40}
+        className="w-48 border border-gray-200 rounded-lg px-3 py-1.5 text-xs outline-none focus:border-brand"
+      />
+      <button type="button" disabled={!changed} onClick={save} className="text-xs border border-gray-300 rounded-lg px-3 py-1.5 disabled:opacity-40">
+        영상 저장
+      </button>
+      {msg && <span className="text-xs text-brand">{msg}</span>}
+    </div>
+  );
+}
 
 const HOMEPAGE_SLOTS: { placement: string; label: string }[] = [
   { placement: 'HOMEPAGE_3', label: '메인화면 3번째 카드' },
@@ -186,6 +226,7 @@ export default function BannersAdminPage() {
               ) : (
                 <p className="text-xs text-gray-400 mb-3">현재 등록된 배너가 없습니다 (일반 기사 카드가 노출됩니다).</p>
               )}
+              {current && <div className="mb-3 -mt-1"><VideoFields key={current.id} banner={current} onSaved={load} /></div>}
 
               <div className="flex flex-wrap items-center gap-2">
                 <label className="text-xs text-gray-600 cursor-pointer">
@@ -237,7 +278,8 @@ export default function BannersAdminPage() {
 
         <ul className="space-y-2 mb-4">
           {articleBanners.map((b) => (
-            <li key={b.id} className="flex items-center gap-3 border border-gray-200 rounded-xl p-3">
+            <li key={b.id} className="border border-gray-200 rounded-xl p-3">
+              <div className="flex items-center gap-3">
               <img src={b.imageUrl} alt="" className="w-20 h-14 object-cover rounded-lg border border-gray-200" />
               <div className="flex-1 min-w-0">
                 <p className="text-xs text-gray-500 truncate">{b.linkUrl}</p>
@@ -259,6 +301,8 @@ export default function BannersAdminPage() {
               >
                 삭제
               </button>
+              </div>
+              <VideoFields key={b.id} banner={b} onSaved={load} />
             </li>
           ))}
           {articleBanners.length === 0 && <p className="text-xs text-gray-400">등록된 본문 광고가 없습니다.</p>}

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { ROLES } from '@/lib/roles';
 import { getCurrentUser } from '@/lib/session';
+import { cleanLabel, cleanVideo } from '@/lib/bannerFields';
 
 const HOMEPAGE_PLACEMENTS = ['HOMEPAGE_3', 'HOMEPAGE_5', 'HOMEPAGE_7'];
 
@@ -28,7 +29,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: '편집장만 배너를 등록할 수 있습니다' }, { status: 403 });
   }
 
-  const { placement, imageUrl, linkUrl, order, active } = await req.json();
+  const { placement, imageUrl, linkUrl, order, active, videoUrl, ctaLabel } = await req.json();
   if (!placement || !imageUrl || !linkUrl) {
     return NextResponse.json({ error: 'placement, imageUrl, linkUrl은 필수입니다' }, { status: 400 });
   }
@@ -41,7 +42,7 @@ export async function POST(req: NextRequest) {
       await tx.banner.updateMany({ where: { placement, active: true }, data: { active: false } });
     }
     return tx.banner.create({
-      data: { placement, imageUrl, linkUrl, order: order ?? 0, active: wantsActive },
+      data: { placement, imageUrl, linkUrl, order: order ?? 0, active: wantsActive, videoUrl: cleanVideo(videoUrl), ctaLabel: cleanLabel(ctaLabel) },
     });
   });
   return NextResponse.json(banner, { status: 201 });

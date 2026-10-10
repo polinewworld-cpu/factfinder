@@ -6,8 +6,8 @@ import BannerSlotCard from './BannerSlotCard';
 import VideoMasonryCard, { MasonryVideo } from './VideoMasonryCard';
 import { FEATURED_CARD_RATIO, WIDE_CARD_RATIO } from '@/lib/cardImage';
 
-export type HomepageBanner = { slot: 3 | 5 | 7; imageUrl: string; linkUrl: string };
-type BannerGridItem = { id: string; isBanner: true; imageUrl: string; linkUrl: string };
+export type HomepageBanner = { slot: 3 | 5 | 7; imageUrl: string; linkUrl: string; videoUrl?: string | null; ctaLabel?: string | null };
+type BannerGridItem = { id: string; isBanner: true; imageUrl: string; linkUrl: string; videoUrl?: string | null; ctaLabel?: string | null };
 // 정치신세계 영상을 "기사 생성"처럼 취급해 전체(인덱스) 피드에 섞어 보여주기 위한 항목 타입 (2026-09-11 신설)
 export type VideoGridItem = MasonryVideo & { isVideo: true };
 type GridItem = CardArticle | BannerGridItem | VideoGridItem;
@@ -32,6 +32,8 @@ function withBanners(items: (CardArticle | VideoGridItem)[], banners: HomepageBa
       isBanner: true as const,
       imageUrl: banner.imageUrl,
       linkUrl: banner.linkUrl,
+      videoUrl: banner.videoUrl,
+      ctaLabel: banner.ctaLabel,
     };
   });
 }
@@ -325,7 +327,7 @@ export default function Masonry({
                   }
                 >
                   {isBannerItem(item) ? (
-                    <BannerSlotCard imageUrl={item.imageUrl} linkUrl={item.linkUrl} />
+                    <BannerSlotCard imageUrl={item.imageUrl} linkUrl={item.linkUrl} videoUrl={item.videoUrl} ctaLabel={item.ctaLabel} />
                   ) : isVideoItem(item) ? (
                     <VideoMasonryCard video={item} square={squareTop} />
                   ) : (

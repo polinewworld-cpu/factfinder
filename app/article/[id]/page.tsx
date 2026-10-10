@@ -239,12 +239,12 @@ export default async function ArticlePage({
             </div>
           </div>
           {activeArticleBanners[0] && (
-            <ArticleBodyBanner imageUrl={activeArticleBanners[0].imageUrl} linkUrl={activeArticleBanners[0].linkUrl} />
+            <ArticleBodyBanner imageUrl={activeArticleBanners[0].imageUrl} linkUrl={activeArticleBanners[0].linkUrl} videoUrl={activeArticleBanners[0].videoUrl} ctaLabel={activeArticleBanners[0].ctaLabel} />
           )}
           <CardNewsCarousel articleId={article.id} images={article.images} />
           {article.poll && <PollCard pollId={article.poll.id} />}
           {activeArticleBanners[1] && (
-            <ArticleBodyBanner imageUrl={activeArticleBanners[1].imageUrl} linkUrl={activeArticleBanners[1].linkUrl} />
+            <ArticleBodyBanner imageUrl={activeArticleBanners[1].imageUrl} linkUrl={activeArticleBanners[1].linkUrl} videoUrl={activeArticleBanners[1].videoUrl} ctaLabel={activeArticleBanners[1].ctaLabel} />
           )}
           <EmbedScripts />
           {lineAds.length > 0 && (
@@ -274,7 +274,7 @@ export default async function ArticlePage({
           />
           <CommentSection articleId={article.id} />
           {activeArticleBanners[2] && (
-            <ArticleBodyBanner imageUrl={activeArticleBanners[2].imageUrl} linkUrl={activeArticleBanners[2].linkUrl} />
+            <ArticleBodyBanner imageUrl={activeArticleBanners[2].imageUrl} linkUrl={activeArticleBanners[2].linkUrl} videoUrl={activeArticleBanners[2].videoUrl} ctaLabel={activeArticleBanners[2].ctaLabel} />
           )}
         </div>
       </article>
