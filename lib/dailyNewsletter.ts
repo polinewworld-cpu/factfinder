@@ -117,7 +117,8 @@ const linkedHtml = (text: string, allowed: Set<string>) =>
 
 const toReader = (t: string) => t.replace(/편집장님[,과와\s]*(?:선배 기자님들|선배님들|선배님)/g, '정신줄님').replace(/(선배 기자님들|선배님들|선배님|편집장님)/g, '정신줄님');
 
-async function personaSections(): Promise<string> {
+// full=false면 인사(이름 줄 + 첫 문단)만, true면 브리핑 전체 — 인사는 기사가 있는 날에도 항상 싣는다 (2026-10-10)
+async function personaSections(full: boolean): Promise<string> {
   const oh = (await pastOhLetters(1).catch(() => []))[0]?.ai;
   const kim = (await recentForeignReports(1).catch(() => []))[0];
   if (!oh && !kim) return '';
@@ -152,7 +153,8 @@ ${JSON.stringify(input)}`,
   const bullet = (t: string) => `<p style="margin:0 0 6px;color:#333;font-size:14px;line-height:1.7;">· ${linkedHtml(t, allowed)}</p>`;
   const h = (t: string) => `<h2 style="font-size:16px;margin:26px 0 10px;color:#111;">${esc(t)}</h2>`;
   let html = '';
-  if (out.oh) html += h('오진실 기자의 아침 한마디') + para(out.oh.opening) + out.oh.lines.map(bullet).join('') + para(out.oh.closing);
+  const who = (t: string) => `<p style="margin:0 0 6px;color:#111;font-size:14px;font-weight:700;line-height:1.7;">${esc(t)}</p>`;
+  if (out.oh) html += h('오진실 기자의 아침 한마디') + who('정신줄님, 오진실 기자입니다.') + para(out.oh.opening) + (full ? out.oh.lines.map(bullet).join('') + para(out.oh.closing) : '');
   if (out.kim) {
     const briefs = out.kim.briefs
       .map((b) => {
@@ -160,7 +162,7 @@ ${JSON.stringify(input)}`,
         return src ? `<p style="margin:0 0 6px;color:#333;font-size:14px;line-height:1.7;">· ${esc(b.text)} <a href="${esc(src.url)}" style="${A_STYLE}">${esc(src.outlet)}</a></p>` : '';
       })
       .join('');
-    html += h('김정신 특파원의 해외 소식') + para(out.kim.intro) + out.kim.issues.map(bullet).join('') + briefs + para(out.kim.closing);
+    html += h('김정신 특파원의 해외 소식') + who('정신줄님, 김정신 특파원입니다.') + para(out.kim.intro) + (full ? out.kim.issues.map(bullet).join('') + briefs + para(out.kim.closing) : '');
   }
   return html;
 }
@@ -201,19 +203,19 @@ export async function buildDailyNewsletter(dateKey = kstDate()): Promise<DailyRe
           <a href="${esc(url)}" style="display:inline-block;margin-top:6px;color:#ec1561;font-weight:700;font-size:13px;text-decoration:none;">▶ 방송 보러 가기</a>
         </div>`;
       })
-      .join('') +
-    (articles.length ? h('어제의 기사') : '');
+      .join('');
 
-  const personas = articles.length ? '' : await personaSections();
+  // 두 기자의 인사는 항상, 브리핑 전체는 어제 기사가 없을 때만
+  const personas = await personaSections(!articles.length);
   const label = dailyLabel(dateKey);
   const greeting = '정신줄님, 좋은 아침입니다. 팩트파인더입니다.\n어제 정치신세계 방송과 소식을 정리해 드립니다.';
   const html = buildNewsletterHtml(articles, greeting, {
     title: `팩트파인더 아침 · ${label}`,
     campaign: `daily-${dateKey.replace(/-/g, '')}`,
     subtitle: '정치신세계 · 아침 브리핑',
-    beforeArticles: castHtml,
-    afterArticles: personas,
+    beforeArticles: castHtml + (articles.length ? personas + h('어제의 기사') : ''),
+    afterArticles: articles.length ? '' : personas,
   });
   const subject = `[팩트파인더 아침] ${label} — 정치신세계 어제 방송: ${casts[0].title.replace(/\s+/g, ' ').slice(0, 40)}`;
-  return { subject, html, info: { broadcasts: casts.length, summarySources: sums.map((s) => s.source), articles: articles.length, usedPersonas: !!personas } };
+  return { subject, html, info: { broadcasts: casts.length, summarySources: sums.map((s) => s.source), articles: articles.length, usedPersonas: !!personas && !articles.length } };
 }
