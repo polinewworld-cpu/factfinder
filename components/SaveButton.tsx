@@ -18,7 +18,7 @@ export default function SaveButton({
 
   async function toggle() {
     if (!loggedIn) {
-      window.location.href = '/api/auth/signin/google';
+      window.location.href = '/login';
       return;
     }
     setBusy(true);

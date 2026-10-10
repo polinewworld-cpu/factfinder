@@ -119,7 +119,7 @@ export default function ProfilePage() {
       <main className="max-w-md mx-auto px-4 py-10">
         <p className="text-gray-600">
           로그인 후 이용해주세요.{' '}
-          <a href="/api/auth/signin/google" className="text-brand font-semibold">
+          <a href="/login" className="text-brand font-semibold">
             구글로 로그인
           </a>
         </p>

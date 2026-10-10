@@ -115,7 +115,7 @@ export default function ArticleCard({
     event.preventDefault();
     event.stopPropagation();
     if (!loggedIn) {
-      window.location.href = '/api/auth/signin';
+      window.location.href = '/login';
       return;
     }
     setSaveBusy(true);

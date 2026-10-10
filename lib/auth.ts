@@ -57,6 +57,8 @@ export const authOptions: NextAuthOptions = {
   // Credentials 프로바이더가 있으면 NextAuth가 database 세션을 허용하지 않으므로 jwt로 고정.
   // (구글 로그인만 쓰는 운영 환경에서도 문제없이 동작하는 표준 방식)
   session: { strategy: 'jwt' },
+  // 로그인 화면을 우리 디자인(한국어)으로 — 기존 /api/auth/signin 링크도 여기로 옴, 오류도 ?error=로 여기 표시 (2026-10-10)
+  pages: { signIn: '/login', error: '/login' },
   callbacks: {
     async jwt({ token, user }) {
       if (!user && token.id) {

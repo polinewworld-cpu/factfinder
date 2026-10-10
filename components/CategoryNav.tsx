@@ -43,7 +43,7 @@ export default function CategoryNav({ account = null }: { account?: CategoryAcco
         })}
       </div>
       {!account && (
-        <a className="chip category-aux" href="/api/auth/signin">
+        <a className="chip category-aux" href="/login">
           로그인
         </a>
       )}

@@ -11,7 +11,7 @@ export default async function SavedArticlesPage() {
     return (
       <main className="px-4 py-16 text-center">
         <p className="text-gray-600 mb-4">저장한 기사를 보려면 로그인이 필요합니다.</p>
-        <a href="/api/auth/signin" className="text-brand font-semibold">
+        <a href="/login" className="text-brand font-semibold">
           로그인하러 가기 →
         </a>
       </main>

@@ -98,7 +98,7 @@ export default function CommentSection({ articleId }: { articleId: string }) {
             </div>
             <p className="text-sm text-gray-600 mt-3 mb-5">댓글을 작성하려면 구글 로그인이 필요합니다.</p>
             <button
-              onClick={() => (window.location.href = '/api/auth/signin/google')}
+              onClick={() => (window.location.href = '/login')}
               className="w-full text-sm font-bold text-white bg-brand rounded-lg py-3"
             >
               구글로 로그인
