@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { ensureDailySnapshot } from '@/lib/analyticsSnapshot';
 import { ensurePhotoCollect } from '@/lib/photoCollector';
+import { ensureWeeklyNewsletter } from '@/lib/newsletterAuto';
 
 // 외부 핑 서비스(cron-job.org 등)가 주기적으로 호출 — Render 무료 인스턴스가 15분 무접속 시 잠드는 것 방지.
 // DB도 가볍게 한 번 건드려서 Supabase 연결까지 깨어 있게 유지.
@@ -14,6 +15,8 @@ export async function GET() {
     ensureDailySnapshot();
     // 사진 뱅크 자동 수집기 — 관리자가 정한 주기(기본 1시간)마다 (2026-10-09)
     ensurePhotoCollect();
+    // 주간 뉴스레터 — 토요일 아침 7시 이후 첫 핑에 한 번 (2026-10-10)
+    ensureWeeklyNewsletter();
     return NextResponse.json({ ok: true });
   } catch {
     return NextResponse.json({ ok: false }, { status: 503 });

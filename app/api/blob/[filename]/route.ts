@@ -50,14 +50,14 @@ async function serveOriginal(name: string) {
 }
 
 // 축소본 만들기 — 같은 사진을 동시에 여러 번 요청해도 한 번만 만든다
-function makeVariant(name: string, variant: string, width: number) {
+function makeVariant(name: string, variant: string, width: number, jpeg = false) {
   let job = making.get(variant);
   if (!job) {
     job = (async () => {
       const original = await getBlob(name);
       if (!original) return null;
       const src = Buffer.from(original.data);
-      const out = await resizeToWidth(src, width, /\.gif$/i.test(name));
+      const out = await resizeToWidth(src, width, !jpeg && /\.gif$/i.test(name), jpeg ? 'jpeg' : 'webp');
       // 줄인 게 더 크면(이미 작은 사진) 원본을 그대로 축소본 자리에 저장 — 다음부턴 바로 전달
       const pick = out.buf.length < src.length ? out : { buf: src, type: original.contentType };
       await putBlob(variant, pick.buf, pick.type).catch(() => {});
@@ -77,11 +77,13 @@ export async function GET(req: NextRequest, { params }: { params: { filename: st
   const width = Number(req.nextUrl.searchParams.get('w'));
   if (!(CARD_WIDTHS as readonly number[]).includes(width) || !RESIZABLE.test(name)) return serveOriginal(name);
 
-  const variant = `w${width}-${name.replace(/\.[^.]+$/, '')}.webp`;
+  // &f=jpg — 메일용(일부 메일 프로그램이 webp를 못 보여 줌, 2026-10-10 뉴스레터)
+  const jpeg = req.nextUrl.searchParams.get('f') === 'jpg';
+  const variant = jpeg ? `w${width}j-${name.replace(/\.[^.]+$/, '')}.jpg` : `w${width}-${name.replace(/\.[^.]+$/, '')}.webp`;
   const ready = await streamFromSupabase(variant);
   if (ready instanceof Response) return ready;
   try {
-    const made = await makeVariant(name, variant, width);
+    const made = await makeVariant(name, variant, width, jpeg);
     if (!made) return NextResponse.json({ error: '파일을 찾을 수 없습니다' }, { status: 404 });
     return new NextResponse(made.buf, { headers: { 'Content-Type': made.type, 'Cache-Control': CACHE } });
   } catch {

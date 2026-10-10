@@ -38,14 +38,14 @@ export function shrinkImage(buf: Buffer, type: string, maxDim = 2000): Promise<I
 }
 
 // 카드 썸네일용 축소본 (가로 width px, webp) — GIF는 움직임을 살린 webp로
-export function resizeToWidth(buf: Buffer, width: number, animated = false): Promise<ImageOut> {
+export function resizeToWidth(buf: Buffer, width: number, animated = false, format: 'webp' | 'jpeg' = 'webp'): Promise<ImageOut> {
   return oneAtATime(async () => {
     const sharp = await loadSharp();
-    const out = await sharp(buf, { failOn: 'none', animated })
-      .rotate()
-      .resize({ width, withoutEnlargement: true })
-      .webp({ quality: 78 })
-      .toBuffer();
-    return { buf: out, type: 'image/webp', ext: 'webp' };
+    const pipe = sharp(buf, { failOn: 'none', animated }).rotate().resize({ width, withoutEnlargement: true });
+    if (format === 'jpeg') {
+      // 메일용 — 투명 배경은 흰색으로
+      return { buf: await pipe.flatten({ background: '#ffffff' }).jpeg({ quality: 82, mozjpeg: true }).toBuffer(), type: 'image/jpeg', ext: 'jpg' };
+    }
+    return { buf: await pipe.webp({ quality: 78 }).toBuffer(), type: 'image/webp', ext: 'webp' };
   });
 }

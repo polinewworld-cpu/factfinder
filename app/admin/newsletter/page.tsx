@@ -4,7 +4,18 @@ import { useEffect, useRef, useState } from 'react';
 import { toFrenchBrackets } from '@/lib/frenchBrackets';
 
 type Item = { id: string; title: string; publishedAt: string | null; category: string | null; author: string | null };
-type Info = { articles: Item[]; defaultIds: string[]; subscriberCount: number; emailConfigured: boolean; lastSentAt: string | null };
+type History = { id: string; sentAt: string; status: string; auto: boolean; recipientCount: number; failedCount: number; subject: string | null; note: string | null };
+type Info = {
+  articles: Item[];
+  defaultIds: string[];
+  subscriberCount: number;
+  emailConfigured: boolean;
+  lastSentAt: string | null;
+  gmail: { connected: boolean; sender: string | null };
+  auto: { enabled: boolean; week: string; weekLabel: string; skipped: boolean; alreadySent: boolean; ids: string[] };
+  history: History[];
+};
+const STATUS_LABEL: Record<string, string> = { SENT: '발송', SENDING: '발송 중', SKIPPED: '건너뜀', FAILED: '실패' };
 
 const day = (iso: string | null) =>
   iso ? new Date(iso).toLocaleDateString('ko-KR', { timeZone: 'Asia/Seoul', month: 'numeric', day: 'numeric', weekday: 'short' }) : '';
@@ -20,15 +31,50 @@ export default function NewsletterAdminPage() {
   const [errorMsg, setErrorMsg] = useState('');
   const [resultMsg, setResultMsg] = useState('');
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [autoMsg, setAutoMsg] = useState('');
+  const [busy, setBusy] = useState(false);
 
+  async function load(resetSelection = false) {
+    const d: Info = await fetch('/api/newsletter').then((r) => r.json());
+    setInfo(d);
+    if (resetSelection) setSelected(new Set(d.defaultIds));
+  }
   useEffect(() => {
-    fetch('/api/newsletter')
-      .then((r) => r.json())
-      .then((d: Info) => {
-        setInfo(d);
-        setSelected(new Set(d.defaultIds));
-      });
+    load(true);
+    // 구글 [지메일 연결] 화면에서 돌아왔을 때 결과 안내
+    const q = new URLSearchParams(window.location.search);
+    if (q.get('gmail') === 'ok') setAutoMsg(`지메일 연결 완료 — ${q.get('sender') ?? ''} 주소로 보냅니다.`);
+    if (q.get('gmail') === 'fail') setAutoMsg(`지메일 연결 실패: ${q.get('msg') ?? ''}`);
+    if (q.get('gmail')) window.history.replaceState(null, '', '/admin/newsletter');
   }, []);
+
+  async function settings(body: { auto?: boolean; skipThisWeek?: boolean }) {
+    setBusy(true);
+    await fetch('/api/newsletter/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    await load();
+    setBusy(false);
+  }
+  async function testSend(useSelection: boolean) {
+    setBusy(true);
+    setAutoMsg('');
+    const res = await fetch('/api/newsletter/test', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(useSelection ? { ids, greeting } : {}),
+    });
+    const d = await res.json().catch(() => ({}));
+    setBusy(false);
+    const msg = res.ok ? `테스트 메일을 ${d.to}로 보냈습니다. 받은편지함(또는 스팸함)을 확인하세요.` : d.error ?? '테스트 발송 실패';
+    if (useSelection) {
+      if (res.ok) setResultMsg(msg);
+      else setErrorMsg(msg);
+    } else setAutoMsg(msg);
+  }
+  async function disconnect() {
+    if (!confirm('뉴스레터 발송 지메일 연결을 끊을까요? 끊으면 토요일 자동 발송도 멈춥니다.')) return;
+    await fetch('/api/admin/gmail', { method: 'DELETE' });
+    await load();
+  }
 
   // 고른 기사·인사말이 바뀌면 잠깐 뒤 미리보기 갱신
   const ids = info ? info.articles.filter((a) => selected.has(a.id)).map((a) => a.id) : [];
@@ -74,7 +120,8 @@ export default function NewsletterAdminPage() {
     const data = await res.json().catch(() => ({}));
     setSending(false);
     if (!res.ok) setErrorMsg(data.error ?? '발송에 실패했습니다.');
-    else setResultMsg(`발송 완료: 성공 ${data.sent}건 / 실패 ${data.failed}건 (전체 ${data.total}명)`);
+    else setResultMsg(`발송 완료: 성공 ${data.sent}건 / 실패 ${data.failed}건 (전체 ${data.total}명)${data.firstError ? ` — ${data.firstError}` : ''}`);
+    load();
   }
 
   if (!info) return <main className="py-8 text-gray-500">불러오는 중…</main>;
@@ -87,11 +134,109 @@ export default function NewsletterAdminPage() {
         {info.lastSentAt && <> · 마지막 발송 {new Date(info.lastSentAt).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</>}
       </p>
 
-      {!info.emailConfigured && (
-        <div className="border border-amber-200 bg-amber-50 rounded-xl p-4 mb-6 text-sm text-amber-800">
-          메일 발송 서비스가 아직 연결되지 않아 지금은 미리보기만 됩니다. (Render 환경변수 RESEND_API_KEY · NEWSLETTER_FROM_EMAIL 필요)
+      {/* 토요일 자동 발송 (2026-10-10) */}
+      <section className="border rounded-xl p-4 mb-6 space-y-4">
+        <div className="flex flex-wrap items-center gap-3">
+          <h2 className="text-sm font-semibold">토요일 아침 7시 자동 발송</h2>
+          <label className="inline-flex items-center gap-1.5 text-sm">
+            <input type="checkbox" className="w-4 h-4" checked={info.auto.enabled} disabled={busy} onChange={(e) => settings({ auto: e.target.checked })} />
+            {info.auto.enabled ? '켜짐' : '꺼짐'}
+          </label>
+          <span className="text-xs text-gray-500">지난 한 주(토~금) 기사 중 1면톱 + 많이 본 기사를 카테고리가 섞이게 최대 8개, 인사말은 AI가 씁니다.</span>
         </div>
-      )}
+
+        <div className="flex flex-wrap items-center gap-2 text-sm">
+          <span className="font-semibold">보내는 지메일</span>
+          {info.gmail.connected ? (
+            <>
+              <span>{info.gmail.sender}</span>
+              <button type="button" onClick={disconnect} className="text-xs border rounded-lg px-2 py-1 text-gray-500">
+                연결 끊기
+              </button>
+            </>
+          ) : (
+            <>
+              <span className="text-amber-700">연결 안 됨 — 연결해야 발송됩니다</span>
+              <a href="/api/admin/gmail/connect" className="text-xs font-bold text-white bg-brand rounded-lg px-3 py-1.5">
+                지메일 연결
+              </a>
+            </>
+          )}
+        </div>
+        {autoMsg && <p className="text-sm text-brand">{autoMsg}</p>}
+
+        <div className="bg-gray-50 rounded-lg p-3">
+          <div className="flex flex-wrap items-center gap-2 mb-2">
+            <b className="text-sm">
+              이번 발송: {info.auto.week} (토) · {info.auto.weekLabel}
+            </b>
+            <span className="text-xs text-gray-500">
+              {info.auto.alreadySent
+                ? '이번 주 처리 끝남(아래 이력)'
+                : !info.auto.enabled
+                  ? '자동 발송 꺼짐'
+                  : info.auto.skipped
+                    ? '이번 주 건너뜀'
+                    : !info.gmail.connected
+                      ? '지메일 연결 필요'
+                      : `구독자 ${info.subscriberCount}명에게 발송 예정`}
+            </span>
+            <span className="ml-auto flex flex-wrap gap-1">
+              {!info.auto.alreadySent && (
+                <button type="button" disabled={busy} onClick={() => settings({ skipThisWeek: !info.auto.skipped })} className="text-xs border rounded-lg px-2 py-1 bg-white">
+                  {info.auto.skipped ? '건너뛰기 취소' : '이번 주 건너뛰기'}
+                </button>
+              )}
+              <button type="button" disabled={busy || !info.gmail.connected || !info.auto.ids.length} onClick={() => testSend(false)} className="text-xs border rounded-lg px-2 py-1 bg-white disabled:opacity-40">
+                나에게 테스트 발송
+              </button>
+              <button type="button" disabled={!info.auto.ids.length} onClick={() => setSelected(new Set(info.auto.ids))} className="text-xs border rounded-lg px-2 py-1 bg-white disabled:opacity-40">
+                아래 미리보기에 불러오기
+              </button>
+            </span>
+          </div>
+          {info.auto.ids.length ? (
+            <ol className="list-decimal pl-5 text-sm space-y-0.5">
+              {info.auto.ids.map((id) => {
+                const a = info.articles.find((x) => x.id === id);
+                return <li key={id}>{a ? toFrenchBrackets(a.title) : id}</li>;
+              })}
+            </ol>
+          ) : (
+            <p className="text-sm text-gray-400">아직 이번 주에 고를 기사가 없습니다(지난 토요일 이후 발행 기사 없음).</p>
+          )}
+        </div>
+
+        {info.history.length > 0 && (
+          <table className="w-full text-xs">
+            <thead>
+              <tr className="text-left text-gray-500 border-b">
+                <th className="py-1 pr-2">날짜</th>
+                <th className="py-1 pr-2">구분</th>
+                <th className="py-1 pr-2">결과</th>
+                <th className="py-1 pr-2 text-right">받은 사람</th>
+                <th className="py-1">제목·비고</th>
+              </tr>
+            </thead>
+            <tbody>
+              {info.history.map((h) => (
+                <tr key={h.id} className="border-b last:border-0">
+                  <td className="py-1 pr-2 whitespace-nowrap">{new Date(h.sentAt).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</td>
+                  <td className="py-1 pr-2">{h.auto ? '자동' : '직접'}</td>
+                  <td className="py-1 pr-2">{STATUS_LABEL[h.status] ?? h.status}</td>
+                  <td className="py-1 pr-2 text-right tabular-nums">
+                    {h.recipientCount}
+                    {h.failedCount ? ` (실패 ${h.failedCount})` : ''}
+                  </td>
+                  <td className="py-1 text-gray-600">{[h.subject, h.note].filter(Boolean).join(' · ')}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </section>
+
+      <h2 className="text-sm font-semibold mb-3 text-gray-700">직접 골라 지금 보내기</h2>
 
       <div className="grid lg:grid-cols-2 gap-6 items-start">
         {/* 1. 기사 고르기 */}
@@ -165,6 +310,9 @@ export default function NewsletterAdminPage() {
               className="text-sm font-bold text-white bg-brand rounded-lg px-6 py-2 disabled:opacity-40 mb-4"
             >
               {sending ? '발송 중…' : '구독자에게 발송'}
+            </button>
+            <button type="button" disabled={busy || !info.gmail.connected || ids.length === 0} onClick={() => testSend(true)} className="ml-2 text-sm border rounded-lg px-4 py-2 disabled:opacity-40 mb-4">
+              나에게 테스트
             </button>
             {preview && (
               <>

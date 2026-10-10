@@ -342,6 +342,10 @@ model SiteConfig {
   // 사진 뱅크 자동 수집기 (2026-10-09) — 주기(분, 0이면 끔)와 마지막 실행 시각
   photoCollectMinutes Int       @default(60)
   photoCollectAt      DateTime?
+  newsletterAuto      Boolean   @default(true) // 토요일 아침 7시 자동 발송 (2026-10-10)
+  newsletterSkipWeek  String? // 이 토요일(YYYY-MM-DD)은 건너뛰기
+  gmailSender         String? // 뉴스레터 보내는 지메일 주소 (편집실에서 [지메일 연결])
+  gmailToken          String? // 지메일 발송 권한(갱신 토큰) — NEXTAUTH_SECRET으로 암호화해 저장
 }
 
 // 범용 사진 라이브러리 — 기사에 종속되지 않는 재사용 가능한 사진 모음 (기능정의서 8.1)
@@ -469,6 +473,12 @@ model NewsletterSend {
   weekEnd        DateTime
   recipientCount Int
   sentAt         DateTime @default(now())
+  weekKey        String?  @unique // 토요일 자동 발송의 그 주 토요일(한국 날짜 YYYY-MM-DD) — 같은 주 두 번 발송 방지 (2026-10-10)
+  status         String   @default("SENT") // SENDING / SENT / SKIPPED(기사 없음) / FAILED
+  failedCount    Int      @default(0)
+  subject        String?
+  auto           Boolean  @default(false) // 토요일 자동 발송이면 true, 편집장이 직접 보낸 건 false
+  note           String? // 건너뜀·실패 사유
 }
 
 model Comment {
