@@ -24,6 +24,7 @@ export type AnalyticsReport = {
   // 매체 동향 (lib/mediaWatch.ts, 2026-10-09) — 조선·중앙·동아·매일·서울신문 1면·많이 본·댓글 많은 뉴스
   media?: import('@/lib/mediaWatch').MediaWatch | null;
   mediaError?: string | null;
+  leeX?: import('@/lib/leeX').LeeXInfo; // 이재명 대통령 X 링크 + 관련 기사(구글 뉴스)
   dismissed?: string[]; // 관리자가 ×로 지운 오진실 항목(같은 주제를 다시 안 가져오게)
   mediaCheckedAt?: string; // 마지막으로 매체 동향을 받으려 한 시각(3시간 주기 판단용)
 };

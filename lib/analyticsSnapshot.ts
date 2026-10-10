@@ -3,6 +3,7 @@ import { gaConfigured } from '@/lib/ga';
 import { buildAnalyticsReport, type AnalyticsReport } from '@/lib/gaReport';
 import { analyzeWithGemini, geminiConfigured } from '@/lib/geminiAnalysis';
 import { buildMediaWatch } from '@/lib/mediaWatch';
+import { fetchLeeX, LEE_X_URL } from '@/lib/leeX';
 
 // 하루 한 번 만든 방문 분석 보고서를 DB에 저장해 두고 재사용 (2026-10-08)
 // 자동화: 10분마다 오는 잠들기 방지 핑(/api/health)이 한국시간 오전 6시 이후 그날 보고서가 없으면 만들어 둔다.
@@ -31,6 +32,12 @@ async function attachMediaAndIdeas(report: AnalyticsReport) {
     report.mediaError = null;
   } catch (e) {
     report.mediaError = e instanceof Error ? e.message : '매체 동향 수집 실패';
+  }
+  // 이재명 대통령 X 관련 기사 — 못 받으면 이전 것을 두고 링크만 보장
+  try {
+    report.leeX = await fetchLeeX();
+  } catch {
+    report.leeX = { url: LEE_X_URL, articles: report.leeX?.articles ?? [], checkedAt: report.leeX?.checkedAt ?? new Date().toISOString() };
   }
   if (geminiConfigured()) {
     try {

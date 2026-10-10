@@ -423,6 +423,31 @@ export default function AnalyticsView({ view }: { view: 'visits' | 'trends' }) {
             </section>
           )}
 
+          {(
+            <section className="border rounded-xl p-4">
+              <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                <h2 className={BIG_TITLE}>이재명 대통령 X</h2>
+                <a href={r.leeX?.url ?? 'https://x.com/Jaemyung_Lee'} target="_blank" rel="noopener noreferrer" className="border rounded-lg px-3 py-1 text-sm font-semibold" style={{ color: MARK }}>
+                  대통령 X 바로가기 ↗
+                </a>
+              </div>
+              {(r.leeX?.articles.length ?? 0) > 0 ? (
+                <ul className="space-y-1.5">
+                  {r.leeX!.articles.map((a) => (
+                    <li key={a.url} className="text-sm text-gray-800 leading-snug">
+                      · <span className="text-xs font-semibold text-gray-500 mr-1">[{a.outlet}]</span>
+                      <a href={a.url} target="_blank" rel="noopener noreferrer" className="underline" style={{ color: MARK }}>
+                        {a.title}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-sm text-gray-500">최근 이틀 안에 대통령 X를 다룬 기사를 아직 찾지 못했어요. 새로고침하면 다시 찾아봐요.</p>
+              )}
+            </section>
+          )}
+
           <section className="border rounded-xl p-4">
             <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
               <h2 className={BIG_TITLE}>
