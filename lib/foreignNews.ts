@@ -56,7 +56,7 @@ const MAX_CANDIDATES = 40;
 
 // 한국 관련 1차 거름 — 놓치지 않으려고 넓게, 진짜 관련성은 제미나이가 가림
 const KOREA_RE =
-  /\b(south korea|north korea|korea|korean|koreans|seoul|pyongyang|kim jong|lee jae-?myung|yoon suk|han duck|park chung|moon jae|dmz|panmunjom|busan|incheon|samsung|hyundai|sk hynix|lg energy|k-pop|bts|blackpink|kospi)\b/i;
+  /\b(south korea|north korea|korea|korean|koreans|seoul|pyongyang|kim jong|lee jae[- ]?myung|yoon suk|han duck|han dong-?hoon|park chung|moon jae|people power party|national assembly|blue house|dmz|panmunjom|busan|incheon|samsung|hyundai|sk hynix|lg energy|k-pop|bts|blackpink|kospi)\b/i;
 
 const kstNow = () => new Date(Date.now() + 9 * 3600_000);
 const kstDate = () => kstNow().toISOString().slice(0, 10);
