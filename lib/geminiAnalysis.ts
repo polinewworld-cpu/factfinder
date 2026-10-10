@@ -196,7 +196,7 @@ export async function analyzeWithGemini(report: AnalyticsReport, media: MediaWat
 - 이재명 대통령의 X(엑스) 게시글이 연일 화제입니다. 기사 제목 목록에 대통령 X·SNS 게시글 관련 기사가 있으면 ideas에 그 이슈를 **반드시 1개 이상** 포함하세요(keyword는 "이재명 X" 또는 해당 핵심어). 목록에 없으면 억지로 만들지 마세요.
 "outletComparison": 같은 이슈를 6개 매체가 어떻게 다르게 다뤘는지 3~5개 — 1면 배치 여부, 어느 매체만 다뤘는지, 제목에서 드러나는 초점 차이를 매체 이름과 함께.
 
-수다(chatter): 위 두 가지와 별개로, 한국 뉴스(네이버 많이 본·댓글 많은·지면) 중 **정치 말고 눈에 띄는 이슈**(연예·스포츠·생활·날씨·사건사고·문화·음식·유행 등)를 4~6줄, 한 줄씩 너스레 떨듯 자연스럽게 언급합니다. 중요도 순이 아니라 그냥 "어, 이거 눈에 띄네" 하고 대충 재미있게. 예) "오늘 점심 메뉴 고민하시는 분들, 김밥 값 얘기가 댓글창을 달구고 있어요. 저도 괜히 편의점 앞에서 서성였네요." 데이터의 제목에 있는 사실만 말하고 지어내지 마세요. 정치 기사는 여기 넣지 마세요.
+수다(chatter): 위 두 가지와 별개로, 한국 뉴스(네이버 많이 본·댓글 많은·지면) 중 **정치 말고 눈에 띄는 이슈**(연예·스포츠·생활·날씨·사건사고·문화·음식·유행 등)를 **정확히 7줄**(서로 다른 이슈, 중복 금지), 한 줄씩 너스레 떨듯 자연스럽게 언급합니다. 중요도 순이 아니라 그냥 "어, 이거 눈에 띄네" 하고 대충 재미있게. 예) "오늘 점심 메뉴 고민하시는 분들, 김밥 값 얘기가 댓글창을 달구고 있어요. 저도 괜히 편의점 앞에서 서성였네요." 데이터의 제목에 있는 사실만 말하고 지어내지 마세요. 정치 기사는 여기 넣지 마세요.
 
 첫 인사는 세 칸으로 나눠 씁니다(합쳐서 보고 맨 앞 정감 있는 이야기가 됩니다).
 - openingGreeting: "선배님들~" 하고 부르며 너스레 떠는 인사 한 문장. 지금 한국시간은 ${kstHourNow}시니 아침·낮·저녁을 맞추세요. 자기소개는 화면에 따로 나오니 넣지 마세요.
@@ -283,7 +283,7 @@ ${JSON.stringify(dataForPrompt)}`;
     headline: link(String(parsed.headline ?? '')),
     ideas,
     outletComparison: arr(parsed.outletComparison).map(link),
-    chatter: arr(parsed.chatter).map(link),
+    chatter: (Array.isArray(parsed.chatter) ? parsed.chatter.map(String).filter(Boolean).slice(0, 7) : []).map(link),
     opening: link([parsed.openingGreeting, parsed.openingIssue, parsed.openingCare].map((x) => String(x ?? '').trim()).filter(Boolean).join(' ') || String(parsed.opening ?? '').trim()),
     closing: String(parsed.closing ?? '').trim(),
     whatWorked: arr(parsed.whatWorked),

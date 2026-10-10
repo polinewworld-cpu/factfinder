@@ -19,28 +19,45 @@ const tag = (b: string, t: string) => decode(b.match(new RegExp(`<${t}[^>]*>([\\
 
 const RELATED = /(\bX\b|엑스|트위터|SNS|소셜미디어|게시글|글을 올|올린 글)/;
 
-export async function fetchLeeX(): Promise<LeeXInfo> {
-  const q = encodeURIComponent('이재명 대통령 X 게시글 when:2d');
-  const res = await fetch(`https://news.google.com/rss/search?q=${q}&hl=ko&gl=KR&ceid=KR:ko`, {
+const MIN_ARTICLES = 6; // 최소 6개(중복 없이) — 편집장 지시 2026-10-10
+const QUERIES = ['이재명 대통령 X 게시글', '이 대통령 엑스 SNS 글', '李대통령 X 올린 글', '이재명 X 논란'];
+const norm = (t: string) => t.replace(/[^0-9A-Za-z가-힣]/g, '').slice(0, 18); // 비슷한 제목(같은 기사 재전송) 걸러내기
+
+async function search(query: string, when: string): Promise<LeeXArticle[]> {
+  const res = await fetch(`https://news.google.com/rss/search?q=${encodeURIComponent(`${query} when:${when}`)}&hl=ko&gl=KR&ceid=KR:ko`, {
     headers: { 'User-Agent': 'Mozilla/5.0 (compatible; FactfinderBot/1.0)' },
     signal: AbortSignal.timeout(15_000),
     cache: 'no-store',
   });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const xml = await res.text();
-  const articles: LeeXArticle[] = [];
-  const seen = new Set<string>();
+  const out: LeeXArticle[] = [];
   for (const m of xml.matchAll(/<item>([\s\S]*?)<\/item>/g)) {
     const b = m[1];
     const source = tag(b, 'source');
     let title = tag(b, 'title');
     if (source && title.endsWith(` - ${source}`)) title = title.slice(0, -(source.length + 3));
     const url = tag(b, 'link');
-    if (!title || !url || !/(이재명|李|대통령|이 대통령)/.test(title) || !RELATED.test(title) || seen.has(title)) continue;
-    seen.add(title);
+    if (!title || !url || !/(이재명|李|대통령|이 대통령)/.test(title) || !RELATED.test(title)) continue;
     const t = Date.parse(tag(b, 'pubDate'));
-    articles.push({ outlet: source || '언론', title, url, publishedAt: Number.isNaN(t) ? null : new Date(t).toISOString() });
+    out.push({ outlet: source || '언론', title, url, publishedAt: Number.isNaN(t) ? null : new Date(t).toISOString() });
   }
-  articles.sort((a, b) => (Date.parse(b.publishedAt ?? '') || 0) - (Date.parse(a.publishedAt ?? '') || 0));
-  return { url: LEE_X_URL, articles: articles.slice(0, 10), checkedAt: new Date().toISOString() };
+  return out;
+}
+
+export async function fetchLeeX(): Promise<LeeXInfo> {
+  const found: LeeXArticle[] = [];
+  let lastErr: unknown = null;
+  // 최근 이틀 → 6개가 안 되면 이레, 그래도 모자라면 한 달까지 넓힘
+  for (const when of ['2d', '7d', '30d']) {
+    const lists = await Promise.all(QUERIES.map((q) => search(q, when).catch((e) => ((lastErr = e), [] as LeeXArticle[]))));
+    for (const a of lists.flat()) {
+      if (found.some((f) => f.url === a.url || norm(f.title) === norm(a.title))) continue;
+      found.push(a);
+    }
+    if (found.length >= MIN_ARTICLES) break;
+  }
+  if (!found.length && lastErr) throw lastErr;
+  found.sort((a, b) => (Date.parse(b.publishedAt ?? '') || 0) - (Date.parse(a.publishedAt ?? '') || 0));
+  return { url: LEE_X_URL, articles: found.slice(0, 10), checkedAt: new Date().toISOString() };
 }
