@@ -7,7 +7,7 @@ import { authorName } from '@/lib/byline';
 // 팩트파인더 주간 뉴스레터 (기능정의서 6 → 2026-10-09 편집장 선택 → 2026-10-10 토요일 아침 자동 발송)
 // 메일 HTML은 구독자마다 수신거부 링크만 다름 — {{UNSUBSCRIBE}} 자리에 끼워 넣어 보냄.
 
-const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+export const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 const KST = 9 * 3600_000;
 export const UNSUBSCRIBE_PLACEHOLDER = '{{UNSUBSCRIBE}}';
 export const WEEKLY_MAX = 8;
@@ -61,6 +61,11 @@ export async function selectedArticles(ids: string[]) {
 // 자동 선정: 그 주 발행 기사 중 1면톱 먼저, 나머지는 조회수 순으로 카테고리가 골고루 섞이게 최대 8개 (후원하기 제외)
 export async function weeklyPicks(saturdayKey: string) {
   const { start, end } = weekRangeFor(saturdayKey);
+  return pickArticles(start, end, WEEKLY_MAX);
+}
+
+// 기간·개수를 받는 같은 선정 규칙 — 일간 브리핑(lib/dailyNewsletter.ts)도 이걸 씀 (2026-10-10)
+export async function pickArticles(start: Date, end: Date, max: number) {
   const rows = await prisma.article.findMany({
     where: { status: 'PUBLISHED', publishedAt: { gte: start, lt: end }, NOT: { category: { name: '후원하기' } } },
     select: { id: true, viewCount: true, isFrontpageTop: true, category: { select: { name: true } } },
@@ -75,10 +80,10 @@ export async function weeklyPicks(saturdayKey: string) {
   }
   // 카테고리마다 조회수 1등부터 돌아가며 한 개씩 (많이 읽힌 카테고리 먼저)
   const order = [...queues.entries()].sort((a, b) => (rows.find((r) => r.id === b[1][0])?.viewCount ?? 0) - (rows.find((r) => r.id === a[1][0])?.viewCount ?? 0));
-  while (picked.length < WEEKLY_MAX && order.some(([, q]) => q.length)) {
+  while (picked.length < max && order.some(([, q]) => q.length)) {
     for (const [, q] of order) {
       const id = q.shift();
-      if (id && picked.length < WEEKLY_MAX) picked.push(id);
+      if (id && picked.length < max) picked.push(id);
     }
   }
   return picked;
@@ -135,7 +140,11 @@ const mailImage = (url: string | null) => {
 
 type MailArticle = Awaited<ReturnType<typeof selectedArticles>>[number];
 
-export function buildNewsletterHtml(articles: MailArticle[], greeting: string, opts: { title: string; campaign: string }) {
+export function buildNewsletterHtml(
+  articles: MailArticle[],
+  greeting: string,
+  opts: { title: string; campaign: string; beforeArticles?: string; afterArticles?: string; subtitle?: string }
+) {
   const link = (id: string) => `${SITE_URL}/article/${id}?utm_source=newsletter&utm_medium=email&utm_campaign=${opts.campaign}`;
   const items = articles
     .map((a, i) => {
@@ -158,9 +167,11 @@ export function buildNewsletterHtml(articles: MailArticle[], greeting: string, o
 <div style="max-width:560px;margin:0 auto;padding:24px 20px;background:#fff;font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;">
   <a href="${SITE_URL}/?utm_source=newsletter&utm_medium=email&utm_campaign=${opts.campaign}" style="display:inline-block;background:#ec1561;color:#fff;font-weight:800;font-size:18px;padding:6px 12px;border-radius:4px;text-decoration:none;">팩트파인더</a>
   <h1 style="font-size:20px;margin:16px 0 4px;color:#111;">${esc(opts.title)}</h1>
-  <p style="margin:0 0 18px;color:#999;font-size:12px;">진영에 기대지 않는 중도의 시선</p>
+  <p style="margin:0 0 18px;color:#999;font-size:12px;">${esc(opts.subtitle ?? '진영에 기대지 않는 중도의 시선')}</p>
   ${greet}
-  <table role="presentation" style="width:100%;border-collapse:collapse;">${items || '<tr><td style="padding:16px 0;color:#999;">이번 주 기사가 없습니다.</td></tr>'}</table>
+  ${opts.beforeArticles ?? ''}
+  ${items || !opts.afterArticles && !opts.beforeArticles ? `<table role="presentation" style="width:100%;border-collapse:collapse;">${items || '<tr><td style="padding:16px 0;color:#999;">이번 주 기사가 없습니다.</td></tr>'}</table>` : ''}
+  ${opts.afterArticles ?? ''}
   <div style="margin:24px 0 0;padding:16px;border:1px solid #f3c6d6;border-radius:10px;text-align:center;">
     <p style="margin:0 0 10px;color:#333;font-size:14px;">진영에 기대지 않는 저널리즘은 독자 여러분의 후원으로 지켜집니다.</p>
     <a href="${SITE_URL}/donate?utm_source=newsletter&utm_medium=email&utm_campaign=${opts.campaign}" style="display:inline-block;background:#ec1561;color:#fff;font-weight:700;font-size:14px;padding:8px 18px;border-radius:999px;text-decoration:none;">팩트파인더 후원하기</a>

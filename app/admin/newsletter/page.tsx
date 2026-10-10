@@ -54,6 +54,25 @@ export default function NewsletterAdminPage() {
     await load();
     setBusy(false);
   }
+  const [dailyMsg, setDailyMsg] = useState('');
+  const [dailyBusy, setDailyBusy] = useState(false);
+  const [dailyDate, setDailyDate] = useState(''); // 비우면 오늘 아침 기준, 지정하면 그 날짜 아침 기준(방송이 있던 날 시험용)
+  // 일간 아침 브리핑 샘플을 편집장 본인 메일로만 (2026-10-10) — 방송 영상 분석이 있어 1~4분 걸릴 수 있음
+  async function dailyTest() {
+    setDailyBusy(true);
+    setDailyMsg('만드는 중입니다… 방송 내용을 요약하느라 몇 분 걸릴 수 있어요.');
+    try {
+      const res = await fetch('/api/newsletter/daily-test', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dailyDate ? { date: dailyDate } : {}) });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok) setDailyMsg(d.error ?? '테스트 발송 실패');
+      else if (d.skipped) setDailyMsg(`${d.note} (방송이 있던 날 다음 날짜를 골라 다시 시험해 보세요)`);
+      else setDailyMsg(`${d.to}로 보냈습니다. 방송 ${d.info.broadcasts}건(요약 방식: ${d.info.summarySources.map((s: string) => (s === 'video' ? '영상 분석' : s === 'description' ? '설명란' : '요약 없음')).join(', ')}) · 기사 ${d.info.articles}건${d.info.usedPersonas ? ' · 기자 브리핑 포함' : ''}`);
+    } catch {
+      setDailyMsg('테스트 발송 중 오류가 났습니다.');
+    }
+    setDailyBusy(false);
+  }
+
   async function testSend(useSelection: boolean) {
     setBusy(true);
     setAutoMsg('');
@@ -133,6 +152,20 @@ export default function NewsletterAdminPage() {
         구독자 <b>{info.subscriberCount}명</b>
         {info.lastSentAt && <> · 마지막 발송 {new Date(info.lastSentAt).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</>}
       </p>
+
+      {/* 일간 아침 브리핑 샘플 (2026-10-10) — 구독자 발송은 아직 연결 전, 편집장 본인에게만 */}
+      <section className="border rounded-xl p-4 mb-6">
+        <h2 className="text-sm font-semibold mb-1">일간 아침 브리핑 샘플 (정치신세계 어제 방송)</h2>
+        <p className="text-xs text-gray-500 mb-3">평일 아침 8시 기준 · 어제 방송을 요약해서 보여주고, 어제 기사가 있으면 기사를 없으면 오진실·김정신 브리핑을 &quot;정신줄님&quot; 호칭으로 싣습니다. 방송이 없던 날은 건너뜁니다. 아직 구독자에게는 나가지 않습니다.</p>
+        <label className="text-xs text-gray-500 mr-2">
+          기준 날짜(비우면 오늘 아침)
+          <input type="date" value={dailyDate} onChange={(e) => setDailyDate(e.target.value)} className="ml-1 border rounded px-2 py-1 text-sm" />
+        </label>
+        <button type="button" disabled={dailyBusy || !info.gmail.connected} onClick={dailyTest} className="text-sm border rounded-lg px-4 py-2 disabled:opacity-40">
+          {dailyBusy ? '만드는 중…' : '일간 샘플을 내 메일로 받기'}
+        </button>
+        {dailyMsg && <p className="text-sm text-brand mt-2">{dailyMsg}</p>}
+      </section>
 
       {/* 토요일 자동 발송 (2026-10-10) */}
       <section className="border rounded-xl p-4 mb-6 space-y-4">
