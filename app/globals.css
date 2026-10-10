@@ -3224,3 +3224,7 @@ body:has(.admin-dashboard) .brand-admin .logo-mark { filter: drop-shadow(0 0 3px
 .zb-admin:has(.admin-dashboard) .zb-dot-card:hover { background: rgba(255, 255, 255, 0.17); }
 .zb-admin:has(.admin-dashboard) .admin-sidebar a.bg-brand { background: rgba(255, 255, 255, 0.2); color: #fff; }
 .zb-admin:has(.admin-dashboard) .admin-mobilebar { border-bottom-color: rgba(255, 255, 255, 0.24); }
+
+/* 대시보드: 글래스 카드의 작은 점 무늬 제거, 카드 안 링크는 밝은 색 */
+.admin-dashboard canvas { display: none !important; }
+.admin-dashboard a[style*="0d4f55"] { color: var(--zb-teal-hi) !important; }
