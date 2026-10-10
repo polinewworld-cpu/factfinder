@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { ROLES } from '@/lib/roles';
 import { getCurrentUser } from '@/lib/session';
 import { nicknameHolder } from '@/lib/nicknameHolder';
+import { retiredUserData } from '@/lib/retireUser';
 
 // 편집장이 특정 회원의 등급을 변경 (예: 독자 -> 기자)
 // 2026-10-09: [편집] — 닉네임·프로필 사진·자기소개·정산 계좌도 같은 요청으로 (보낸 항목만 바꿈)
@@ -60,7 +61,7 @@ export async function DELETE(_req: NextRequest, { params }: { params: { id: stri
     await prisma.$transaction([
       prisma.account.deleteMany({ where: { userId: params.id } }),
       prisma.session.deleteMany({ where: { userId: params.id } }),
-      prisma.user.update({ where: { id: params.id }, data: { ghost: true, legacyClaimEmail: null } }),
+      prisma.user.update({ where: { id: params.id }, data: await retiredUserData(params.id) }), // 바이라인 유지, 이름은 비워 재사용 가능 (2026-10-10)
     ]);
     return NextResponse.json({ ok: true, ghost: true, articleCount });
   }

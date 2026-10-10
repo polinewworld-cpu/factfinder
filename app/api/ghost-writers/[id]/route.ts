@@ -4,6 +4,7 @@ import { ROLES } from '@/lib/roles';
 import { getCurrentUser } from '@/lib/session';
 import { GHOST_WHERE } from '@/lib/ghostWriter';
 import { nicknameHolder } from '@/lib/nicknameHolder';
+import { deleteOrRetire } from '@/lib/retireUser';
 
 // 유령기자 상세·수정·숨김 (2026-10-09) — 편집장 전용. 정산 정보(은행·계좌·예금주) 포함. (주민등록증 사진 기능은 사장님 지시로 삭제)
 async function chief() {
@@ -56,11 +57,11 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   return NextResponse.json({ ok: true });
 }
 
-// 삭제 = 목록에서 숨김(기존 "유령 계정" 처리와 같음) — 쓴 기사·이름은 그대로 남음
+// 삭제 = 영구 삭제 (2026-10-10 사장님: "삭제하면 영원히, 필요하면 나중에 새로 등록") — 되살리기 없음.
+// 쓴 기사가 있으면 기사엔 기자 이름만 그대로 남고(바이라인 유지), 이름(닉네임)은 비워져 같은 이름으로 새로 등록 가능.
 export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
   if (!(await chief())) return NextResponse.json({ error: '편집장만 삭제할 수 있습니다' }, { status: 403 });
   const u = await prisma.user.findFirst({ where: { id: params.id, ...GHOST_WHERE }, select: { id: true } });
   if (!u) return NextResponse.json({ error: '유령기자를 찾을 수 없습니다' }, { status: 404 });
-  await prisma.user.update({ where: { id: u.id }, data: { ghost: true } });
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, ...(await deleteOrRetire(u.id)) });
 }

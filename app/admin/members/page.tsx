@@ -158,10 +158,10 @@ export default function MembersAdminPage() {
     setBusyId(null);
   }
 
-  // 회원 삭제 — 확인창 한 번. 쓴 기사가 있으면 유령 계정(목록에서만 숨김, 기사·이름 유지) (2026-10-08)
+  // 회원 삭제 — 확인창 한 번. 쓴 기사가 있으면 기사엔 이름만 남기고 영구 정리(lib/retireUser.ts, 2026-10-10)
   async function deleteUser(u: any) {
-    if (!confirm(`${u.name} 회원을 삭제할까요?
-쓴 기사가 있으면 목록에서만 사라지고 기사와 이름은 그대로 남습니다.`)) return;
+    if (!confirm(`${u.nickname || u.name} 회원을 영구히 삭제할까요?
+쓴 기사가 있으면 기사에는 기자 이름만 그대로 남고, 로그인·목록에서는 사라집니다.`)) return;
     setBusyId(u.id);
     const res = await fetch(`/api/users/${u.id}`, { method: 'DELETE' });
     if (!res.ok) {

@@ -15,14 +15,8 @@ export async function createGhostWriter(name: string, writerTitle?: string | nul
   const clean = name.trim().slice(0, 30);
   if (!clean) throw new Error('이름을 입력하세요');
   // 같은 이름이 이미 있으면 닉네임 충돌 — 숫자를 붙이지 않고 알려 줌
-  const holder = await prisma.user.findFirst({ where: { nickname: clean }, select: { id: true, email: true, ghost: true } });
-  if (holder?.ghost && holder.email.endsWith(GHOST_EMAIL_SUFFIX)) {
-    // 목록에서 숨긴 옛 기자·기고자와 같은 이름 — 같은 사람으로 보고 되살려 씀(옛 기사도 그대로 이 유령기자 것으로, 2026-10-10)
-    return prisma.user.update({
-      where: { id: holder.id },
-      data: { ghost: false, writerTitle: writerTitle?.trim() || null, ...(image?.trim() ? { image: image.trim() } : {}) },
-    });
-  }
+  // 숨긴 계정까지 포함해 확인 — 삭제한 계정은 닉네임이 비워지므로 같은 이름으로 새로 등록 가능 (2026-10-10)
+  const holder = await prisma.user.findFirst({ where: { nickname: clean }, select: { id: true } });
   if (holder) {
     throw new Error(`"${clean}" 이름이 이미 있습니다. 목록에서 고르거나 다른 이름을 쓰세요`);
   }

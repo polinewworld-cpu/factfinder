@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
 import { nicknameHolder } from '@/lib/nicknameHolder';
+import { retiredUserData } from '@/lib/retireUser';
 
 export async function GET() {
   const user = await getCurrentUser();
@@ -83,7 +84,7 @@ export async function DELETE() {
       ...common,
       prisma.user.update({
         where: { id: user.id },
-        data: { ghost: true, image: null, bio: null, newsletterOptIn: false, legacyClaimEmail: null },
+        data: { ...(await retiredUserData(user.id)), image: null, bio: null, newsletterOptIn: false },
       }),
     ]);
   } else {

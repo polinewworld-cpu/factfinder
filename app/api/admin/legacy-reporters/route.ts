@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { ROLES } from '@/lib/roles';
 import { getCurrentUser } from '@/lib/session';
 import { mergeLegacyReporter } from '@/lib/legacyReporter';
+import { deleteOrRetire } from '@/lib/retireUser';
 
 // 옛 기자 계정 연결 (2026-10-08) — 옛 사이트 기사를 옮길 때 만든 "로그인 불가 임시 기자 계정"(…@legacy.invalid)을
 // 실제로 구글 가입한 기자 계정에 합침: 기사·후원 지정을 실제 계정으로 옮기고 빈 임시 계정은 정리.
@@ -21,9 +22,8 @@ export async function GET() {
   if (denied) return denied;
   const [legacy, members] = await Promise.all([
     prisma.user.findMany({
-      // 2026-10-10: [삭제]로 숨긴 옛 기자도 목록 아래쪽에 "숨김"으로 보여 줌 — 숨긴 뒤 그 기자가 가입하면 연결할 길이 없었음
-      where: { email: LEGACY },
-      select: { id: true, name: true, ghost: true, legacyClaimEmail: true, _count: { select: { articles: true } } },
+      where: { email: LEGACY, ghost: false }, // 삭제한 옛 기자는 영구히 목록에서 빠짐
+      select: { id: true, name: true, legacyClaimEmail: true, _count: { select: { articles: true } } },
       orderBy: { articles: { _count: 'desc' } },
     }),
     prisma.user.findMany({
@@ -40,9 +40,7 @@ export async function GET() {
     }),
   ]);
   return NextResponse.json({
-    legacy: legacy
-      .map((u) => ({ id: u.id, name: u.name, hidden: u.ghost, claimEmail: u.legacyClaimEmail, articleCount: u._count.articles }))
-      .sort((a, b) => Number(a.hidden) - Number(b.hidden)),
+    legacy: legacy.map((u) => ({ id: u.id, name: u.name, claimEmail: u.legacyClaimEmail, articleCount: u._count.articles })),
     members,
   });
 }
@@ -67,8 +65,7 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ ok: true, moved });
 }
 
-// 옛 기자 삭제 = 유령 계정 처리 (2026-10-08 사장님 지시) — 관리자 목록에서만 사라지고 옛 기사·바이라인은 그대로.
-// 자동 승계 이메일도 해제해 더는 연결되지 않게 함.
+// 옛 기자 삭제 = 영구 삭제 (2026-10-10) — 옛 기사엔 기자 이름만 그대로 남고, 이름은 비워져 새로 등록 가능 (lib/retireUser.ts)
 export async function DELETE(req: NextRequest) {
   const denied = await requireChief();
   if (denied) return denied;
@@ -77,8 +74,7 @@ export async function DELETE(req: NextRequest) {
   if (!legacy || !legacy.email.endsWith('@legacy.invalid')) {
     return NextResponse.json({ error: '옛 기자 임시 계정이 아닙니다' }, { status: 400 });
   }
-  await prisma.user.update({ where: { id }, data: { ghost: true, legacyClaimEmail: null } });
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, ...(await deleteOrRetire(id)) });
 }
 
 // 구글 이메일 미리 등록 — body: { id, claimEmail } (빈 값이면 해제).

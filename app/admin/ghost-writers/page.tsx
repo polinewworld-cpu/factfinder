@@ -69,8 +69,16 @@ function EditPanel({ id, onClose, onChanged }: { id: string; onClose: () => void
   }
 
   async function hide() {
-    if (!confirm(`"${d?.displayName}"을(를) 유령기자 목록에서 지울까요? 쓴 기사와 이름은 그대로 남습니다.`)) return;
-    await fetch(`/api/ghost-writers/${id}`, { method: 'DELETE' });
+    const n = d?.articleCount ?? 0;
+    // 2026-10-10 사장님: 삭제는 영원히. 나간 기사엔 기자 이름만 그대로, 필요하면 나중에 새 유령기자로 다시 등록
+    const ask = n > 0
+      ? `"${d?.displayName}"을(를) 영구히 삭제할까요?
+
+이미 나간 기사 ${n.toLocaleString()}건에는 기자 이름만 그대로 남습니다. 같은 이름으로 나중에 새로 등록할 수 있습니다(옛 기사와는 연결되지 않음).`
+      : `"${d?.displayName}"을(를) 영구히 삭제할까요?`;
+    if (!confirm(ask)) return;
+    const res = await fetch(`/api/ghost-writers/${id}`, { method: 'DELETE' });
+    if (!res.ok) return setMsg((await res.json().catch(() => ({}))).error ?? '삭제 실패');
     onChanged();
     onClose();
   }
@@ -138,7 +146,7 @@ function EditPanel({ id, onClose, onChanged }: { id: string; onClose: () => void
 
             <div className="border-t pt-4">
               <button type="button" onClick={hide} className="text-xs border border-red-200 text-red-600 rounded-lg px-3 py-1.5">
-                유령기자 목록에서 삭제
+                영구 삭제
               </button>
             </div>
           </>
